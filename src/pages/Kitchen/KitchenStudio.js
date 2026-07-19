@@ -1372,7 +1372,6 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
                 </Typography>
               </Box>
             </Stack>
-            <Chip color="success" label="MVP altyapi" />
           </Stack>
           {notice && (
             <Alert severity="info" sx={{ mt: 2 }}>

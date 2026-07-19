@@ -4,6 +4,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Button,
   Chip,
   ClickAwayListener,
   Drawer,
@@ -16,9 +17,10 @@ import {
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import TuneIcon from "@mui/icons-material/Tune";
-import { catalogGroups } from "../kitchenData";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { categoryLabel, materialModifierLabel, money } from "../kitchenUtils";
 
 const materialGroups = [
@@ -27,8 +29,21 @@ const materialGroups = [
   { key: "countertop", title: "Tezgah Malzemeleri" },
 ];
 
+const slugify = (value) =>
+  value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
 const KitchenCatalogManager = ({
   catalogItems,
+  catalogGroups,
   materials,
   installationFee,
   selectedProduct,
@@ -36,13 +51,33 @@ const KitchenCatalogManager = ({
   onSelectProduct,
   onCloseProduct,
   onUpdateProduct,
+  onAddProduct,
+  onAddCatalogGroup,
   onChangeInstallationFee,
   onSelectMaterial,
   onCloseMaterial,
   onUpdateMaterial,
 }) => {
-  const [expanded, setExpanded] = useState("base_cabinet");
-  const [expandedMaterial, setExpandedMaterial] = useState("door");
+  const [expanded, setExpanded] = useState(false);
+  const [expandedMaterial, setExpandedMaterial] = useState(false);
+  const [productDrawerOpen, setProductDrawerOpen] = useState(false);
+  const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
+  const [materialCategoryGroups, setMaterialCategoryGroups] = useState(materialGroups);
+  const [categoryForm, setCategoryForm] = useState({
+    target: "product",
+    title: "",
+  });
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    category: "base_cabinet",
+    base_price: 0,
+    min_width: 40,
+    max_width: 120,
+    min_height: 40,
+    max_height: 120,
+    model_url: "",
+    file_name: "",
+  });
   const toggle = (panel) => (_, nextExpanded) => {
     setExpanded(nextExpanded ? panel : false);
   };
@@ -80,11 +115,150 @@ const KitchenCatalogManager = ({
     }));
   };
 
+  const getProductCategoryLabel = (value) =>
+    catalogGroups.find((group) => group.key === value)?.title || categoryLabel(value);
+
+  const previewByCategory = {
+    base_cabinet: "/images/kitchen/base-cabinet-premium.svg",
+    wall_cabinet: "/images/kitchen/wall-cabinet-glass-premium.svg",
+    countertop: "/images/kitchen/countertop-long-slab-premium.svg",
+    appliance: "/images/kitchen/sink-steel-premium.svg",
+    shelf: "/images/kitchen/open-shelf-premium.svg",
+    room: "/images/kitchen/kitchen-layout-linear-premium.svg",
+  };
+
+  const handleNewModelFile = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    if (!["gltf", "glb"].includes(extension)) return;
+
+    setNewProduct((current) => ({
+      ...current,
+      model_url: URL.createObjectURL(file),
+      file_name: file.name,
+      name: current.name || file.name.replace(/\.(gltf|glb)$/i, ""),
+    }));
+  };
+
+  const addManualProduct = () => {
+    if (!newProduct.name || !newProduct.model_url) return;
+
+    const minWidth = Math.max(Number(newProduct.min_width) || 1, 1);
+    const maxWidth = Math.max(Number(newProduct.max_width) || minWidth, minWidth);
+    const minHeight = Math.max(Number(newProduct.min_height) || 1, 1);
+    const maxHeight = Math.max(Number(newProduct.max_height) || minHeight, minHeight);
+    const product = {
+      id: `manual-${Date.now()}`,
+      sku: `MAN-${Date.now().toString().slice(-6)}`,
+      name: newProduct.name,
+      category: newProduct.category,
+      dimensions: {
+        width: Math.round((minWidth + maxWidth) / 2),
+        height: Math.round((minHeight + maxHeight) / 2),
+        depth: 56,
+        unit: "cm",
+      },
+      constraints: {
+        min_width: minWidth,
+        max_width: maxWidth,
+        min_height: minHeight,
+        max_height: maxHeight,
+      },
+      image_url: previewByCategory[newProduct.category] || "/images/kitchen/base-cabinet-premium.svg",
+      model_url: newProduct.model_url,
+      original_file_name: newProduct.file_name,
+      base_price: Math.max(Number(newProduct.base_price) || 0, 0),
+      is_manual: true,
+    };
+
+    onAddProduct(product);
+    setExpanded(product.category);
+    setProductDrawerOpen(false);
+    setNewProduct({
+      name: "",
+      category: product.category,
+      base_price: 0,
+      min_width: 40,
+      max_width: 120,
+      min_height: 40,
+      max_height: 120,
+      model_url: "",
+      file_name: "",
+    });
+  };
+
+  const addCategory = () => {
+    const title = categoryForm.title.trim();
+    if (!title) return;
+
+    const baseKey = slugify(title) || `kategori_${Date.now()}`;
+    if (categoryForm.target === "product") {
+      const key = catalogGroups.some((group) => group.key === baseKey)
+        ? `${baseKey}_${Date.now().toString().slice(-4)}`
+        : baseKey;
+      const nextGroup = { key, title };
+      onAddCatalogGroup(nextGroup);
+      setExpanded(key);
+      setNewProduct((current) => ({ ...current, category: key }));
+    } else {
+      const key = materialCategoryGroups.some((group) => group.key === baseKey)
+        ? `${baseKey}_${Date.now().toString().slice(-4)}`
+        : baseKey;
+      const nextGroup = { key, title };
+      setMaterialCategoryGroups((current) => [...current, nextGroup]);
+      setExpandedMaterial(key);
+    }
+
+    setCategoryForm({ target: "product", title: "" });
+    setCategoryDrawerOpen(false);
+  };
+
   return (
     <>
       <Grid container spacing={2.5}>
         <Grid item xs={12} md={8}>
           <Stack spacing={1.4}>
+            <Paper
+              elevation={0}
+              sx={{
+                border: "1px solid #D7E3F1",
+                borderRadius: 1.5,
+                p: 1.5,
+                bgcolor: "#FFFFFF",
+                boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
+              }}
+            >
+              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                    Urunler
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Kategorilere gore urun ve 3D model yonetimi.
+                  </Typography>
+                </Box>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<CategoryOutlinedIcon />}
+                    onClick={() => setCategoryDrawerOpen(true)}
+                    sx={{ textTransform: "none", fontWeight: 900, whiteSpace: "nowrap" }}
+                  >
+                    Kategori Ekle
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<UploadFileIcon />}
+                    onClick={() => setProductDrawerOpen(true)}
+                    sx={{ textTransform: "none", fontWeight: 900, whiteSpace: "nowrap" }}
+                  >
+                    Urun Ekle
+                  </Button>
+                </Stack>
+              </Stack>
+            </Paper>
             {catalogGroups.map((group) => {
               const groupItems = catalogItems.filter((item) => item.category === group.key);
               if (!groupItems.length) return null;
@@ -105,9 +279,9 @@ const KitchenCatalogManager = ({
                     </Stack>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <Grid container spacing={1.4}>
+                    <Grid container spacing={1}>
                       {groupItems.map((product) => (
-                        <Grid item xs={12} sm={6} lg={4} key={product.id}>
+                        <Grid item xs={6} sm={4} md={3} lg={2.4} key={product.id}>
                           <Paper
                             elevation={0}
                             onClick={() => onSelectProduct(product)}
@@ -117,30 +291,31 @@ const KitchenCatalogManager = ({
                                   ? "2px solid #1976D2"
                                   : "1px solid #E5E7EB",
                               borderRadius: 1,
-                              p: 1.5,
+                              p: 0.8,
                               cursor: "pointer",
                               bgcolor: selectedProduct?.id === product.id ? "#EEF6FF" : "#FFFFFF",
                             }}
                           >
-                            <Stack spacing={1.2}>
+                            <Stack spacing={0.7}>
                               <Box
                                 component="img"
                                 src={product.image_url || "/images/kitchen/base-cabinet.svg"}
                                 alt={product.name}
                                 sx={{
                                   width: "100%",
-                                  height: 118,
-                                  objectFit: "cover",
+                                  height: 86,
+                                  objectFit: "contain",
                                   borderRadius: 1,
                                   border: "1px solid #E2E8F0",
-                                  bgcolor: "#F8FAFC",
+                                  bgcolor: "#F1F7FE",
+                                  p: 0.6,
                                 }}
                               />
-                              <Stack direction="row" justifyContent="space-between" spacing={1}>
+                              <Stack direction="row" justifyContent="space-between" spacing={0.7}>
                                 <Box>
-                                  <Typography sx={{ fontWeight: 900 }}>{product.name}</Typography>
+                                  <Typography sx={{ fontWeight: 900, fontSize: 12 }} noWrap>{product.name}</Typography>
                                   <Typography variant="caption" color="text.secondary">
-                                    {product.sku} - {categoryLabel(product.category)}
+                                    {product.sku} - {getProductCategoryLabel(product.category)}
                                   </Typography>
                                 </Box>
                                 <TuneIcon color="primary" fontSize="small" />
@@ -163,16 +338,7 @@ const KitchenCatalogManager = ({
                                   {product.constraints?.max_height || product.dimensions?.height} cm
                                 </Typography>
                               </Stack>
-                              <Chip label={money(product.base_price)} size="small" sx={{ alignSelf: "flex-start" }} />
-                              {product.model_url && (
-                                <Chip
-                                  label="3D model bagli"
-                                  color="primary"
-                                  variant="outlined"
-                                  size="small"
-                                  sx={{ alignSelf: "flex-start" }}
-                                />
-                              )}
+                              <Chip label={money(product.base_price)} size="small" sx={{ alignSelf: "center" }} />
                             </Stack>
                           </Paper>
                         </Grid>
@@ -221,7 +387,7 @@ const KitchenCatalogManager = ({
                 Malzemeler
               </Typography>
               <Stack spacing={1.2}>
-                {materialGroups.map((group) => {
+                {materialCategoryGroups.map((group) => {
                   const groupItems = materials.filter((material) => material.type === group.key);
                   if (!groupItems.length) return null;
 
@@ -344,7 +510,7 @@ const KitchenCatalogManager = ({
               value={selectedMaterial.type}
               onChange={(event) => updateSelectedMaterial("type", event.target.value)}
             >
-              {materialGroups.map((group) => (
+              {materialCategoryGroups.map((group) => (
                 <MenuItem key={group.key} value={group.key}>
                   {group.title}
                 </MenuItem>
@@ -387,6 +553,200 @@ const KitchenCatalogManager = ({
 
       <Drawer
         anchor="right"
+        open={categoryDrawerOpen}
+        onClose={() => setCategoryDrawerOpen(false)}
+        variant="persistent"
+        PaperProps={{
+          sx: {
+            width: { xs: 320, sm: 390 },
+            p: 2,
+            top: 0,
+            height: "100%",
+            borderLeft: "1px solid #E2E8F0",
+            boxShadow: "-12px 0 30px rgba(15,23,42,0.12)",
+            zIndex: 1300,
+          },
+        }}
+      >
+        <ClickAwayListener
+          mouseEvent="onMouseDown"
+          touchEvent="onTouchStart"
+          onClickAway={() => setCategoryDrawerOpen(false)}
+        >
+          <Stack spacing={2}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                  Kategori Ekle
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Urun veya malzeme kategorisi olustur.
+                </Typography>
+              </Box>
+              <IconButton onClick={() => setCategoryDrawerOpen(false)}>
+                <CloseIcon />
+              </IconButton>
+            </Stack>
+            <TextField
+              select
+              label="Kategori tipi"
+              size="small"
+              value={categoryForm.target}
+              onChange={(event) =>
+                setCategoryForm((current) => ({ ...current, target: event.target.value }))
+              }
+            >
+              <MenuItem value="product">Urun kategorisi</MenuItem>
+              <MenuItem value="material">Malzeme kategorisi</MenuItem>
+            </TextField>
+            <TextField
+              label="Kategori adi"
+              size="small"
+              value={categoryForm.title}
+              onChange={(event) =>
+                setCategoryForm((current) => ({ ...current, title: event.target.value }))
+              }
+              placeholder="Orn: Ozel ust dolaplar"
+            />
+            <Button
+              variant="contained"
+              startIcon={<CategoryOutlinedIcon />}
+              onClick={addCategory}
+              disabled={!categoryForm.title.trim()}
+              sx={{ textTransform: "none", fontWeight: 900 }}
+            >
+              Kategoriyi Ekle
+            </Button>
+          </Stack>
+        </ClickAwayListener>
+      </Drawer>
+
+      <Drawer
+        anchor="right"
+        open={productDrawerOpen}
+        onClose={() => setProductDrawerOpen(false)}
+        variant="persistent"
+        PaperProps={{
+          sx: {
+            width: { xs: 330, sm: 430 },
+            p: 2,
+            top: 0,
+            height: "100%",
+            borderLeft: "1px solid #E2E8F0",
+            boxShadow: "-12px 0 30px rgba(15,23,42,0.12)",
+            zIndex: 1300,
+          },
+        }}
+      >
+        <ClickAwayListener
+          mouseEvent="onMouseDown"
+          touchEvent="onTouchStart"
+          onClickAway={() => setProductDrawerOpen(false)}
+        >
+          <Stack spacing={2}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                  Urun Ekle
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  GLTF/GLB dosyasi ve olcu sinirlari.
+                </Typography>
+              </Box>
+              <IconButton onClick={() => setProductDrawerOpen(false)}>
+                <CloseIcon />
+              </IconButton>
+            </Stack>
+
+            <Button
+              component="label"
+              variant="outlined"
+              startIcon={<UploadFileIcon />}
+              sx={{ textTransform: "none", fontWeight: 900 }}
+            >
+              GLTF / GLB Sec
+              <input
+                hidden
+                type="file"
+                accept=".gltf,.glb,model/gltf+json,model/gltf-binary"
+                onChange={handleNewModelFile}
+              />
+            </Button>
+            {newProduct.file_name && (
+              <Chip
+                label={newProduct.file_name}
+                color="primary"
+                variant="outlined"
+                sx={{ alignSelf: "flex-start" }}
+              />
+            )}
+            <TextField
+              label="Urun adi"
+              size="small"
+              value={newProduct.name}
+              onChange={(event) =>
+                setNewProduct((current) => ({ ...current, name: event.target.value }))
+              }
+            />
+            <TextField
+              select
+              label="Kategori"
+              size="small"
+              value={newProduct.category}
+              onChange={(event) =>
+                setNewProduct((current) => ({ ...current, category: event.target.value }))
+              }
+            >
+              {catalogGroups.map((group) => (
+                <MenuItem key={group.key} value={group.key}>
+                  {group.title}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="Fiyat"
+              type="number"
+              size="small"
+              value={newProduct.base_price}
+              onChange={(event) =>
+                setNewProduct((current) => ({ ...current, base_price: event.target.value }))
+              }
+            />
+            <Grid container spacing={1}>
+              {[
+                ["min_width", "Min genislik"],
+                ["max_width", "Max genislik"],
+                ["min_height", "Min yukseklik"],
+                ["max_height", "Max yukseklik"],
+              ].map(([field, label]) => (
+                <Grid item xs={6} key={field}>
+                  <TextField
+                    fullWidth
+                    label={label}
+                    type="number"
+                    size="small"
+                    value={newProduct[field]}
+                    onChange={(event) =>
+                      setNewProduct((current) => ({ ...current, [field]: event.target.value }))
+                    }
+                  />
+                </Grid>
+              ))}
+            </Grid>
+            <Button
+              variant="contained"
+              onClick={addManualProduct}
+              disabled={!newProduct.name || !newProduct.model_url}
+              sx={{ textTransform: "none", fontWeight: 900 }}
+            >
+              Urunu Kataloga Ekle
+            </Button>
+          </Stack>
+        </ClickAwayListener>
+      </Drawer>
+
+      <Drawer
+        anchor="right"
         open={Boolean(selectedProduct)}
         onClose={onCloseProduct}
         variant="persistent"
@@ -415,7 +775,7 @@ const KitchenCatalogManager = ({
                   Urun Yonetimi
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {selectedProduct.sku} - {categoryLabel(selectedProduct.category)}
+                  {selectedProduct.sku} - {getProductCategoryLabel(selectedProduct.category)}
                 </Typography>
               </Box>
               <IconButton onClick={onCloseProduct}>
@@ -436,7 +796,12 @@ const KitchenCatalogManager = ({
                 bgcolor: "#F8FAFC",
               }}
             />
-            <TextField label="Urun adi" size="small" value={selectedProduct.name} disabled />
+            <TextField
+              label="Urun adi"
+              size="small"
+              value={selectedProduct.name}
+              onChange={(event) => updateSelectedProductField("name", event.target.value)}
+            />
             <TextField
               label="Urun fiyati"
               type="number"
@@ -469,7 +834,7 @@ const KitchenCatalogManager = ({
               label="Kategori"
               size="small"
               value={selectedProduct.category}
-              disabled
+              onChange={(event) => updateSelectedProductField("category", event.target.value)}
             >
               {catalogGroups.map((group) => (
                 <MenuItem key={group.key} value={group.key}>

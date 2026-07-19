@@ -6,6 +6,7 @@ import {
   Toolbar as MuiToolbar,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import { useLocation } from "react-router-dom";
 import ArrowUp from "mdi-material-ui/ArrowUp";
 import { THEME } from "config";
 import Customizer from "components/Customizer";
@@ -53,7 +54,9 @@ const ContentWrapper = styled("main")(({ theme }) => ({
 }));
 
 const Horizontal = ({ children, ...rest }) => {
+  const { pathname } = useLocation();
   const { skin, contentWidth } = useTheming();
+  const hideFooter = pathname.endsWith("/kitchen-designer");
 
   return (
     <HorizontalLayoutWrapper className={"layout-wrapper"}>
@@ -136,7 +139,7 @@ const Horizontal = ({ children, ...rest }) => {
       >
         {children}
       </ContentWrapper>
-      <Footer {...rest} />
+      {!hideFooter && <Footer {...rest} />}
       <DatePickerWrapper sx={{ zIndex: 11 }}>
         <Box id={"react-datepicker-portal"} />
       </DatePickerWrapper>

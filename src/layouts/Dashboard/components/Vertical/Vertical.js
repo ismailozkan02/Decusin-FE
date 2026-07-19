@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Backdrop, Box, Fab } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import { useLocation } from "react-router-dom";
 import ArrowUp from "mdi-material-ui/ArrowUp";
 import { THEME } from "config";
 import useTheming from "hooks/useTheming";
@@ -35,6 +36,7 @@ const ContentWrapper = styled("main")(({ theme }) => ({
 }));
 
 const Vertical = ({ children, ...rest }) => {
+  const { pathname } = useLocation();
   const { skin, contentWidth } = useTheming();
   const navWidth = THEME.NAVIGATION_SIZE;
   const collapsedNavWidth = THEME.COLLAPSED_NAVIGATION_SIZE;
@@ -42,6 +44,7 @@ const Vertical = ({ children, ...rest }) => {
   const [navHover, setNavHover] = useState(false);
   const [navVisible, setNavVisible] = useState(false);
   const [showBackdrop, setShowBackdrop] = useState(false);
+  const hideFooter = pathname.endsWith("/kitchen-designer");
 
   const toggleNavVisibility = () => setNavVisible(!navVisible);
 
@@ -64,6 +67,11 @@ const Vertical = ({ children, ...rest }) => {
           <ContentWrapper
             className={"layout-page-content"}
             sx={{
+              ...(hideFooter && {
+                height: "calc(100vh - 64px)",
+                minHeight: 0,
+                overflow: "hidden",
+              }),
               ...(contentWidth === "boxed" && {
                 mx: "auto",
                 "@media (min-width:1440px)": { maxWidth: 1440 },
@@ -73,7 +81,7 @@ const Vertical = ({ children, ...rest }) => {
           >
             {children}
           </ContentWrapper>
-          <Footer showBackdrop={showBackdrop} />
+          {!hideFooter && <Footer showBackdrop={showBackdrop} />}
           <DatePickerWrapper sx={{ zIndex: 11 }}>
             <Box id={"react-datepicker-portal"} />
           </DatePickerWrapper>

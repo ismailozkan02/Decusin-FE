@@ -121,15 +121,15 @@ const KitchenScene = ({
   onDeleteItem,
 }) => {
   const wrapperRef = useRef(null);
-  const [sceneSize, setSceneSize] = useState({ width: 0, height: 0 });
+  const [sceneBox, setSceneBox] = useState({ width: 0, top: 0 });
   const [viewportHeight, setViewportHeight] = useState(
     typeof window === "undefined" ? 900 : window.innerHeight,
   );
   const roomWidthCm = Math.max(Number(roomDimensions?.width || 360), 1);
   const roomHeightCm = Math.max(Number(roomDimensions?.height || 260), 1);
   const roomRatio = roomHeightCm / roomWidthCm;
-  const availableWidth = Math.max(sceneSize.width || 1000, 320);
-  const availableHeight = Math.max(viewportHeight - 300, 420);
+  const availableWidth = Math.max((sceneBox.width || 1000) - 34, 300);
+  const availableHeight = Math.max(viewportHeight - sceneBox.top - 128, 300);
   const fittedWidth = Math.min(availableWidth, availableHeight / roomRatio);
   const fittedHeight = fittedWidth * roomRatio;
   const cmToPx = Math.max((fittedWidth / roomWidthCm) * zoom, 0.6);
@@ -145,9 +145,9 @@ const KitchenScene = ({
 
     const updateSize = () => {
       const rect = wrapperRef.current?.getBoundingClientRect();
-      setSceneSize({
+      setSceneBox({
         width: rect?.width || 0,
-        height: rect?.height || 0,
+        top: rect?.top || 0,
       });
     };
     updateSize();
@@ -164,7 +164,7 @@ const KitchenScene = ({
     sx={{
       border: "1px solid #E2E8F0",
       borderRadius: 2.5,
-      overflow: "hidden",
+      overflow: "visible",
       bgcolor: "#DCEEFF",
       boxShadow: "0 18px 45px rgba(15,23,42,0.08)",
       display: "flex",
@@ -180,7 +180,6 @@ const KitchenScene = ({
       onWheel={onWheel}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
       onMouseDown={onBackgroundMouseDown}
       sx={{
         width: fittedWidth,
@@ -190,7 +189,7 @@ const KitchenScene = ({
         position: "relative",
         background: "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)",
         perspective: "1000px",
-        overflow: "hidden",
+        overflow: "visible",
         border: "1px dashed rgba(15,23,42,0.18)",
         borderRadius: 1.5,
       }}
@@ -222,6 +221,18 @@ const KitchenScene = ({
           const width = Math.max(widthCm * cmToPx, hasModel ? 44 : 24);
           const height = Math.max(heightCm * cmToPx, hasModel ? 44 : 12);
           const selected = selectedSceneIndex === index;
+          const layerIndex =
+            product.category === "room"
+              ? 1
+              : isWall
+                ? 12
+                : isCounter
+                  ? 18
+                  : product.category === "appliance"
+                    ? 24
+                    : isShelf
+                      ? 20
+                      : 10;
 
           return (
             <Box
@@ -253,7 +264,7 @@ const KitchenScene = ({
                 placeItems: "center",
                 cursor: dragState?.index === index ? "grabbing" : "grab",
                 userSelect: "none",
-                zIndex: dragState?.index === index ? 5 : isWall ? 3 : 2,
+                zIndex: selected ? 100 : dragState?.index === index ? 90 : layerIndex,
                 outline: "none",
                 boxShadow: selected
                   ? hasModel

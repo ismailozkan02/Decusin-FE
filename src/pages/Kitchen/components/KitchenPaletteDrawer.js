@@ -3,7 +3,6 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Chip,
   ClickAwayListener,
   Drawer,
   Grid,
@@ -15,7 +14,6 @@ import {
 import { useState } from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
-import { catalogGroups } from "../kitchenData";
 import { money } from "../kitchenUtils";
 
 const ProductPreview = ({ product, selectedDoor, selectedCounter }) => {
@@ -28,10 +26,11 @@ const ProductPreview = ({ product, selectedDoor, selectedCounter }) => {
         sx={{
           width: 86,
           height: 68,
-          objectFit: "cover",
+          objectFit: "contain",
           borderRadius: 1,
           border: "1px solid #CBD5E1",
-          bgcolor: "#F8FAFC",
+          bgcolor: "#F1F7FE",
+          p: 0.5,
         }}
       />
     );
@@ -78,16 +77,18 @@ const ProductPreview = ({ product, selectedDoor, selectedCounter }) => {
 const KitchenPaletteDrawer = ({
   open,
   onClose,
-  templates,
-  selectedTemplate,
-  onApplyTemplate,
+  catalogGroups,
   catalogItems,
   onPaletteDragStart,
   onPaletteProductClick,
   selectedDoor,
   selectedCounter,
 }) => {
-  const [expanded, setExpanded] = useState("templates");
+  const orderedGroups = [
+    ...catalogGroups.filter((group) => group.key === "room"),
+    ...catalogGroups.filter((group) => group.key !== "room"),
+  ];
+  const [expanded, setExpanded] = useState("room");
   const toggle = (panel) => (_, nextExpanded) => {
     setExpanded(nextExpanded ? panel : false);
   };
@@ -127,85 +128,7 @@ const KitchenPaletteDrawer = ({
           </IconButton>
         </Stack>
 
-        <Accordion
-          expanded={expanded === "templates"}
-          onChange={toggle("templates")}
-          disableGutters
-          elevation={0}
-          sx={{ border: "1px solid #E2E8F0" }}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography sx={{ fontWeight: 900 }}>Hazir Sablonlar</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Stack spacing={1.2}>
-              {templates.map((template) => {
-                const active = selectedTemplate === template.id;
-
-                return (
-                  <Paper
-                    key={template.id}
-                    elevation={0}
-                    onClick={() => onApplyTemplate(template.id)}
-                    sx={{
-                      border: active ? "2px solid #1976D2" : "1px solid #E5E7EB",
-                      borderRadius: 1,
-                      p: 1.2,
-                      bgcolor: active ? "#EEF6FF" : "#FFFFFF",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Stack direction="row" spacing={1.2} alignItems="center">
-                      <Box
-                        sx={{
-                          width: 74,
-                          height: 52,
-                          borderRadius: 1,
-                          bgcolor: "#E2E8F0",
-                          border: "1px solid #CBD5E1",
-                          position: "relative",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            left: template.type === "island" ? 18 : 8,
-                            right: template.type === "island" ? 18 : 8,
-                            bottom: template.type === "l_shape" ? 10 : 18,
-                            height: 10,
-                            bgcolor: "#94A3B8",
-                            borderRadius: 0.5,
-                          }}
-                        />
-                        {template.type === "l_shape" && (
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              right: 12,
-                              top: 8,
-                              width: 10,
-                              bottom: 10,
-                              bgcolor: "#94A3B8",
-                              borderRadius: 0.5,
-                            }}
-                          />
-                        )}
-                      </Box>
-                      <Box>
-                        <Typography sx={{ fontWeight: 900 }}>{template.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {template.type || "custom"}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </Paper>
-                );
-              })}
-            </Stack>
-          </AccordionDetails>
-        </Accordion>
-
-        {catalogGroups.map((group) => {
+        {orderedGroups.map((group) => {
           const groupItems = catalogItems.filter((item) => item.category === group.key);
           if (!groupItems.length) return null;
 
@@ -246,23 +169,18 @@ const KitchenPaletteDrawer = ({
                             selectedDoor={selectedDoor}
                             selectedCounter={selectedCounter}
                           />
-                          <Box sx={{ width: "100%" }}>
+                          <Box sx={{ width: "100%", textAlign: "center" }}>
                             <Typography sx={{ fontWeight: 900, fontSize: 12 }} noWrap>
                               {product.name}
                             </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {money(product.base_price)}
-                          </Typography>
-                          {product.model_url && (
-                            <Chip
-                              label="3D model"
-                              size="small"
-                              color="primary"
-                              variant="outlined"
-                              sx={{ mt: 0.5, height: 20, fontSize: 10 }}
-                            />
-                          )}
-                        </Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: "block", fontWeight: 800 }}
+                            >
+                              {money(product.base_price)}
+                            </Typography>
+                          </Box>
                         </Stack>
                       </Paper>
                     </Grid>
