@@ -1,6 +1,7 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Box, Button, IconButton, Paper, Stack } from "@mui/material";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Box, CircularProgress, IconButton, Paper, Stack, Typography } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import DeleteSweepOutlinedIcon from "@mui/icons-material/DeleteSweepOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import OpenInFullOutlinedIcon from "@mui/icons-material/OpenInFullOutlined";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
@@ -168,6 +169,7 @@ const KitchenScene = ({
   selectedCounter,
   selectedSceneIndex,
   roomDimensions,
+  roomSurfaces,
   dragState,
   zoom,
   onDragOver,
@@ -185,6 +187,9 @@ const KitchenScene = ({
   onDeleteItem,
   onNewProject,
   onSaveProject,
+  onClearItems,
+  onChangeRoomDimension,
+  onChangeRoomSurface,
   onExportPdf,
   onToggleFullscreen,
 }) => {
@@ -192,9 +197,11 @@ const KitchenScene = ({
   void onSceneItemMouseDown;
 
   const wrapperRef = useRef(null);
+  const controlsRef = useRef(null);
   const pendingDragRef = useRef(null);
   const [sceneBox, setSceneBox] = useState({ width: 0, top: 0 });
   const [drag3DIndex, setDrag3DIndex] = useState(null);
+  const [sceneReady, setSceneReady] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(
     typeof window === "undefined" ? 900 : window.innerHeight,
   );
@@ -207,10 +214,51 @@ const KitchenScene = ({
   const fittedHeight = fittedWidth * roomRatio;
   const cmToPx = Math.max((fittedWidth / roomWidthCm) * zoom, 0.6);
   const roomDepthCm = Math.max(Number(roomDimensions?.depth || 240), 1);
+  const layoutReady = sceneBox.width > 0 && sceneBox.top > 0;
+  const sceneLoading = !layoutReady || !sceneReady;
+  const placeholderHeight = Math.max(viewportHeight - 190, 420);
+  const defaultCameraView = useMemo(() => {
+    const roomWidth = cmToUnit(roomWidthCm);
+    const roomHeight = cmToUnit(roomHeightCm);
+    const roomDepth = cmToUnit(roomDepthCm);
+    const cameraDistance = Math.max(roomWidth, roomDepth) * 1.12;
+
+    return {
+      position: [0, roomHeight * 0.58, cameraDistance],
+      target: [0, roomHeight * 0.38, -roomDepth * 0.22],
+    };
+  }, [roomDepthCm, roomHeightCm, roomWidthCm]);
+  const handleSceneReady = useCallback(() => setSceneReady(true), []);
+  const applyDefaultCameraView = useCallback((camera, controls) => {
+    const target = new Vector3(...defaultCameraView.target);
+
+    camera.position.set(...defaultCameraView.position);
+    camera.lookAt(target);
+    camera.updateProjectionMatrix();
+
+    if (controls) {
+      controls.target.copy(target);
+      controls.update();
+    }
+  }, [defaultCameraView]);
   const isWallDrag = (index) => {
     const item = sceneItems[index];
     const product = catalogMap[item?.catalog_item_id] || {};
     return product.category === "wall_cabinet" || product.category === "shelf";
+  };
+  const getDragSurfaceHeight = (index) => {
+    const item = sceneItems[index];
+    const product = catalogMap[item?.catalog_item_id] || {};
+    const elevation = getDynamicElevationCm({
+      item,
+      index,
+      product,
+      sceneItems,
+      catalogMap,
+      cmToPx,
+    });
+
+    return cmToUnit(Number.isFinite(Number(elevation)) ? elevation : 0.035);
   };
 
   const moveItemFromWorldPoint = (index, point) => {
@@ -218,13 +266,7 @@ const KitchenScene = ({
     const product = catalogMap[item?.catalog_item_id] || {};
     if (!item || !product) return;
 
-    const dimensions = {
-      width: 60,
-      height: product.category === "countertop" ? 4 : 72,
-      depth: product.category === "wall_cabinet" ? 34 : 56,
-      ...(product.dimensions || {}),
-      ...(item.dimensions || {}),
-    };
+    const dimensions = getSceneItemDimensions(product, item);
     const widthCm = Math.max(Number(dimensions.width || 60), 1);
     const heightCm = Math.max(Number(dimensions.height || 72), 1);
     const depthCm = Math.max(Number(dimensions.depth || 56), 1);
@@ -330,10 +372,35 @@ const KitchenScene = ({
         display: "flex",
         justifyContent: "center",
         position: "relative",
+        minHeight: layoutReady ? fittedHeight + 32 : placeholderHeight,
         p: { xs: 1, md: 2 },
         background: "linear-gradient(135deg, #E8F4FF 0%, #D8EBFF 100%)",
       }}
     >
+      {sceneLoading && (
+        <Stack
+          alignItems="center"
+          justifyContent="center"
+          spacing={1.2}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 1300,
+            background: "linear-gradient(135deg, #E8F4FF 0%, #D8EBFF 100%)",
+            color: "#1976D2",
+            borderRadius: 2.5,
+          }}
+        >
+          {layoutReady && (
+            <>
+              <CircularProgress size={30} thickness={4} />
+              <Typography sx={{ fontSize: 13, fontWeight: 900 }}>
+                Sahne hazirlaniyor
+              </Typography>
+            </>
+          )}
+        </Stack>
+      )}
       <Box
         ref={sceneRef}
         onDragOver={onDragOver}
@@ -343,15 +410,17 @@ const KitchenScene = ({
         onMouseUp={onMouseUp}
         onMouseDown={onBackgroundMouseDown}
         sx={{
-          width: fittedWidth,
-          height: fittedHeight,
+          width: layoutReady ? fittedWidth : "100%",
+          height: layoutReady ? fittedHeight : placeholderHeight,
           minWidth: 320,
           maxWidth: "100%",
           position: "relative",
-          background: "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)",
+          background: sceneReady
+            ? "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)"
+            : "transparent",
           perspective: "1000px",
           overflow: "visible",
-          border: "1px dashed rgba(15,23,42,0.18)",
+          border: sceneReady ? "1px dashed rgba(15,23,42,0.18)" : "1px dashed transparent",
           borderRadius: 1.5,
           "&:fullscreen": {
             width: "100vw",
@@ -374,22 +443,22 @@ const KitchenScene = ({
             transition: dragState ? "none" : "none",
           }}
         >
-          <Canvas
-            shadows
-            dpr={[1, 1.7]}
-            camera={{
-              position: [
-                cmToUnit(roomWidthCm) * 0.85,
-                cmToUnit(roomHeightCm) * 0.72,
-                cmToUnit(roomDimensions?.depth || 240) * 1.15,
-              ],
-              fov: 38,
-            }}
-            gl={{ antialias: true, alpha: true }}
-            onPointerMissed={() => {
-              if (drag3DIndex === null) onClearSelection();
-            }}
-          >
+          {layoutReady && (
+            <Canvas
+              shadows
+              dpr={[1, 1.7]}
+              camera={{
+                position: defaultCameraView.position,
+                fov: 38,
+              }}
+              gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
+              onCreated={({ camera }) => {
+                applyDefaultCameraView(camera, controlsRef.current);
+              }}
+              onPointerMissed={() => {
+                if (drag3DIndex === null) onClearSelection();
+              }}
+            >
             <color attach="background" args={["#F7F7F5"]} />
             <ambientLight intensity={0.74} />
             <directionalLight
@@ -401,6 +470,7 @@ const KitchenScene = ({
             <directionalLight position={[-3, 2.6, 2]} intensity={0.55} />
             <RoomShell
               roomDimensions={roomDimensions}
+              roomSurfaces={roomSurfaces}
               onEmptyClick={() => {
                 if (drag3DIndex === null) onClearSelection();
               }}
@@ -414,12 +484,14 @@ const KitchenScene = ({
                 <SceneDragController
                   roomDimensions={roomDimensions}
                   wallMode={isWallDrag(drag3DIndex)}
+                  surfaceHeight={getDragSurfaceHeight(drag3DIndex)}
                   onDragPoint={handle3DDragPoint}
                   onDragEnd={handle3DPointerUp}
                 />
                 <DragSurface
                   roomDimensions={roomDimensions}
                   wallMode={isWallDrag(drag3DIndex)}
+                  surfaceHeight={getDragSurfaceHeight(drag3DIndex)}
                   onPointerMove={handle3DSurfaceMove}
                   onPointerUp={handle3DPointerUp}
                 />
@@ -439,6 +511,8 @@ const KitchenScene = ({
                   selectedGlass={selectedGlass}
                   selectedCounter={selectedCounter}
                   selected={selectedSceneIndex === index}
+                  sceneItems={sceneItems}
+                  catalogMap={catalogMap}
                   roomDimensions={roomDimensions}
                   cmToPx={cmToPx}
                   onSelectItem={onSelectItem}
@@ -452,109 +526,224 @@ const KitchenScene = ({
               );
             })}
             <OrbitControls
+              ref={controlsRef}
               makeDefault
               enabled={drag3DIndex === null}
               enableDamping
               dampingFactor={0.08}
-              minDistance={2.1}
+              enablePan
+              screenSpacePanning
+              minDistance={0.28}
               maxDistance={8}
-              maxPolarAngle={Math.PI / 2.05}
-              target={[0, cmToUnit(roomHeightCm) * 0.42, 0]}
+              minPolarAngle={0.04}
+              maxPolarAngle={Math.PI - 0.04}
+              target={defaultCameraView.target}
+            />
+            <InitialCameraView
+              controlsRef={controlsRef}
+              applyView={applyDefaultCameraView}
+              onReady={handleSceneReady}
             />
             <Environment preset="apartment" />
-          </Canvas>
+            </Canvas>
+          )}
         </Box>
       </Box>
       <Stack
         data-kitchen-scene-controls="true"
-        direction="row"
-        spacing={1}
+        direction="column"
+        spacing={0.8}
         sx={{
           position: "absolute",
           left: { xs: 12, md: 20 },
           top: { xs: 12, md: 20 },
           zIndex: 1200,
+          ...sceneToolPanelSx,
         }}
       >
-        <Button
-          variant="contained"
-          startIcon={<PictureAsPdfOutlinedIcon />}
-          onClick={onExportPdf}
-          sx={{
-            textTransform: "none",
-            fontWeight: 900,
-            borderRadius: 1.5,
-            px: 1.8,
-            boxShadow: "0 12px 24px rgba(25,118,210,0.22)",
-          }}
-        >
-          PDF
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<OpenInFullOutlinedIcon />}
-          onClick={onToggleFullscreen}
-          sx={{
-            bgcolor: "rgba(255,255,255,0.92)",
-            textTransform: "none",
-            fontWeight: 900,
-            borderRadius: 1.5,
-            px: 1.8,
-            "&:hover": { bgcolor: "#FFFFFF" },
-          }}
-        >
-          Buyut
-        </Button>
+          <IconButton aria-label="Yeni proje" onClick={onNewProject} sx={sceneIconButtonSx("#1976D2")}>
+            <RestartAltOutlinedIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            aria-label="Projeyi kaydet"
+            onClick={onSaveProject}
+            disabled={!sceneItems.length}
+            sx={sceneIconButtonSx("#16A34A")}
+          >
+            <SaveOutlinedIcon fontSize="small" />
+          </IconButton>
+          <IconButton aria-label="PDF aktar" onClick={onExportPdf} sx={sceneIconButtonSx("#F97316")}>
+            <PictureAsPdfOutlinedIcon fontSize="small" />
+          </IconButton>
+          <IconButton aria-label="Sahneyi buyut" onClick={onToggleFullscreen} sx={sceneIconButtonSx("#111827")}>
+            <OpenInFullOutlinedIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            aria-label="Sahneyi temizle"
+            onClick={onClearItems}
+            disabled={!sceneItems.length}
+            sx={sceneIconButtonSx("#DC2626")}
+          >
+            <DeleteSweepOutlinedIcon fontSize="small" />
+          </IconButton>
       </Stack>
       <Stack
         data-kitchen-scene-controls="true"
-        direction="row"
-        spacing={1}
+        direction="column"
+        spacing={0.75}
         sx={{
           position: "absolute",
           right: { xs: 12, md: 20 },
-          bottom: { xs: 12, md: 20 },
+          top: { xs: 12, md: 20 },
           zIndex: 1200,
+          ...sceneToolPanelSx,
         }}
       >
-        <Button
-          variant="contained"
-          startIcon={<RestartAltOutlinedIcon />}
-          onClick={onNewProject}
-          sx={{
-            textTransform: "none",
-            fontWeight: 900,
-            borderRadius: 1.5,
-            px: 2.2,
-            py: 1,
-            bgcolor: "#1976D2",
-            boxShadow: "0 14px 28px rgba(25,118,210,0.24)",
-            "&:hover": { bgcolor: "#1565C0" },
-          }}
-        >
-          Yeni Proje
-        </Button>
-        <Button
-          variant="contained"
-          startIcon={<SaveOutlinedIcon />}
-          onClick={onSaveProject}
-          disabled={!sceneItems.length}
-          color="success"
-          sx={{
-            textTransform: "none",
-            fontWeight: 900,
-            borderRadius: 1.5,
-            px: 2.2,
-            py: 1,
-            boxShadow: "0 14px 28px rgba(25,118,210,0.28)",
-          }}
-        >
-          Projeyi Kaydet
-        </Button>
+          <SceneNumberControl
+            label="Genislik"
+            value={roomDimensions.width}
+            onChange={(value) => onChangeRoomDimension("width", value)}
+          />
+          <SceneNumberControl
+            label="Yukseklik"
+            value={roomDimensions.height}
+            onChange={(value) => onChangeRoomDimension("height", value)}
+          />
+          {[
+            ["floor", "Zemin"],
+            ["backWall", "Arka"],
+            ["sideWall", "Yan"],
+            ["ceiling", "Tavan"],
+          ].map(([field, label]) => (
+            <SceneColorControl
+              key={field}
+              label={label}
+              value={roomSurfaces?.[field] || "#FFFFFF"}
+              onChange={(value) => onChangeRoomSurface(field, value)}
+            />
+          ))}
       </Stack>
     </Paper>
   );
 };
+
+const InitialCameraView = ({ controlsRef, applyView, onReady }) => {
+  const { camera } = useThree();
+
+  useEffect(() => {
+    applyView(camera, controlsRef.current);
+
+    const frameId = requestAnimationFrame(() => onReady());
+    return () => cancelAnimationFrame(frameId);
+  }, [applyView, camera, controlsRef, onReady]);
+
+  return null;
+};
+
+const sceneToolPanelSx = {
+  p: 0.7,
+  borderRadius: 1.5,
+  bgcolor: "rgba(255,255,255,0.94)",
+  border: "1px solid rgba(226,232,240,0.95)",
+  boxShadow: "0 14px 30px rgba(15,23,42,0.14)",
+};
+
+const sceneIconButtonSx = (color) => ({
+  width: 48,
+  height: 48,
+  borderRadius: 1,
+  color,
+  bgcolor: "transparent",
+  boxShadow: "none",
+  border: "none",
+  "&:hover": {
+    bgcolor: "rgba(255,255,255,0.72)",
+  },
+  "& .MuiSvgIcon-root": {
+    fontSize: 30,
+  },
+  "&.Mui-disabled": {
+    color: "rgba(100,116,139,0.45)",
+    bgcolor: "transparent",
+  },
+});
+
+const sceneControlBoxSx = {
+  width: 64,
+  minHeight: 48,
+  p: 0.45,
+  borderRadius: 1,
+  border: "1px solid rgba(148,163,184,0.36)",
+  bgcolor: "#FFFFFF",
+  boxShadow: "0 6px 14px rgba(15,23,42,0.08)",
+};
+
+const sceneControlLabelSx = {
+  display: "block",
+  mb: 0.35,
+  fontSize: 9,
+  fontWeight: 900,
+  color: "#475569",
+  lineHeight: 1,
+  textAlign: "center",
+};
+
+const SceneNumberControl = ({ label, value, onChange }) => (
+  <Box sx={sceneControlBoxSx}>
+    <Typography component="label" sx={sceneControlLabelSx}>
+      {label}
+    </Typography>
+    <Box
+      component="input"
+      type="number"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      sx={{
+        width: "100%",
+        height: 26,
+        border: "1px solid rgba(148,163,184,0.45)",
+        borderRadius: 0.8,
+        px: 0.4,
+        fontSize: 11,
+        fontWeight: 900,
+        color: "#111827",
+        outline: "none",
+        textAlign: "center",
+        bgcolor: "#F8FAFC",
+      }}
+    />
+  </Box>
+);
+
+const SceneColorControl = ({ label, value, onChange }) => (
+  <Box component="label" title={label} sx={{ ...sceneControlBoxSx, cursor: "pointer" }}>
+    <Typography component="span" sx={sceneControlLabelSx}>
+      {label}
+    </Typography>
+    <Box
+      sx={{
+        width: "100%",
+        height: 28,
+        borderRadius: 0.8,
+        border: "1px solid rgba(148,163,184,0.48)",
+        bgcolor: value,
+        boxShadow: "inset 0 0 0 3px rgba(255,255,255,0.76)",
+      }}
+    />
+    <Box
+      component="input"
+      type="color"
+      aria-label={label}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      sx={{
+        position: "absolute",
+        opacity: 0,
+        pointerEvents: "none",
+      }}
+    />
+  </Box>
+);
 
 const cmToUnit = (value) => Number(value || 0) / 100;
 
@@ -573,35 +762,169 @@ const snapRoomValue = (value, roomSize, itemSize) => {
 
 const isCountertopMountedProduct = (product) => {
   const name = `${product?.name || ""} ${product?.category || ""}`.toLowerCase();
-  return ["evye", "ocak", "sink", "hob", "cooktop"].some((keyword) => name.includes(keyword));
+  return ["evye", "ocak", "ankastre", "sink", "hob", "cooktop", "built-in"].some((keyword) =>
+    name.includes(keyword),
+  );
 };
 
-const getCategoryPlacement = (product, roomHeightCm, dimensions, topCm) => {
+const getSceneItemDimensions = (product, item = {}) => {
+  const mounted = isCountertopMountedProduct(product);
+  const defaults = {
+    width: mounted ? 60 : 60,
+    height: product.category === "countertop" ? 4 : mounted ? 6 : 72,
+    depth: product.category === "wall_cabinet" ? 34 : mounted ? 48 : 56,
+    unit: "cm",
+  };
+  const dimensions = {
+    ...defaults,
+    ...(product.dimensions || {}),
+    ...(item.dimensions || {}),
+  };
+
+  if (mounted && Number(dimensions.height || 0) > 20) {
+    dimensions.height = 6;
+  }
+  if (product.category === "countertop" && Number(dimensions.height || 0) > 12) {
+    dimensions.height = 4;
+  }
+
+  return dimensions;
+};
+
+const rangesOverlap = (startA, sizeA, startB, sizeB) =>
+  Math.min(startA + sizeA, startB + sizeB) - Math.max(startA, startB) > 1;
+
+const getItemFootprintCm = (item, product, cmToPx) => {
+  const dimensions = getSceneItemDimensions(product, item);
+
+  return {
+    x: Number(item.position?.x || 0) / cmToPx,
+    z: Number(item.position?.z || 0),
+    width: Number(dimensions.width || 60),
+    depth: Number(dimensions.depth || 56),
+    height: Number(dimensions.height || 72),
+    dimensions,
+  };
+};
+
+const getBaseSupportTopCm = ({ sceneItems, catalogMap, targetIndex, targetFootprint, cmToPx }) => {
+  let supportTop = 0;
+
+  sceneItems.forEach((supportItem, supportIndex) => {
+    if (supportIndex === targetIndex) return;
+
+    const supportProduct = catalogMap[supportItem.catalog_item_id] || {};
+    if (!["base_cabinet", "appliance"].includes(supportProduct.category)) return;
+
+    const supportFootprint = getItemFootprintCm(supportItem, supportProduct, cmToPx);
+    const overlaps =
+      rangesOverlap(targetFootprint.x, targetFootprint.width, supportFootprint.x, supportFootprint.width) &&
+      rangesOverlap(targetFootprint.z, targetFootprint.depth, supportFootprint.z, supportFootprint.depth);
+
+    if (!overlaps) return;
+
+    const supportElevation = Number(supportItem.position?.elevation);
+    const supportBottom = Number.isFinite(supportElevation) ? supportElevation : 0;
+    supportTop = Math.max(supportTop, supportBottom + supportFootprint.height);
+  });
+
+  return supportTop;
+};
+
+const getCountertopSupportTopCm = ({ sceneItems, catalogMap, targetIndex, targetFootprint, cmToPx }) => {
+  let supportTop = 0;
+
+  sceneItems.forEach((supportItem, supportIndex) => {
+    if (supportIndex === targetIndex) return;
+
+    const supportProduct = catalogMap[supportItem.catalog_item_id] || {};
+    if (supportProduct.category !== "countertop") return;
+
+    const supportFootprint = getItemFootprintCm(supportItem, supportProduct, cmToPx);
+    const overlaps =
+      rangesOverlap(targetFootprint.x, targetFootprint.width, supportFootprint.x, supportFootprint.width) &&
+      rangesOverlap(targetFootprint.z, targetFootprint.depth, supportFootprint.z, supportFootprint.depth);
+
+    if (!overlaps) return;
+
+    const countertopBottom =
+      getBaseSupportTopCm({
+        sceneItems,
+        catalogMap,
+        targetIndex: supportIndex,
+        targetFootprint: supportFootprint,
+        cmToPx,
+      }) || Number(supportItem.position?.elevation || 0);
+
+    supportTop = Math.max(supportTop, countertopBottom + supportFootprint.height);
+  });
+
+  return supportTop;
+};
+
+const getDynamicElevationCm = ({ item, index, product, sceneItems, catalogMap, cmToPx }) => {
+  const footprint = getItemFootprintCm(item, product, cmToPx);
+
+  if (product.category === "countertop") {
+    return getBaseSupportTopCm({
+      sceneItems,
+      catalogMap,
+      targetIndex: index,
+      targetFootprint: footprint,
+      cmToPx,
+    });
+  }
+
+  if (isCountertopMountedProduct(product)) {
+    return (
+      getCountertopSupportTopCm({
+        sceneItems,
+        catalogMap,
+        targetIndex: index,
+        targetFootprint: footprint,
+        cmToPx,
+      }) ||
+      getBaseSupportTopCm({
+        sceneItems,
+        catalogMap,
+        targetIndex: index,
+        targetFootprint: footprint,
+        cmToPx,
+      })
+    );
+  }
+
+  const elevation = Number(item.position?.elevation);
+  return Number.isFinite(elevation) ? elevation : null;
+};
+
+const getCategoryPlacement = (product, roomHeightCm, dimensions, topCm, elevationCm) => {
   const category = product?.category;
   const height = Number(dimensions.height || 72);
+  const elevation = Number(elevationCm);
+
+  if (Number.isFinite(elevation)) {
+    const maxElevation = Math.max(roomHeightCm - height, 0);
+    return cmToUnit(Math.min(Math.max(elevation, 0), maxElevation) + height / 2);
+  }
 
   if (category === "wall_cabinet" || category === "shelf") {
     return Math.max(cmToUnit(roomHeightCm - topCm - height / 2), cmToUnit(height / 2));
   }
 
-  if (category === "countertop") return cmToUnit(90);
-  if (isCountertopMountedProduct(product)) return cmToUnit(92 + height / 2);
+  if (category === "countertop" || isCountertopMountedProduct(product)) {
+    return cmToUnit(height / 2);
+  }
   if (category === "appliance") return cmToUnit(Math.max(height / 2, 6));
 
   return cmToUnit(height / 2);
 };
 
-const getItem3DTransform = ({ item, product, roomDimensions, cmToPx }) => {
+const getItem3DTransform = ({ item, index, product, sceneItems, catalogMap, roomDimensions, cmToPx }) => {
   const roomWidthCm = Math.max(Number(roomDimensions?.width || 360), 1);
   const roomHeightCm = Math.max(Number(roomDimensions?.height || 260), 1);
   const roomDepthCm = Math.max(Number(roomDimensions?.depth || 240), 1);
-  const dimensions = {
-    width: 60,
-    height: product.category === "countertop" ? 4 : 72,
-    depth: product.category === "wall_cabinet" ? 34 : 56,
-    ...(product.dimensions || {}),
-    ...(item.dimensions || {}),
-  };
+  const dimensions = getSceneItemDimensions(product, item);
   const widthCm = Math.max(Number(dimensions.width || 60), 1);
   const heightCm = Math.max(Number(dimensions.height || 72), 1);
   const depthCm = Math.max(Number(dimensions.depth || 56), 1);
@@ -614,7 +937,15 @@ const getItem3DTransform = ({ item, product, roomDimensions, cmToPx }) => {
   const height = cmToUnit(heightCm);
   const depth = cmToUnit(depthCm);
   const x = -roomWidth / 2 + cmToUnit(xCm) + width / 2;
-  const y = getCategoryPlacement(product, roomHeightCm, dimensions, topCm);
+  const dynamicElevation = getDynamicElevationCm({
+    item,
+    index,
+    product,
+    sceneItems,
+    catalogMap,
+    cmToPx,
+  });
+  const y = getCategoryPlacement(product, roomHeightCm, dimensions, topCm, dynamicElevation);
   const z =
     product.category === "room"
       ? 0
@@ -627,10 +958,18 @@ const getItem3DTransform = ({ item, product, roomDimensions, cmToPx }) => {
   };
 };
 
-const RoomShell = ({ roomDimensions, onEmptyClick }) => {
+const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
   const width = cmToUnit(roomDimensions?.width || 360);
   const height = cmToUnit(roomDimensions?.height || 260);
   const depth = cmToUnit(roomDimensions?.depth || 240);
+  const surfaces = {
+    floor: "#DDBF86",
+    backWall: "#F4F1E9",
+    sideWall: "#EFECE3",
+    ceiling: "#D8D8D2",
+    trim: "#D5D5D0",
+    ...(roomSurfaces || {}),
+  };
   const handleEmptyClick = (event) => {
     event.stopPropagation();
     onEmptyClick();
@@ -640,41 +979,41 @@ const RoomShell = ({ roomDimensions, onEmptyClick }) => {
     <group>
       <mesh position={[0, -0.015, 0]} receiveShadow onClick={handleEmptyClick}>
         <boxGeometry args={[width, 0.03, depth]} />
-        <meshStandardMaterial color="#DDBF86" roughness={0.58} metalness={0.02} />
+        <meshStandardMaterial color={surfaces.floor} roughness={0.58} metalness={0.02} />
       </mesh>
       <mesh position={[0, height / 2, -depth / 2]} receiveShadow onClick={handleEmptyClick}>
         <boxGeometry args={[width, height, 0.06]} />
-        <meshStandardMaterial color="#F4F1E9" roughness={0.72} />
+        <meshStandardMaterial color={surfaces.backWall} roughness={0.72} />
       </mesh>
       <mesh position={[-width / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
         <boxGeometry args={[0.06, height, depth]} />
-        <meshStandardMaterial color="#EFECE3" roughness={0.76} />
+        <meshStandardMaterial color={surfaces.sideWall} roughness={0.76} />
       </mesh>
       <mesh position={[width / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
         <boxGeometry args={[0.06, height, depth]} />
-        <meshStandardMaterial color="#ECE9DF" roughness={0.76} />
+        <meshStandardMaterial color={surfaces.sideWall} roughness={0.76} />
       </mesh>
       <mesh position={[0, height + 0.015, 0]} receiveShadow onClick={handleEmptyClick}>
         <boxGeometry args={[width, 0.03, depth]} />
-        <meshStandardMaterial color="#D8D8D2" roughness={0.74} />
+        <meshStandardMaterial color={surfaces.ceiling} roughness={0.74} />
       </mesh>
       <mesh position={[0, 0.025, -depth / 2 - 0.02]}>
         <boxGeometry args={[width + 0.08, 0.05, 0.08]} />
-        <meshStandardMaterial color="#D5D5D0" />
+        <meshStandardMaterial color={surfaces.trim} />
       </mesh>
       <mesh position={[-width / 2 - 0.02, height / 2, 0]}>
         <boxGeometry args={[0.08, height + 0.08, depth + 0.08]} />
-        <meshStandardMaterial color="#D5D5D0" />
+        <meshStandardMaterial color={surfaces.trim} />
       </mesh>
       <mesh position={[width / 2 + 0.02, height / 2, 0]}>
         <boxGeometry args={[0.08, height + 0.08, depth + 0.08]} />
-        <meshStandardMaterial color="#D5D5D0" />
+        <meshStandardMaterial color={surfaces.trim} />
       </mesh>
     </group>
   );
 };
 
-const DragSurface = ({ roomDimensions, wallMode, onPointerMove, onPointerUp }) => {
+const DragSurface = ({ roomDimensions, wallMode, surfaceHeight, onPointerMove, onPointerUp }) => {
   const width = cmToUnit(roomDimensions?.width || 360);
   const height = cmToUnit(roomDimensions?.height || 260);
   const depth = cmToUnit(roomDimensions?.depth || 240);
@@ -696,7 +1035,7 @@ const DragSurface = ({ roomDimensions, wallMode, onPointerMove, onPointerUp }) =
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, 0.035, 0]}
+      position={[0, surfaceHeight, 0]}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerUp}
@@ -707,7 +1046,7 @@ const DragSurface = ({ roomDimensions, wallMode, onPointerMove, onPointerUp }) =
   );
 };
 
-const SceneDragController = ({ roomDimensions, wallMode, onDragPoint, onDragEnd }) => {
+const SceneDragController = ({ roomDimensions, wallMode, surfaceHeight, onDragPoint, onDragEnd }) => {
   const { camera, gl, raycaster } = useThree();
   const pointer = useRef(new Vector2());
   const point = useRef(new Vector3());
@@ -717,8 +1056,8 @@ const SceneDragController = ({ roomDimensions, wallMode, onDragPoint, onDragEnd 
       return new Plane(new Vector3(0, 0, 1), depth / 2 - 0.035);
     }
 
-    return new Plane(new Vector3(0, 1, 0), -0.035);
-  }, [depth, wallMode]);
+    return new Plane(new Vector3(0, 1, 0), -surfaceHeight);
+  }, [depth, surfaceHeight, wallMode]);
 
   useEffect(() => {
     const handlePointerMove = (event) => {
@@ -853,6 +1192,8 @@ const SceneItem3D = ({
   item,
   index,
   product,
+  sceneItems,
+  catalogMap,
   materialMap,
   selectedDoor,
   selectedGlass,
@@ -868,7 +1209,15 @@ const SceneItem3D = ({
   onCopyItem,
   onDeleteItem,
 }) => {
-  const transform = getItem3DTransform({ item, product, roomDimensions, cmToPx });
+  const transform = getItem3DTransform({
+    item,
+    index,
+    product,
+    sceneItems,
+    catalogMap,
+    roomDimensions,
+    cmToPx,
+  });
   const itemDoor = materialMap[item.options?.door_material_id] || selectedDoor;
   const itemGlass = materialMap[item.options?.glass_material_id] || selectedGlass;
   const itemCounter = materialMap[item.options?.countertop_material_id] || selectedCounter;

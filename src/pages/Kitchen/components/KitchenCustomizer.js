@@ -30,13 +30,13 @@ const KitchenCustomizer = ({
   selectedProduct,
   selectedDimensions,
   selectedOptions,
-  selectedPosition,
+  selectedElevation,
   materials,
   selectedDoorMaterial,
   selectedGlassMaterial,
   selectedCounterMaterial,
   onChangeDimension,
-  onChangePosition,
+  onChangeElevation,
   onChangeOption,
   onRotateItem,
   onRemoveItem,
@@ -57,13 +57,6 @@ const KitchenCustomizer = ({
     if (!Number.isFinite(nextValue)) return;
 
     onChangeDimension(selectedSceneIndex, field, nextValue);
-  };
-
-  const commitPosition = (axis, value) => {
-    const nextValue = Number(value);
-    if (!Number.isFinite(nextValue)) return;
-
-    onChangePosition(selectedSceneIndex, axis, nextValue);
   };
 
   const commitInputValue = (event, commit) => {
@@ -208,6 +201,32 @@ const KitchenCustomizer = ({
               </Grid>
             </Grid>
 
+            <TextField
+              key={`elevation-${selectedSceneIndex}-${selectedElevation}`}
+              label="Yerden Yukseklik"
+              size="small"
+              defaultValue={toInputValue(selectedElevation)}
+              helperText="Urunu sahnede asagi-yukari alir"
+              name="elevation"
+              inputProps={{ inputMode: "numeric" }}
+              onChange={(event) =>
+                scheduleCommit("elevation", event.target.value, (value) =>
+                  onChangeElevation(selectedSceneIndex, value),
+                )
+              }
+              onBlur={(event) => {
+                clearCommitTimer("elevation");
+                commitInputValue(event, (value) =>
+                  onChangeElevation(selectedSceneIndex, value),
+                );
+              }}
+              onKeyDown={(event) =>
+                commitOnEnter(event, (value) =>
+                  onChangeElevation(selectedSceneIndex, value),
+                )
+              }
+            />
+
             {["base_cabinet", "wall_cabinet"].includes(
               selectedProduct.category,
             ) && (
@@ -349,47 +368,6 @@ const KitchenCustomizer = ({
                   <RotateRightIcon fontSize="small" />
                 </IconButton>
               </Stack>
-            </Box>
-
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontWeight: 800 }}
-              >
-                Pozisyon
-              </Typography>
-              <Grid container spacing={1} sx={{ mt: 0.5 }}>
-                {[
-                  ["x", "X"],
-                  ["y", "Y"],
-                  ["z", "Z"],
-                ].map(([axis, label]) => (
-                  <Grid item xs={4} key={axis}>
-                    <TextField
-                      fullWidth
-                      key={`${axis}-${selectedSceneIndex}-${selectedPosition?.[axis] || 0}`}
-                      label={label}
-                      size="small"
-                      defaultValue={toInputValue(selectedPosition?.[axis])}
-                      name={axis}
-                      inputProps={{ inputMode: "numeric" }}
-                      onChange={(event) =>
-                        scheduleCommit(axis, event.target.value, (value) =>
-                          commitPosition(axis, value),
-                        )
-                      }
-                      onBlur={(event) => {
-                        clearCommitTimer(axis);
-                        commitInputValue(event, (value) => commitPosition(axis, value));
-                      }}
-                      onKeyDown={(event) =>
-                        commitOnEnter(event, (value) => commitPosition(axis, value))
-                      }
-                    />
-                  </Grid>
-                ))}
-              </Grid>
             </Box>
 
             <Button

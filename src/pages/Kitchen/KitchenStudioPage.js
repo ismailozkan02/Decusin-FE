@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
-  IconButton,
   InputAdornment,
   Pagination,
   Paper,
@@ -23,8 +22,6 @@ import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
-import ZoomInIcon from "@mui/icons-material/ZoomIn";
-import ZoomOutIcon from "@mui/icons-material/ZoomOut";
 import Page from "components/Page";
 import { SERVER } from "routes/paths";
 import { getData, postData } from "utils/axiosForPhyton";
@@ -101,16 +98,118 @@ const consumePendingProject = (initialTab) => {
   }
 };
 
+const PROJECT_CACHE_KEY = "decusinKitchenProjects";
+
+const defaultRoomSurfaces = {
+  floor: "#DDBF86",
+  backWall: "#F4F1E9",
+  sideWall: "#EFECE3",
+  ceiling: "#D8D8D2",
+  trim: "#D5D5D0",
+};
+
+const isCountertopMountedProduct = (product) => {
+  const name = `${product?.name || ""} ${product?.category || ""}`.toLowerCase();
+  return ["evye", "ocak", "ankastre", "sink", "hob", "cooktop", "built-in"].some((keyword) =>
+    name.includes(keyword),
+  );
+};
+
+const normalizeProductDimensions = (product, dimensions = {}) => {
+  const mounted = isCountertopMountedProduct(product);
+  const nextDimensions = {
+    width: 60,
+    height: product?.category === "countertop" ? 4 : mounted ? 6 : 72,
+    depth: product?.category === "wall_cabinet" ? 34 : mounted ? 48 : 56,
+    unit: "cm",
+    ...(dimensions || {}),
+  };
+
+  if (mounted && Number(nextDimensions.height || 0) > 20) {
+    nextDimensions.height = 6;
+  }
+  if (product?.category === "countertop" && Number(nextDimensions.height || 0) > 12) {
+    nextDimensions.height = 4;
+  }
+
+  return nextDimensions;
+};
+
+const cloneProjectData = (value) => {
+  if (typeof structuredClone === "function") {
+    return structuredClone(value);
+  }
+
+  return JSON.parse(JSON.stringify(value));
+};
+
+const normalizeProjectSnapshot = (project) => {
+  const snapshot = cloneProjectData(project || {});
+
+  return {
+    ...snapshot,
+    room_dimensions: {
+      width: 360,
+      height: 260,
+      depth: 240,
+      unit: "cm",
+      ...(snapshot.room_dimensions || {}),
+    },
+    items: Array.isArray(snapshot.items) ? snapshot.items : [],
+    installation_fee: Number(snapshot.installation_fee || 0),
+    room_surfaces: {
+      ...defaultRoomSurfaces,
+      ...(snapshot.room_surfaces || {}),
+    },
+  };
+};
+
+const readProjectCache = () => {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const cachedProjects = JSON.parse(window.localStorage.getItem(PROJECT_CACHE_KEY) || "[]");
+    return Array.isArray(cachedProjects) ? cachedProjects.map(normalizeProjectSnapshot) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeProjectCache = (projects) => {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(
+    PROJECT_CACHE_KEY,
+    JSON.stringify(projects.map(normalizeProjectSnapshot)),
+  );
+};
+
+const mergeProjectsById = (...projectLists) => {
+  const projectMap = new Map();
+
+  projectLists.flat().forEach((project) => {
+    if (!project?.id) return;
+    projectMap.set(project.id, normalizeProjectSnapshot(project));
+  });
+
+  return Array.from(projectMap.values()).sort(
+    (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0),
+  );
+};
+
 const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const navigate = useNavigate();
   const sceneRef = useRef(null);
   const copiedSceneItemRef = useRef(null);
   const tab = TABS[initialTab] || 0;
-  const [pendingProject] = useState(() => consumePendingProject(initialTab));
+  const [pendingProject] = useState(() => {
+    const project = consumePendingProject(initialTab);
+    return project ? normalizeProjectSnapshot(project) : null;
+  });
   const [catalogItems, setCatalogItems] = useState(fallbackCatalog);
   const [catalogGroups, setCatalogGroups] = useState(fallbackCatalogGroups);
   const [materials, setMaterials] = useState(fallbackMaterials);
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState(() => readProjectCache());
   const [selectedDoorMaterial] = useState("mat-door-lake-white");
   const [selectedGlassMaterial] = useState("mat-glass-smoked");
   const [selectedCounterMaterial] = useState("mat-counter-quartz");
@@ -141,7 +240,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const [resizeState, setResizeState] = useState(null);
   const [selectedSceneIndex, setSelectedSceneIndex] = useState(null);
   const [customizerOpen, setCustomizerOpen] = useState(false);
-  const [zoom, setZoom] = useState(1);
+  const [zoom] = useState(1);
   const [installationFee, setInstallationFee] = useState(
     () => Number(pendingProject?.installation_fee || 0),
   );
@@ -151,6 +250,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     depth: 240,
     unit: "cm",
     ...(pendingProject?.room_dimensions || {}),
+  });
+  const [roomSurfaces, setRoomSurfaces] = useState({
+    ...defaultRoomSurfaces,
+    ...(pendingProject?.room_surfaces || {}),
   });
 
   const materialMap = useMemo(
@@ -181,15 +284,23 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     ? catalogMap[selectedSceneItem.catalog_item_id] || null
     : null;
   const selectedDimensions = {
-    ...(selectedProduct?.dimensions || {
-      width: 60,
-      height: 72,
-      depth: 56,
-      unit: "cm",
-    }),
+    ...normalizeProductDimensions(selectedProduct, selectedProduct?.dimensions),
     ...(selectedSceneItem?.dimensions || {}),
   };
+  if (selectedProduct && isCountertopMountedProduct(selectedProduct) && Number(selectedDimensions.height || 0) > 20) {
+    selectedDimensions.height = 6;
+  }
   const selectedOptions = selectedSceneItem?.options || {};
+  const selectedElevation = (() => {
+    if (!selectedSceneItem || !selectedProduct) return 0;
+    if (Number.isFinite(Number(selectedSceneItem.position?.elevation))) {
+      return Number(selectedSceneItem.position.elevation);
+    }
+    if (selectedProduct.category === "wall_cabinet" || selectedProduct.category === "shelf") {
+      return 140;
+    }
+    return 0;
+  })();
   const selectedCatalogProduct = selectedCatalogProductId
     ? catalogItems.find((item) => item.id === selectedCatalogProductId) || null
     : null;
@@ -281,7 +392,15 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         setMaterials(materialResult.value?.data || fallbackMaterials);
       }
       if (projectResult.status === "fulfilled") {
-        setProjects(projectResult.value?.data || []);
+        setProjects((current) => {
+          const mergedProjects = mergeProjectsById(
+            current,
+            projectResult.value?.data || [],
+            readProjectCache(),
+          );
+          writeProjectCache(mergedProjects);
+          return mergedProjects;
+        });
       }
     });
 
@@ -337,16 +456,17 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     return Math.min(Math.max(width, minValue), maxValue);
   };
 
-  const getDefaultProductDimensions = (product) => ({
-    ...(product.dimensions || { width: 60, height: 72, depth: 56, unit: "cm" }),
-    width: clampProductSize(product, "width", product.dimensions?.width || 60),
-    height: clampProductSize(
-      product,
-      "height",
-      product.dimensions?.height || 72,
-    ),
-    unit: "cm",
-  });
+  const getDefaultProductDimensions = (product) => {
+    const dimensions = normalizeProductDimensions(product, product.dimensions);
+    const mounted = isCountertopMountedProduct(product);
+
+    return {
+      ...dimensions,
+      width: clampProductSize(product, "width", dimensions.width),
+      height: mounted ? dimensions.height : clampProductSize(product, "height", dimensions.height),
+      unit: "cm",
+    };
+  };
 
   const addSceneItemAt = (product, x, y) => {
     setSceneItems((current) => {
@@ -397,6 +517,33 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     );
   };
 
+  const updateSceneItemElevation = (index, value) => {
+    setSceneItems((current) =>
+      current.map((item, itemIndex) => {
+        if (itemIndex !== index) return item;
+
+        const product = catalogMap[item.catalog_item_id] || {};
+        const dimensions = {
+          ...(product.dimensions || { height: 72 }),
+          ...(item.dimensions || {}),
+        };
+        const maxElevation = Math.max(
+          Number(roomDimensions.height || 260) - Number(dimensions.height || 72),
+          0,
+        );
+        const elevation = Math.min(Math.max(Number(value) || 0, 0), maxElevation);
+
+        return {
+          ...item,
+          position: {
+            ...(item.position || { x: 0, y: 0, z: 0 }),
+            elevation,
+          },
+        };
+      }),
+    );
+  };
+
   const selectSceneItem = (index) => {
     setPaletteOpen(false);
     setSceneItemsOpen(false);
@@ -404,42 +551,6 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setCustomizerOpen(true);
     setDragState(null);
     setResizeState(null);
-  };
-
-  const updateSceneItemPositionAxis = (index, axis, value) => {
-    setSceneItems((current) =>
-      current.map((item, itemIndex) => {
-        if (itemIndex !== index) return item;
-
-        const nextPosition = {
-          ...(item.position || { x: 0, y: 0, z: 0 }),
-          [axis]: Number(value) || 0,
-        };
-
-        if (axis === "x" || axis === "y") {
-          const product = catalogMap[item.catalog_item_id] || {};
-          const position = clampScenePosition(
-            item,
-            product,
-            axis === "x" ? nextPosition.x : item.position?.x,
-            axis === "y" ? nextPosition.y : item.position?.y,
-          );
-
-          return {
-            ...item,
-            position: {
-              ...nextPosition,
-              ...position,
-            },
-          };
-        }
-
-        return {
-          ...item,
-          position: nextPosition,
-        };
-      }),
-    );
   };
 
   const updateSceneItemDimensions = (index, field, value) => {
@@ -457,7 +568,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
 
         const nextValue =
           field === "width" || field === "height"
-            ? clampProductSize(product, field, value)
+            ? isCountertopMountedProduct(product) && field === "height"
+              ? Math.max(Number(value) || 1, 1)
+              : clampProductSize(product, field, value)
             : Math.max(Number(value) || 1, 1);
 
         return {
@@ -873,29 +986,45 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   };
 
   const saveProject = () => {
-    const payload = {
+    const payload = normalizeProjectSnapshot({
       id: `project-${Date.now()}`,
       name: projectForm.name || "Yeni mutfak projesi",
       customer_name: projectForm.customer_name || "Musteri",
       template_id: "",
-      room_dimensions: roomDimensions,
-      items: sceneItems,
+      room_dimensions: cloneProjectData(roomDimensions),
+      room_surfaces: cloneProjectData(roomSurfaces),
+      items: cloneProjectData(sceneItems),
       installation_fee: installationFee,
-      quote,
+      quote: cloneProjectData(quote),
       notes: projectForm.notes || "FE uzerinden kaydedilen proje.",
       created_at: new Date().toISOString(),
-    };
+    });
 
-    setProjects((current) => [payload, ...current]);
+    setProjects((current) => {
+      const mergedProjects = mergeProjectsById([payload], current);
+      writeProjectCache(mergedProjects);
+      return mergedProjects;
+    });
     setProjectSaveOpen(false);
     setProjectForm({ name: "", customer_name: "", notes: "" });
 
     postData(SERVER.kitchen.projects, payload)
       .then((project) => {
         if (!project?.id) return;
-        setProjects((current) =>
-          current.map((item) => (item.id === payload.id ? project : item)),
-        );
+        const savedProject = normalizeProjectSnapshot({
+          ...payload,
+          ...project,
+          room_dimensions: project.room_dimensions || payload.room_dimensions,
+          items: Array.isArray(project.items) && project.items.length ? project.items : payload.items,
+          quote: project.quote || payload.quote,
+        });
+        setProjects((current) => {
+          const mergedProjects = current.map((item) =>
+            item.id === payload.id ? savedProject : item,
+          );
+          writeProjectCache(mergedProjects);
+          return mergedProjects;
+        });
       })
       .catch(() => undefined);
   };
@@ -912,26 +1041,33 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setDragState(null);
     setResizeState(null);
     setRoomDimensions({ width: 360, height: 260, depth: 240, unit: "cm" });
+    setRoomSurfaces(defaultRoomSurfaces);
+  }, []);
+
+  const clearSceneItems = useCallback(() => {
+    setSceneItems([]);
+    setSelectedSceneIndex(null);
+    setCustomizerOpen(false);
+    setSceneItemsOpen(false);
+    setDragState(null);
+    setResizeState(null);
   }, []);
 
   const exportScenePdf = useCallback(() => {
     const stage = sceneRef.current;
     if (!stage || typeof window === "undefined") return;
 
-    const clone = stage.cloneNode(true);
-    clone.querySelectorAll("[data-kitchen-scene-controls]").forEach((node) => {
-      node.remove();
-    });
-    clone.querySelectorAll("[data-kitchen-scene-item='true']").forEach((node) => {
-      node.style.boxShadow = "none";
-      node.style.outline = "none";
-    });
+    const canvas = stage.querySelector("canvas");
+    if (!canvas) return;
 
-    const styles = Array.from(
-      document.querySelectorAll("style, link[rel='stylesheet']"),
-    )
-      .map((node) => node.outerHTML)
-      .join("");
+    let sceneImage;
+
+    try {
+      sceneImage = canvas.toDataURL("image/png");
+    } catch {
+      return;
+    }
+
     const printWindow = window.open("", "_blank", "width=1280,height=820");
 
     if (!printWindow) return;
@@ -941,7 +1077,6 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       <html>
         <head>
           <title>Decusin tasarim PDF</title>
-          ${styles}
           <style>
             @page { size: A4 landscape; margin: 10mm; }
             * { box-sizing: border-box; }
@@ -966,17 +1101,18 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               justify-content: center;
               background: #ffffff;
             }
-            .decusin-pdf-stage > div {
-              transform-origin: center center;
-              box-shadow: none !important;
-            }
-            [data-kitchen-scene-controls="true"] {
-              display: none !important;
+            .decusin-pdf-image {
+              display: block;
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
             }
           </style>
         </head>
         <body>
-          <div class="decusin-pdf-stage">${clone.outerHTML}</div>
+          <div class="decusin-pdf-stage">
+            <img class="decusin-pdf-image" src="${sceneImage}" alt="Decusin 3D mutfak sahnesi" />
+          </div>
           <script>
             window.onload = function () {
               setTimeout(function () {
@@ -1004,8 +1140,24 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   }, []);
 
   const inspectProject = (project) => {
-    window.localStorage.setItem("decusinOpenProject", JSON.stringify(project));
-    navigate("/kitchen-designer");
+    const snapshot = normalizeProjectSnapshot(project);
+
+    setSceneItems(cloneProjectData(snapshot.items));
+    setRoomDimensions(snapshot.room_dimensions);
+    setRoomSurfaces(snapshot.room_surfaces);
+    setInstallationFee(snapshot.installation_fee);
+    setSelectedSceneIndex(null);
+    setCustomizerOpen(false);
+    setPaletteOpen(false);
+    setSceneItemsOpen(false);
+    setProjectSaveOpen(false);
+    setDragState(null);
+    setResizeState(null);
+
+    if (initialTab !== "designer") {
+      window.localStorage.setItem("decusinOpenProject", JSON.stringify(snapshot));
+      navigate("/kitchen-designer");
+    }
   };
 
   const addCustomer = () => {
@@ -1171,45 +1323,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             <Paper
               elevation={0}
               sx={{
-                px: 0.8,
-                py: 0.6,
-                border: "1px solid #D7E3F1",
-                borderRadius: 1.5,
-                bgcolor: "rgba(255,255,255,0.92)",
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={0.8}>
-                <IconButton
-                  size="small"
-                  onClick={() =>
-                    setZoom((current) => Math.max(current - 0.05, 0.55))
-                  }
-                >
-                  <ZoomOutIcon fontSize="small" />
-                </IconButton>
-                <Typography
-                  sx={{
-                    minWidth: 54,
-                    textAlign: "center",
-                    fontWeight: 900,
-                    color: "#1976D2",
-                  }}
-                >
-                  %{Math.round(zoom * 100)}
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() =>
-                    setZoom((current) => Math.min(current + 0.05, 1.8))
-                  }
-                >
-                  <ZoomInIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-            </Paper>
-            <Paper
-              elevation={0}
-              sx={{
+                display: "none",
                 px: 1.2,
                 py: 0.8,
                 border: "1px solid #D7E3F1",
@@ -1263,6 +1377,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             selectedCounter={selectedCounter}
             selectedSceneIndex={selectedSceneIndex}
             roomDimensions={roomDimensions}
+            roomSurfaces={roomSurfaces}
             dragState={dragState}
             zoom={zoom}
             onDragOver={(event) => event.preventDefault()}
@@ -1280,6 +1395,14 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             onDeleteItem={removeSceneItem}
             onNewProject={startNewProject}
             onSaveProject={() => setProjectSaveOpen(true)}
+            onClearItems={clearSceneItems}
+            onChangeRoomDimension={updateRoomDimension}
+            onChangeRoomSurface={(field, value) =>
+              setRoomSurfaces((current) => ({
+                ...current,
+                [field]: value,
+              }))
+            }
             onExportPdf={exportScenePdf}
             onToggleFullscreen={toggleSceneFullscreen}
           />
@@ -1293,13 +1416,13 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         selectedProduct={selectedProduct}
         selectedDimensions={selectedDimensions}
         selectedOptions={selectedOptions}
-        selectedPosition={selectedSceneItem?.position || { x: 0, y: 0, z: 0 }}
+        selectedElevation={selectedElevation}
         materials={materials}
         selectedDoorMaterial={selectedDoorMaterial}
         selectedGlassMaterial={selectedGlassMaterial}
         selectedCounterMaterial={selectedCounterMaterial}
         onChangeDimension={updateSceneItemDimensions}
-        onChangePosition={updateSceneItemPositionAxis}
+        onChangeElevation={updateSceneItemElevation}
         onChangeOption={updateSceneItemOption}
         onRotateItem={rotateSceneItem}
         onRemoveItem={removeSceneItem}
