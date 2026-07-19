@@ -3,7 +3,6 @@ import { Box, Button, IconButton, Paper, Stack } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Environment, useGLTF } from "@react-three/drei";
 import { Box3, Color, Vector3 } from "three";
@@ -82,8 +81,8 @@ const ModelInstance = ({ modelUrl, category, rotation, palette }) => {
       },
     };
   }, [model]);
-  const scaleX = (viewport.width * 0.88 * baseScale) / fit.size.x;
-  const scaleY = (viewport.height * 0.88 * baseScale) / fit.size.y;
+  const scaleX = (viewport.width * 1.02 * baseScale) / fit.size.x;
+  const scaleY = (viewport.height * 1.02 * baseScale) / fit.size.y;
   const scaleZ = Math.min(scaleX, scaleY);
 
   return (
@@ -172,7 +171,6 @@ const KitchenScene = ({
   onBackgroundMouseDown,
   onSceneItemMouseDown,
   onResizeMouseDown,
-  onOpenItemSettings,
   onCopyItem,
   onDeleteItem,
   onSaveProject,
@@ -295,9 +293,10 @@ const KitchenScene = ({
                     ? 18
                     : product.category === "appliance"
                       ? 24
-                      : isShelf
-                        ? 20
-                        : 10;
+                    : isShelf
+                      ? 20
+                      : 10;
+            const depthLayer = Math.round(Number(item.position?.z || 0));
 
             return (
               <Box
@@ -333,10 +332,10 @@ const KitchenScene = ({
                   cursor: dragState?.index === index ? "grabbing" : "grab",
                   userSelect: "none",
                   zIndex: selected
-                    ? 100
+                    ? 1000
                     : dragState?.index === index
-                      ? 90
-                      : layerIndex,
+                      ? 900
+                      : layerIndex + depthLayer,
                   outline: "none",
                   boxShadow: selected
                     ? hasModel
@@ -394,27 +393,6 @@ const KitchenScene = ({
                         zIndex: 9,
                       }}
                     >
-                      <IconButton
-                        size="small"
-                        onMouseDown={(event) => event.stopPropagation()}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onOpenItemSettings(index);
-                        }}
-                        sx={{
-                          width: 22,
-                          height: 22,
-                          color: "#0F766E",
-                          borderRadius: "50%",
-                          "& .MuiSvgIcon-root": { fontSize: 15 },
-                          "&:hover": {
-                            bgcolor: "#ECFDF5",
-                            transform: "translateY(-1px)",
-                          },
-                        }}
-                      >
-                        <SettingsOutlinedIcon />
-                      </IconButton>
                       <IconButton
                         size="small"
                         onMouseDown={(event) => event.stopPropagation()}

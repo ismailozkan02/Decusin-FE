@@ -331,6 +331,42 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     );
   };
 
+  const updateSceneItemPositionAxis = (index, axis, value) => {
+    setSceneItems((current) =>
+      current.map((item, itemIndex) => {
+        if (itemIndex !== index) return item;
+
+        const nextPosition = {
+          ...(item.position || { x: 0, y: 0, z: 0 }),
+          [axis]: Number(value) || 0,
+        };
+
+        if (axis === "x" || axis === "y") {
+          const product = catalogMap[item.catalog_item_id] || {};
+          const position = clampScenePosition(
+            item,
+            product,
+            axis === "x" ? nextPosition.x : item.position?.x,
+            axis === "y" ? nextPosition.y : item.position?.y,
+          );
+
+          return {
+            ...item,
+            position: {
+              ...nextPosition,
+              ...position,
+            },
+          };
+        }
+
+        return {
+          ...item,
+          position: nextPosition,
+        };
+      }),
+    );
+  };
+
   const updateSceneItemDimensions = (index, field, value) => {
     setSceneItems((current) =>
       current.map((item, itemIndex) => {
@@ -680,6 +716,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     event.stopPropagation();
     setPaletteOpen(false);
     setSelectedSceneIndex(index);
+    setCustomizerOpen(true);
     const point = scenePointFromEvent(event);
     const item = sceneItems[index];
     setDragState({
@@ -703,6 +740,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     const item = sceneItems[index];
 
     setSelectedSceneIndex(index);
+    setCustomizerOpen(true);
     setDragState(null);
     setResizeState({
       index,
@@ -830,6 +868,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           setPaletteOpen(false);
           setSceneItemsOpen(false);
           setSelectedSceneIndex(index);
+          setCustomizerOpen(true);
         }}
         onDeleteItem={removeSceneItem}
         quote={quote}
@@ -1025,12 +1064,6 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             onBackgroundMouseDown={handleSceneBackgroundMouseDown}
             onSceneItemMouseDown={handleSceneItemMouseDown}
             onResizeMouseDown={handleResizeMouseDown}
-            onOpenItemSettings={(index) => {
-              setSelectedSceneIndex(index);
-              setPaletteOpen(false);
-              setSceneItemsOpen(false);
-              setCustomizerOpen(true);
-            }}
             onCopyItem={duplicateSceneItem}
             onDeleteItem={removeSceneItem}
             onSaveProject={() => setProjectSaveOpen(true)}
@@ -1045,11 +1078,13 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         selectedProduct={selectedProduct}
         selectedDimensions={selectedDimensions}
         selectedOptions={selectedOptions}
+        selectedPosition={selectedSceneItem?.position || { x: 0, y: 0, z: 0 }}
         materials={materials}
         selectedDoorMaterial={selectedDoorMaterial}
         selectedGlassMaterial={selectedGlassMaterial}
         selectedCounterMaterial={selectedCounterMaterial}
         onChangeDimension={updateSceneItemDimensions}
+        onChangePosition={updateSceneItemPositionAxis}
         onChangeOption={updateSceneItemOption}
         onRotateItem={rotateSceneItem}
         onRemoveItem={removeSceneItem}
