@@ -45,7 +45,10 @@ const ModelInstance = ({ modelUrl, category, rotation }) => {
   const scaleZ = Math.min(scaleX, scaleY);
 
   return (
-    <group rotation={[rotationX, rotationY, 0]} scale={[scaleX, scaleY, scaleZ]}>
+    <group
+      rotation={[rotationX, rotationY, 0]}
+      scale={[scaleX, scaleY, scaleZ]}
+    >
       <primitive
         object={model}
         position={[-fit.center.x, -fit.center.y, -fit.center.z]}
@@ -76,7 +79,14 @@ const ProductModelCanvas = ({ product, rotation }) => {
   if (!product.model_url) return null;
 
   return (
-    <Box sx={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+    <Box
+      sx={{
+        position: "absolute",
+        inset: 0,
+        overflow: "hidden",
+        pointerEvents: "none",
+      }}
+    >
       <Canvas
         orthographic
         dpr={[1, 1.6]}
@@ -163,291 +173,325 @@ const KitchenScene = ({
 
   return (
     <Paper
-    ref={wrapperRef}
-    elevation={0}
-    sx={{
-      border: "1px solid #E2E8F0",
-      borderRadius: 2.5,
-      overflow: "visible",
-      bgcolor: "#DCEEFF",
-      boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
-      display: "flex",
-      justifyContent: "center",
-      position: "relative",
-      p: { xs: 1, md: 2 },
-      background: "linear-gradient(135deg, #E8F4FF 0%, #D8EBFF 100%)",
-    }}
-    >
-    <Box
-      ref={sceneRef}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      onWheel={onWheel}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseDown={onBackgroundMouseDown}
+      ref={wrapperRef}
+      elevation={0}
       sx={{
-        width: fittedWidth,
-        height: fittedHeight,
-        minWidth: 320,
-        maxWidth: "100%",
-        position: "relative",
-        background: "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)",
-        perspective: "1000px",
+        border: "1px solid #E2E8F0",
+        borderRadius: 2.5,
         overflow: "visible",
-        border: "1px dashed rgba(15,23,42,0.18)",
-        borderRadius: 1.5,
+        bgcolor: "#DCEEFF",
+        boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
+        display: "flex",
+        justifyContent: "center",
+        position: "relative",
+        p: { xs: 1, md: 2 },
+        background: "linear-gradient(135deg, #E8F4FF 0%, #D8EBFF 100%)",
       }}
     >
       <Box
-        data-kitchen-room-stage="true"
+        ref={sceneRef}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        onWheel={onWheel}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
         onMouseDown={onBackgroundMouseDown}
         sx={{
-          position: "absolute",
-          inset: 0,
-          transition: dragState ? "none" : "none",
+          width: fittedWidth,
+          height: fittedHeight,
+          minWidth: 320,
+          maxWidth: "100%",
+          position: "relative",
+          background: "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)",
+          perspective: "1000px",
+          overflow: "visible",
+          border: "1px dashed rgba(15,23,42,0.18)",
+          borderRadius: 1.5,
         }}
       >
-        {sceneItems.map((item, index) => {
-          const product = catalogMap[item.catalog_item_id] || {};
-          const isWall = product.category === "wall_cabinet";
-          const isCounter = product.category === "countertop";
-          const isShelf = product.category === "shelf";
-          const hasModel = Boolean(product.model_url);
-          const itemDimensions = {
-            ...(product.dimensions || {}),
-            ...(item.dimensions || {}),
-          };
-          const itemDoor = materialMap[item.options?.door_material_id] || selectedDoor;
-          const itemGlass = materialMap[item.options?.glass_material_id] || selectedGlass;
-          const itemCounter = materialMap[item.options?.countertop_material_id] || selectedCounter;
-          const widthCm = Number(itemDimensions.width || 60);
-          const heightCm = Number(itemDimensions.height || (isWall ? 72 : isCounter ? 4 : isShelf ? 3 : 72));
-          const width = Math.max(widthCm * cmToPx, hasModel ? 44 : 24);
-          const height = Math.max(heightCm * cmToPx, hasModel ? 44 : 12);
-          const selected = selectedSceneIndex === index;
-          const layerIndex =
-            product.category === "room"
-              ? 1
-              : isWall
-                ? 12
-                : isCounter
-                  ? 18
-                  : product.category === "appliance"
-                    ? 24
-                    : isShelf
-                      ? 20
-                      : 10;
+        <Box
+          data-kitchen-room-stage="true"
+          onMouseDown={onBackgroundMouseDown}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            transition: dragState ? "none" : "none",
+          }}
+        >
+          {sceneItems.map((item, index) => {
+            const product = catalogMap[item.catalog_item_id] || {};
+            const isWall = product.category === "wall_cabinet";
+            const isCounter = product.category === "countertop";
+            const isShelf = product.category === "shelf";
+            const hasModel = Boolean(product.model_url);
+            const itemDimensions = {
+              ...(product.dimensions || {}),
+              ...(item.dimensions || {}),
+            };
+            const itemDoor =
+              materialMap[item.options?.door_material_id] || selectedDoor;
+            const itemGlass =
+              materialMap[item.options?.glass_material_id] || selectedGlass;
+            const itemCounter =
+              materialMap[item.options?.countertop_material_id] ||
+              selectedCounter;
+            const widthCm = Number(itemDimensions.width || 60);
+            const heightCm = Number(
+              itemDimensions.height ||
+                (isWall ? 72 : isCounter ? 4 : isShelf ? 3 : 72),
+            );
+            const width = Math.max(widthCm * cmToPx, hasModel ? 44 : 24);
+            const height = Math.max(heightCm * cmToPx, hasModel ? 44 : 12);
+            const selected = selectedSceneIndex === index;
+            const layerIndex =
+              product.category === "room"
+                ? 1
+                : isWall
+                  ? 12
+                  : isCounter
+                    ? 18
+                    : product.category === "appliance"
+                      ? 24
+                      : isShelf
+                        ? 20
+                        : 10;
 
-          return (
-            <Box
-              key={`${item.catalog_item_id}-${index}`}
-              data-kitchen-scene-item="true"
-              onMouseDown={(event) => onSceneItemMouseDown(event, index)}
-              sx={{
-                width,
-                height,
-                position: "absolute",
-                left: Number(item.position?.x || 0),
-                top: Number(item.position?.y || 0),
-                border: hasModel
-                  ? selected
-                    ? "1px solid rgba(25,118,210,0.36)"
-                    : "1px solid transparent"
-                  : "1px solid rgba(15,23,42,0.18)",
-                bgcolor: isCounter
-                  ? itemCounter?.color_hex
-                  : isShelf
-                    ? "#A16207"
+            return (
+              <Box
+                key={`${item.catalog_item_id}-${index}`}
+                data-kitchen-scene-item="true"
+                onMouseDown={(event) => onSceneItemMouseDown(event, index)}
+                sx={{
+                  width,
+                  height,
+                  position: "absolute",
+                  left: Number(item.position?.x || 0),
+                  top: Number(item.position?.y || 0),
+                  border: hasModel
+                    ? selected
+                      ? "1px solid rgba(25,118,210,0.36)"
+                      : "1px solid transparent"
+                    : "1px solid rgba(15,23,42,0.18)",
+                  bgcolor: isCounter
+                    ? itemCounter?.color_hex
+                    : isShelf
+                      ? "#A16207"
+                      : hasModel
+                        ? selected
+                          ? "rgba(25,118,210,0.035)"
+                          : "rgba(255,255,255,0.01)"
+                        : itemDoor?.color_hex,
+                  transform:
+                    hasModel || isShelf
+                      ? "none"
+                      : "rotateX(2deg) rotateY(-12deg)",
+                  display: "grid",
+                  placeItems: "center",
+                  cursor: dragState?.index === index ? "grabbing" : "grab",
+                  userSelect: "none",
+                  zIndex: selected
+                    ? 100
+                    : dragState?.index === index
+                      ? 90
+                      : layerIndex,
+                  outline: "none",
+                  boxShadow: selected
+                    ? hasModel
+                      ? "inset 0 0 0 2px rgba(25,118,210,0.96), 0 10px 22px rgba(15,23,42,0.08)"
+                      : "inset 0 0 0 3px #1976D2, 10px 14px 22px rgba(15,23,42,0.18)"
                     : hasModel
-                      ? selected
-                        ? "rgba(25,118,210,0.035)"
-                        : "rgba(255,255,255,0.01)"
-                      : itemDoor?.color_hex,
-                transform: hasModel || isShelf ? "none" : "rotateX(2deg) rotateY(-12deg)",
-                display: "grid",
-                placeItems: "center",
-                cursor: dragState?.index === index ? "grabbing" : "grab",
-                userSelect: "none",
-                zIndex: selected ? 100 : dragState?.index === index ? 90 : layerIndex,
-                outline: "none",
-                boxShadow: selected
-                  ? hasModel
-                    ? "inset 0 0 0 2px rgba(25,118,210,0.96), 0 10px 22px rgba(15,23,42,0.08)"
-                    : "inset 0 0 0 3px #1976D2, 10px 14px 22px rgba(15,23,42,0.18)"
-                  : hasModel
-                    ? "none"
-                    : "10px 14px 22px rgba(15,23,42,0.18)",
-                borderRadius: hasModel ? 1.5 : 0,
-              }}
-            >
-              {hasModel && (
-                <ProductModelCanvas
-                  product={product}
-                  rotation={item.rotation}
-                />
-              )}
-              {!hasModel && product.image_url && <ProductImageFallback product={product} compact />}
-              {!hasModel && !isCounter && !isShelf && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    inset: 8,
-                    border: "1px solid rgba(15,23,42,0.18)",
-                    bgcolor:
-                      isWall && itemGlass
-                        ? `${itemGlass.color_hex}66`
-                        : "rgba(255,255,255,0.18)",
-                  }}
-                />
-              )}
-              {selected &&
-                <>
-                  <Stack
-                    direction="row"
-                    spacing={0.25}
+                      ? "none"
+                      : "10px 14px 22px rgba(15,23,42,0.18)",
+                  borderRadius: hasModel ? 1.5 : 0,
+                }}
+              >
+                {hasModel && (
+                  <ProductModelCanvas
+                    product={product}
+                    rotation={item.rotation}
+                  />
+                )}
+                {!hasModel && product.image_url && (
+                  <ProductImageFallback product={product} compact />
+                )}
+                {!hasModel && !isCounter && !isShelf && (
+                  <Box
                     sx={{
                       position: "absolute",
-                      top: -30,
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      p: 0.25,
-                      borderRadius: 999,
-                      bgcolor: "rgba(255,255,255,0.96)",
-                      border: "1px solid rgba(226,232,240,0.95)",
-                      boxShadow: "0 12px 28px rgba(15,23,42,0.16)",
-                      backdropFilter: "blur(10px)",
-                      zIndex: 9,
+                      inset: 8,
+                      border: "1px solid rgba(15,23,42,0.18)",
+                      bgcolor:
+                        isWall && itemGlass
+                          ? `${itemGlass.color_hex}66`
+                          : "rgba(255,255,255,0.18)",
                     }}
-                  >
-                    <IconButton
-                      size="small"
-                      onMouseDown={(event) => event.stopPropagation()}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onOpenItemSettings(index);
-                      }}
-                      sx={{
-                        width: 22,
-                        height: 22,
-                        color: "#0F766E",
-                        borderRadius: "50%",
-                        "& .MuiSvgIcon-root": { fontSize: 15 },
-                        "&:hover": { bgcolor: "#ECFDF5", transform: "translateY(-1px)" },
-                      }}
-                    >
-                      <SettingsOutlinedIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onMouseDown={(event) => event.stopPropagation()}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onCopyItem(index);
-                      }}
-                      sx={{
-                        width: 22,
-                        height: 22,
-                        color: "#2563EB",
-                        borderRadius: "50%",
-                        "& .MuiSvgIcon-root": { fontSize: 15 },
-                        "&:hover": { bgcolor: "#EFF6FF", transform: "translateY(-1px)" },
-                      }}
-                    >
-                      <ContentCopyIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onMouseDown={(event) => event.stopPropagation()}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onDeleteItem(index);
-                      }}
-                      sx={{
-                        width: 22,
-                        height: 22,
-                        color: "#EF4444",
-                        borderRadius: "50%",
-                        "& .MuiSvgIcon-root": { fontSize: 15 },
-                        "&:hover": { bgcolor: "#FEF2F2", transform: "translateY(-1px)" },
-                      }}
-                    >
-                      <DeleteOutlineIcon />
-                    </IconButton>
-                  </Stack>
-                  {[
-                    ["top-left", -6, -6, "nwse-resize"],
-                    ["top-center", -6, width / 2 - 6, "ns-resize"],
-                    ["top-right", -6, width - 6, "nesw-resize"],
-                    ["bottom-left", height - 6, -6, "nesw-resize"],
-                    ["bottom-center", height - 6, width / 2 - 6, "ns-resize"],
-                    ["bottom-right", height - 6, width - 6, "nwse-resize"],
-                  ].map(([corner, top, left, cursor]) => (
-                    <Box
-                      key={corner}
-                      onMouseDown={(event) =>
-                        onResizeMouseDown(event, index, corner, widthCm, heightCm, cmToPx)
-                      }
+                  />
+                )}
+                {selected && (
+                  <>
+                    <Stack
+                      direction="row"
+                      spacing={0.25}
                       sx={{
                         position: "absolute",
-                        top,
-                        left,
-                        width: 12,
-                        height: 12,
-                        borderRadius: "50%",
-                        bgcolor: "#1976D2",
-                        border: "2px solid #FFFFFF",
-                        boxShadow: "0 2px 7px rgba(15,23,42,0.24)",
-                        cursor,
-                        zIndex: 8,
-                        "&:before": {
-                          content: '""',
-                          position: "absolute",
-                          inset: 3,
-                          borderTop: "2px solid #FFFFFF",
-                          borderLeft: "2px solid #FFFFFF",
-                          transform:
-                            corner === "top-left"
-                              ? "rotate(0deg)"
-                              : corner === "top-center"
-                                ? "rotate(45deg)"
-                              : corner === "top-right"
-                                ? "rotate(90deg)"
-                                : corner === "bottom-center"
-                                  ? "rotate(225deg)"
-                                : corner === "bottom-right"
-                                  ? "rotate(180deg)"
-                                  : "rotate(270deg)",
-                        },
+                        top: -30,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        p: 0.25,
+                        borderRadius: 999,
+                        bgcolor: "rgba(255,255,255,0.96)",
+                        border: "1px solid rgba(226,232,240,0.95)",
+                        boxShadow: "0 12px 28px rgba(15,23,42,0.16)",
+                        backdropFilter: "blur(10px)",
+                        zIndex: 9,
                       }}
-                    />
-                  ))}
-                </>}
-            </Box>
-          );
-        })}
+                    >
+                      <IconButton
+                        size="small"
+                        onMouseDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onOpenItemSettings(index);
+                        }}
+                        sx={{
+                          width: 22,
+                          height: 22,
+                          color: "#0F766E",
+                          borderRadius: "50%",
+                          "& .MuiSvgIcon-root": { fontSize: 15 },
+                          "&:hover": {
+                            bgcolor: "#ECFDF5",
+                            transform: "translateY(-1px)",
+                          },
+                        }}
+                      >
+                        <SettingsOutlinedIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onMouseDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onCopyItem(index);
+                        }}
+                        sx={{
+                          width: 22,
+                          height: 22,
+                          color: "#2563EB",
+                          borderRadius: "50%",
+                          "& .MuiSvgIcon-root": { fontSize: 15 },
+                          "&:hover": {
+                            bgcolor: "#EFF6FF",
+                            transform: "translateY(-1px)",
+                          },
+                        }}
+                      >
+                        <ContentCopyIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onMouseDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onDeleteItem(index);
+                        }}
+                        sx={{
+                          width: 22,
+                          height: 22,
+                          color: "#EF4444",
+                          borderRadius: "50%",
+                          "& .MuiSvgIcon-root": { fontSize: 15 },
+                          "&:hover": {
+                            bgcolor: "#FEF2F2",
+                            transform: "translateY(-1px)",
+                          },
+                        }}
+                      >
+                        <DeleteOutlineIcon />
+                      </IconButton>
+                    </Stack>
+                    {[
+                      ["top-left", -6, -6, "nwse-resize"],
+                      ["top-center", -6, width / 2 - 6, "ns-resize"],
+                      ["top-right", -6, width - 6, "nesw-resize"],
+                      ["bottom-left", height - 6, -6, "nesw-resize"],
+                      ["bottom-center", height - 6, width / 2 - 6, "ns-resize"],
+                      ["bottom-right", height - 6, width - 6, "nwse-resize"],
+                    ].map(([corner, top, left, cursor]) => (
+                      <Box
+                        key={corner}
+                        onMouseDown={(event) =>
+                          onResizeMouseDown(
+                            event,
+                            index,
+                            corner,
+                            widthCm,
+                            heightCm,
+                            cmToPx,
+                          )
+                        }
+                        sx={{
+                          position: "absolute",
+                          top,
+                          left,
+                          width: 12,
+                          height: 12,
+                          borderRadius: "50%",
+                          bgcolor: "#1976D2",
+                          border: "2px solid #FFFFFF",
+                          boxShadow: "0 2px 7px rgba(15,23,42,0.24)",
+                          cursor,
+                          zIndex: 8,
+                          "&:before": {
+                            content: '""',
+                            position: "absolute",
+                            inset: 3,
+                            borderTop: "2px solid #FFFFFF",
+                            borderLeft: "2px solid #FFFFFF",
+                            transform:
+                              corner === "top-left"
+                                ? "rotate(0deg)"
+                                : corner === "top-center"
+                                  ? "rotate(45deg)"
+                                  : corner === "top-right"
+                                    ? "rotate(90deg)"
+                                    : corner === "bottom-center"
+                                      ? "rotate(225deg)"
+                                      : corner === "bottom-right"
+                                        ? "rotate(180deg)"
+                                        : "rotate(270deg)",
+                          },
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+              </Box>
+            );
+          })}
+        </Box>
       </Box>
-    </Box>
-    <Button
-      variant="contained"
-      startIcon={<SaveOutlinedIcon />}
-      onClick={onSaveProject}
-      disabled={!sceneItems.length}
-      sx={{
-        position: "absolute",
-        right: { xs: 12, md: 20 },
-        bottom: { xs: 12, md: 20 },
-        textTransform: "none",
-        fontWeight: 900,
-        borderRadius: 1.5,
-        px: 2.2,
-        py: 1,
-        boxShadow: "0 14px 28px rgba(25,118,210,0.28)",
-      }}
-    >
-      Projeyi Kaydet
-    </Button>
-  </Paper>
+      <Button
+        variant="contained"
+        startIcon={<SaveOutlinedIcon />}
+        onClick={onSaveProject}
+        disabled={!sceneItems.length}
+        color="success"
+        sx={{
+          position: "absolute",
+          right: { xs: 12, md: 20 },
+          bottom: { xs: 12, md: 20 },
+          textTransform: "none",
+          fontWeight: 900,
+          borderRadius: 1.5,
+          px: 2.2,
+          py: 1,
+          boxShadow: "0 14px 28px rgba(25,118,210,0.28)",
+        }}
+      >
+        Projeyi Kaydet
+      </Button>
+    </Paper>
   );
 };
 

@@ -120,7 +120,7 @@ const KitchenPaletteDrawer = ({
               Urun Paleti
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Sablon sec veya urunu sahneye surukle.
+              Sablon seç veya ürünü sahneye sürükle.
             </Typography>
           </Box>
           <IconButton onClick={onClose}>

@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
-import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import ZoomOutIcon from "@mui/icons-material/ZoomOut";
@@ -904,7 +903,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 whiteSpace: "nowrap",
               }}
             >
-              Ürün Paletini Ac
+              Sahneye Ürün Ekle
             </Button>
             <Button
               variant="outlined"
@@ -920,19 +919,6 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               }}
             >
               Ekli Urunler
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<SaveOutlinedIcon />}
-              onClick={() => setProjectSaveOpen(true)}
-              disabled={!sceneItems.length}
-              sx={{
-                textTransform: "none",
-                fontWeight: 900,
-                whiteSpace: "nowrap",
-              }}
-            >
-              Projeyi Kaydet
             </Button>
             <Paper
               elevation={0}
