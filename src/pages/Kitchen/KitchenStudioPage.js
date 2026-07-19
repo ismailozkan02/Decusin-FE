@@ -381,6 +381,31 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     );
   };
 
+  const updateSceneItemPosition3D = (index, nextPosition) => {
+    setSceneItems((current) =>
+      current.map((item, itemIndex) => {
+        if (itemIndex !== index) return item;
+
+        return {
+          ...item,
+          position: {
+            ...(item.position || { x: 0, y: 0, z: 0 }),
+            ...nextPosition,
+          },
+        };
+      }),
+    );
+  };
+
+  const selectSceneItem = (index) => {
+    setPaletteOpen(false);
+    setSceneItemsOpen(false);
+    setSelectedSceneIndex(index);
+    setCustomizerOpen(true);
+    setDragState(null);
+    setResizeState(null);
+  };
+
   const updateSceneItemPositionAxis = (index, axis, value) => {
     setSceneItems((current) =>
       current.map((item, itemIndex) => {
@@ -759,6 +784,14 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       setCustomizerOpen(false);
       setPaletteOpen(false);
     }
+  };
+
+  const clearSceneSelection = () => {
+    setSelectedSceneIndex(null);
+    setCustomizerOpen(false);
+    setPaletteOpen(false);
+    setDragState(null);
+    setResizeState(null);
   };
 
   const handleSceneItemMouseDown = (event, index) => {
@@ -1238,7 +1271,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             onMouseMove={handleSceneMouseMove}
             onMouseUp={handleSceneMouseUp}
             onBackgroundMouseDown={handleSceneBackgroundMouseDown}
+            onClearSelection={clearSceneSelection}
             onSceneItemMouseDown={handleSceneItemMouseDown}
+            onSelectItem={selectSceneItem}
+            onMoveItem3D={updateSceneItemPosition3D}
             onResizeMouseDown={handleResizeMouseDown}
             onCopyItem={duplicateSceneItem}
             onDeleteItem={removeSceneItem}

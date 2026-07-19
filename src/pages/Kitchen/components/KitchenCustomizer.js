@@ -128,6 +128,7 @@ const KitchenCustomizer = ({
         touchEvent="onTouchStart"
         onClickAway={(event) => {
           if (event.target?.closest?.("[data-kitchen-scene-item='true']")) return;
+          if (event.target?.closest?.("[data-kitchen-scene-root='true']")) return;
           onClose();
         }}
       >
