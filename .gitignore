@@ -1,1 +1,38 @@
-node_modules
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Editor
+/.idea
+/.vscode
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+/public
+/index.html
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.lock 
+
+# local env files
+*.config
+*.env
+
+# vercel
+.vercel
+

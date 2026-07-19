@@ -1,0 +1,71 @@
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Old versions of Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently*/
+  cursor: pointer;
+}
+
+[data-n-id] > text {
+  text-transform: capitalize;
+  white-space: normal !important;
+}
+.rdw-image-modal-upload-option-label {
+  font-size: 12px;
+  word-break: break-word;
+}
+
+#reactMarkdown img {
+  max-width: 100%;
+}
+
+:root {
+  --fc-border-color: black;
+  --fc-daygrid-event-dot-width: 5px;
+}
+
+.apexcharts-datalabel-value {
+  color: red !important;
+  background-color: red !important;
+}
+
+/* date picker on log page */
+body
+  > div.MuiDialog-root.MuiModal-root.css-zw3mfo-MuiModal-root-MuiDialog-root
+  > div.MuiDialog-container.MuiDialog-scrollPaper.css-1sep8xo-MuiDialog-container
+  > div
+  > div.MuiBox-root.css-1mgq14i
+  > div
+  > div.rdrDefinedRangesWrapper
+  > div.rdrInputRanges
+  > div:nth-child(2) {
+  display: none;
+}
+
+/* video calls */
+
+#fullScreen video {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  overflow: hidden;
+}
+
+.MuiDrawer-root .MuiBackdrop-root {
+  background-color: transparent;
+}
+
+#buttonedited {
+  color: white !important;
+}
+
+#mapsInfos1 ~ button {
+  display: none;
+}
+
+
