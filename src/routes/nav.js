@@ -40,20 +40,20 @@ const nav = (me, formatMessage) => [
   {
     type: "section",
     icon: ViewInArOutlinedIcon,
-    title: formatMessage("nav.kitchenStudio", "Mutfak Tasarim"),
+    title: formatMessage("nav.kitchenStudio", "Mutfak Tasarım"),
     children: [
       {
-        title: formatMessage("nav.kitchenDesigner", "Tasarim Sahnesi"),
+        title: formatMessage("nav.kitchenDesigner", "Tasarım Sahnesi"),
         icon: ViewInArOutlinedIcon,
         path: DASHBOARD.kitchenDesigner,
       },
       {
-        title: formatMessage("nav.kitchenCatalog", "Urunler & Malzemeler"),
+        title: formatMessage("nav.kitchenCatalog", "Ürünler & Malzemeler"),
         icon: KitchenOutlinedIcon,
         path: DASHBOARD.kitchenCatalog,
       },
       {
-        title: formatMessage("nav.kitchenPricing", "Fiyatlandirma"),
+        title: formatMessage("nav.kitchenPricing", "Fiyatlandırma"),
         icon: RequestQuoteOutlinedIcon,
         path: DASHBOARD.kitchenPricing,
       },

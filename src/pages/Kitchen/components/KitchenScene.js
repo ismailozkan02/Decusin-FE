@@ -6,7 +6,7 @@ import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Environment, useGLTF } from "@react-three/drei";
-import { Box3, Vector3 } from "three";
+import { Box3, Color, Vector3 } from "three";
 
 const modelScaleByCategory = {
   base_cabinet: 1,
@@ -17,9 +17,51 @@ const modelScaleByCategory = {
   room: 1,
 };
 
-const ModelInstance = ({ modelUrl, category, rotation }) => {
+const getModelMaterialColor = (materialName, category, palette) => {
+  const name = materialName.toLowerCase();
+
+  if (name.includes("glass")) return palette.glass;
+  if (name.includes("stone")) return palette.countertop;
+  if (name.includes("oak") || name.includes("light") || name.includes("door")) {
+    return ["base_cabinet", "wall_cabinet"].includes(category) ? palette.door : null;
+  }
+
+  return null;
+};
+
+const ModelInstance = ({ modelUrl, category, rotation, palette }) => {
   const { scene } = useGLTF(modelUrl);
-  const model = useMemo(() => scene.clone(true), [scene]);
+  const model = useMemo(() => {
+    const clonedScene = scene.clone(true);
+
+    clonedScene.traverse((object) => {
+      if (!object.isMesh || !object.material) return;
+
+      const applyMaterial = (material) => {
+        const nextMaterial = material.clone();
+        const nextColor = getModelMaterialColor(nextMaterial.name || object.name || "", category, palette);
+
+        if (nextColor && nextMaterial.color) {
+          nextMaterial.color = new Color(nextColor);
+          nextMaterial.needsUpdate = true;
+        }
+
+        if ((nextMaterial.name || "").toLowerCase().includes("glass")) {
+          nextMaterial.transparent = true;
+          nextMaterial.opacity = 0.42;
+          nextMaterial.needsUpdate = true;
+        }
+
+        return nextMaterial;
+      };
+
+      object.material = Array.isArray(object.material)
+        ? object.material.map(applyMaterial)
+        : applyMaterial(object.material);
+    });
+
+    return clonedScene;
+  }, [category, palette, scene]);
   const viewport = useThree((state) => state.viewport);
   const rotationX = (Number(rotation?.x || 0) * Math.PI) / 180;
   const rotationY = (Number(rotation?.y || 0) * Math.PI) / 180;
@@ -61,7 +103,7 @@ const ProductImageFallback = ({ product, compact = false }) => (
   <Box
     component="img"
     src={product.image_url || "/images/kitchen/base-cabinet.svg"}
-    alt={product.name || "Urun"}
+    alt={product.name || "Ürün"}
     sx={{
       position: "absolute",
       inset: compact ? 0 : 4,
@@ -75,7 +117,7 @@ const ProductImageFallback = ({ product, compact = false }) => (
   />
 );
 
-const ProductModelCanvas = ({ product, rotation }) => {
+const ProductModelCanvas = ({ product, rotation, materialPalette }) => {
   if (!product.model_url) return null;
 
   return (
@@ -101,6 +143,7 @@ const ProductModelCanvas = ({ product, rotation }) => {
             modelUrl={product.model_url}
             category={product.category}
             rotation={rotation}
+            palette={materialPalette}
           />
           <Environment preset="city" />
         </Suspense>
@@ -305,12 +348,17 @@ const KitchenScene = ({
                   borderRadius: hasModel ? 1.5 : 0,
                 }}
               >
-                {hasModel && (
-                  <ProductModelCanvas
-                    product={product}
-                    rotation={item.rotation}
-                  />
-                )}
+              {hasModel && (
+                <ProductModelCanvas
+                  product={product}
+                  rotation={item.rotation}
+                  materialPalette={{
+                    door: itemDoor?.color_hex || "#F8FAFC",
+                    glass: itemGlass?.color_hex || "#BAE6FD",
+                    countertop: itemCounter?.color_hex || "#E5E7EB",
+                  }}
+                />
+              )}
                 {!hasModel && product.image_url && (
                   <ProductImageFallback product={product} compact />
                 )}

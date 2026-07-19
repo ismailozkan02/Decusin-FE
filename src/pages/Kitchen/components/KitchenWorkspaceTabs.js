@@ -10,8 +10,8 @@ const KitchenWorkspaceTabs = ({ tab, onChange }) => (
       sx={{ px: 1 }}
     >
       <Tab label="Tasarim sahnesi" />
-      <Tab label="Urunler & malzemeler" />
-      <Tab label="Fiyatlandirma" />
+      <Tab label="Ürünler & malzemeler" />
+      <Tab label="Fiyatlandırma" />
       <Tab label="Projeler" />
     </Tabs>
   </Paper>

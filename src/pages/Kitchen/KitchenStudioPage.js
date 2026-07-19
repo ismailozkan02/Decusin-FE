@@ -60,7 +60,7 @@ const buildLocalQuote = (items, catalogMap, materialMap, installationFee) => {
 
     return {
       catalog_item_id: item.catalog_item_id,
-      name: product.name || "Urun",
+      name: product.name || "Ürün",
       quantity,
       base_total: baseTotal,
       modifiers_total: modifiersTotal,
@@ -131,11 +131,11 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const selectedCounter = materialMap[selectedCounterMaterial];
   const pageTitle =
     {
-      designer: "Tasarim Sahnesi",
-      catalog: "Urunler & Malzemeler",
-      pricing: "Fiyatlandirma",
+      designer: "Tasarım Sahnesi",
+      catalog: "Ürünler & Malzemeler",
+      pricing: "Fiyatlandırma",
       projects: "Projeler",
-    }[initialTab] || "Tasarim Sahnesi";
+    }[initialTab] || "Tasarım Sahnesi";
 
   const selectedSceneItem =
     selectedSceneIndex === null ? null : sceneItems[selectedSceneIndex] || null;
@@ -876,8 +876,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 {pageTitle}
               </Typography>
               <Typography color="text.secondary" noWrap>
-                3D mutfak tasarimi, urun katalogu, malzeme secimi ve canli
-                fiyatlandirma.
+                3D mutfak tasarımı, ürün katalogu, malzeme seçimi ve canlı
+                fiyatlandırma.
               </Typography>
             </Box>
           </Stack>
@@ -918,7 +918,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 whiteSpace: "nowrap",
               }}
             >
-              Ekli Urunler
+              Ekli Ürünler
             </Button>
             <Paper
               elevation={0}
@@ -1109,7 +1109,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               sx={{ border: "1px solid #E2E8F0", borderRadius: 1.5, p: 1.5 }}
             >
               <Typography sx={{ fontWeight: 900 }}>
-                {sceneItems.length} urun kaydedilecek
+                {sceneItems.length} ürün kaydedilecek
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Toplam teklif: {money(quote.total)}
@@ -1122,7 +1122,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             onClick={() => setProjectSaveOpen(false)}
             sx={{ textTransform: "none" }}
           >
-            Vazgec
+            Vazgeç
           </Button>
           <Button
             variant="contained"
@@ -1275,8 +1275,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                     {pageTitle}
                   </Typography>
                   <Typography color="text.secondary">
-                    3D mutfak tasarimi, urun katalogu, malzeme secimi ve canli
-                    fiyatlandirma.
+                    3D mutfak tasarımı, ürün katalogu, malzeme seçimi ve canlı
+                    fiyatlandırma.
                   </Typography>
                 </Box>
               </Stack>

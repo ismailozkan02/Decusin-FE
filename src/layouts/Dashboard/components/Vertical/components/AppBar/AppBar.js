@@ -173,7 +173,7 @@ const AppBar = ({ hidden, toggleNavVisibility }) => {
                       </Stack>
                     ))
                   ) : (
-                    <Typography color="text.secondary">Sahnede henuz urun yok.</Typography>
+                    <Typography color="text.secondary">Sahnede henuz ürün yok.</Typography>
                   )}
                   <Divider />
                   <Stack direction="row" justifyContent="space-between">

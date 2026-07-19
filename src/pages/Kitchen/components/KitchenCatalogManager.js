@@ -251,7 +251,7 @@ const KitchenCatalogManager = ({
                     Ürünler
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Kategorilere gore urun ve 3D model yonetimi.
+                    Kategorilere gore ürün ve 3D model yonetimi.
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1}>
@@ -277,7 +277,7 @@ const KitchenCatalogManager = ({
                       whiteSpace: "nowrap",
                     }}
                   >
-                    Urun Ekle
+                    Ürün Ekle
                   </Button>
                 </Stack>
               </Stack>
@@ -302,7 +302,7 @@ const KitchenCatalogManager = ({
                       <Typography sx={{ fontWeight: 900 }}>
                         {group.title}
                       </Typography>
-                      <Chip size="small" label={`${groupItems.length} urun`} />
+                      <Chip size="small" label={`${groupItems.length} ürün`} />
                     </Stack>
                   </AccordionSummary>
                   <AccordionDetails>
@@ -705,7 +705,7 @@ const KitchenCatalogManager = ({
                   Kategori Ekle
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Urun veya malzeme kategorisi olustur.
+                  Ürün veya malzeme kategorisi oluştur.
                 </Typography>
               </Box>
               <IconButton onClick={() => setCategoryDrawerOpen(false)}>
@@ -724,7 +724,7 @@ const KitchenCatalogManager = ({
                 }))
               }
             >
-              <MenuItem value="product">Urun kategorisi</MenuItem>
+              <MenuItem value="product">Ürün kategorisi</MenuItem>
               <MenuItem value="material">Malzeme kategorisi</MenuItem>
             </TextField>
             <TextField
@@ -782,10 +782,10 @@ const KitchenCatalogManager = ({
             >
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                  Urun Ekle
+                  Ürün Ekle
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  GLTF/GLB dosyasi ve olcu sinirlari.
+                  GLTF/GLB dosyası ve ölçü sınırları.
                 </Typography>
               </Box>
               <IconButton onClick={() => setProductDrawerOpen(false)}>
@@ -816,7 +816,7 @@ const KitchenCatalogManager = ({
               />
             )}
             <TextField
-              label="Urun adi"
+              label="Ürün adı"
               size="small"
               value={newProduct.name}
               onChange={(event) =>
@@ -886,7 +886,7 @@ const KitchenCatalogManager = ({
               disabled={!newProduct.name || !newProduct.model_url}
               sx={{ textTransform: "none", fontWeight: 900 }}
             >
-              Urunu Kataloga Ekle
+              Ürünü Kataloga Ekle
             </Button>
           </Stack>
         </ClickAwayListener>
@@ -923,7 +923,7 @@ const KitchenCatalogManager = ({
               >
                 <Box>
                   <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                    Urun Yonetimi
+                    Ürün Yonetimi
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {selectedProduct.sku} -{" "}
@@ -952,7 +952,7 @@ const KitchenCatalogManager = ({
                 }}
               />
               <TextField
-                label="Urun adi"
+                label="Ürün adı"
                 size="small"
                 value={selectedProduct.name}
                 onChange={(event) =>
@@ -960,17 +960,17 @@ const KitchenCatalogManager = ({
                 }
               />
               <TextField
-                label="Urun fiyati"
+                label="Ürün fiyatı"
                 type="number"
                 size="small"
                 value={selectedProduct.base_price || 0}
                 onChange={(event) =>
                   updateSelectedProductField("base_price", event.target.value)
                 }
-                helperText="Sahneye eklenen bu urunun ana fiyatini belirler."
+                helperText="Sahneye eklenen bu ürünün ana fiyatını belirler."
               />
               <TextField
-                label="Urun resmi"
+                label="Ürün resmi"
                 size="small"
                 value={selectedProduct.image_url || ""}
                 onChange={(event) =>

@@ -112,84 +112,101 @@ const KitchenPaletteDrawer = ({
         },
       }}
     >
-      <ClickAwayListener mouseEvent="onMouseDown" touchEvent="onTouchStart" onClickAway={onClose}>
+      <ClickAwayListener
+        mouseEvent="onMouseDown"
+        touchEvent="onTouchStart"
+        onClickAway={onClose}
+      >
         <Stack spacing={2}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Urun Paleti
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Sablon seç veya ürünü sahneye sürükle.
-            </Typography>
-          </Box>
-          <IconButton onClick={onClose}>
-            <MenuOpenIcon />
-          </IconButton>
-        </Stack>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                Ürün Paleti
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Şablon seç veya ürünü sahneye sürükle.
+              </Typography>
+            </Box>
+            <IconButton onClick={onClose}>
+              <MenuOpenIcon />
+            </IconButton>
+          </Stack>
 
-        {orderedGroups.map((group) => {
-          const groupItems = catalogItems.filter((item) => item.category === group.key);
-          if (!groupItems.length) return null;
+          {orderedGroups.map((group) => {
+            const groupItems = catalogItems.filter(
+              (item) => item.category === group.key,
+            );
+            if (!groupItems.length) return null;
 
-          return (
-            <Accordion
-              key={group.key}
-              expanded={expanded === group.key}
-              onChange={toggle(group.key)}
-              disableGutters
-              elevation={0}
-              sx={{ border: "1px solid #E2E8F0" }}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: 900 }}>{group.title}</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Grid container spacing={1.2}>
-                  {groupItems.map((product) => (
-                    <Grid item xs={6} key={product.id}>
-                      <Paper
-                        draggable
-                        onClick={() => onPaletteProductClick(product)}
-                        onDragStart={(event) => onPaletteDragStart(event, product)}
-                        elevation={0}
-                        sx={{
-                          border: "1px solid #E5E7EB",
-                          borderRadius: 1,
-                          p: 1,
-                          bgcolor: "#FFFFFF",
-                          cursor: "grab",
-                          userSelect: "none",
-                          "&:active": { cursor: "grabbing" },
-                        }}
-                      >
-                        <Stack spacing={0.8} alignItems="center">
-                          <ProductPreview
-                            product={product}
-                            selectedDoor={selectedDoor}
-                            selectedCounter={selectedCounter}
-                          />
-                          <Box sx={{ width: "100%", textAlign: "center" }}>
-                            <Typography sx={{ fontWeight: 900, fontSize: 12 }} noWrap>
-                              {product.name}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ display: "block", fontWeight: 800 }}
-                            >
-                              {money(product.base_price)}
-                            </Typography>
-                          </Box>
-                        </Stack>
-                      </Paper>
-                    </Grid>
-                  ))}
-                </Grid>
-              </AccordionDetails>
-            </Accordion>
-          );
-        })}
+            return (
+              <Accordion
+                key={group.key}
+                expanded={expanded === group.key}
+                onChange={toggle(group.key)}
+                disableGutters
+                elevation={0}
+                sx={{ border: "1px solid #E2E8F0" }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography sx={{ fontWeight: 900 }}>
+                    {group.title}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Grid container spacing={1.2}>
+                    {groupItems.map((product) => (
+                      <Grid item xs={6} key={product.id}>
+                        <Paper
+                          draggable
+                          onClick={() => onPaletteProductClick(product)}
+                          onDragStart={(event) =>
+                            onPaletteDragStart(event, product)
+                          }
+                          elevation={0}
+                          sx={{
+                            border: "1px solid #E5E7EB",
+                            borderRadius: 1,
+                            p: 1,
+                            bgcolor: "#FFFFFF",
+                            cursor: "grab",
+                            userSelect: "none",
+                            "&:active": { cursor: "grabbing" },
+                          }}
+                        >
+                          <Stack spacing={0.8} alignItems="center">
+                            <ProductPreview
+                              product={product}
+                              selectedDoor={selectedDoor}
+                              selectedCounter={selectedCounter}
+                            />
+                            <Box sx={{ width: "100%", textAlign: "center" }}>
+                              <Typography
+                                sx={{ fontWeight: 900, fontSize: 12 }}
+                                noWrap
+                              >
+                                {product.name}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: "block", fontWeight: 800 }}
+                              >
+                                {money(product.base_price)}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </Paper>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
         </Stack>
       </ClickAwayListener>
     </Drawer>

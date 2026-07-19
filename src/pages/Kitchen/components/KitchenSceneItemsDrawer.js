@@ -43,15 +43,23 @@ const KitchenSceneItemsDrawer = ({
       },
     }}
   >
-    <ClickAwayListener mouseEvent="onMouseDown" touchEvent="onTouchStart" onClickAway={onClose}>
+    <ClickAwayListener
+      mouseEvent="onMouseDown"
+      touchEvent="onTouchStart"
+      onClickAway={onClose}
+    >
       <Stack spacing={2}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+        >
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Ekli Urunler
+              Ekli Ürünler
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Sahnedeki urunleri yonet.
+              Sahnedeki ürünleri yönet.
             </Typography>
           </Box>
           <IconButton onClick={onClose}>
@@ -68,7 +76,11 @@ const KitchenSceneItemsDrawer = ({
             bgcolor: "#FFFFFF",
           }}
         >
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+          >
             <Stack direction="row" spacing={1} alignItems="center">
               <Box
                 sx={{
@@ -84,13 +96,20 @@ const KitchenSceneItemsDrawer = ({
                 <LayersOutlinedIcon fontSize="small" />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 900 }}>{sceneItems.length} urun</Typography>
+                <Typography sx={{ fontWeight: 900 }}>
+                  {sceneItems.length} ürün
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Toplam {money(quote?.total)}
                 </Typography>
               </Box>
             </Stack>
-            <Chip size="small" label="Sahne" color="primary" variant="outlined" />
+            <Chip
+              size="small"
+              label="Sahne"
+              color="primary"
+              variant="outlined"
+            />
           </Stack>
         </Paper>
 
@@ -112,7 +131,9 @@ const KitchenSceneItemsDrawer = ({
                   onClick={() => onSelectItem(index)}
                   sx={{
                     p: 1,
-                    border: selected ? "2px solid #1976D2" : "1px solid #E2E8F0",
+                    border: selected
+                      ? "2px solid #1976D2"
+                      : "1px solid #E2E8F0",
                     borderRadius: 1.5,
                     bgcolor: selected ? "#EEF6FF" : "#FFFFFF",
                     cursor: "pointer",
@@ -121,8 +142,10 @@ const KitchenSceneItemsDrawer = ({
                   <Stack direction="row" spacing={1.2} alignItems="center">
                     <Box
                       component="img"
-                      src={product.image_url || "/images/kitchen/base-cabinet.svg"}
-                      alt={product.name || "Urun"}
+                      src={
+                        product.image_url || "/images/kitchen/base-cabinet.svg"
+                      }
+                      alt={product.name || "Ürün"}
                       sx={{
                         width: 64,
                         height: 52,
@@ -134,12 +157,20 @@ const KitchenSceneItemsDrawer = ({
                     />
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                       <Typography sx={{ fontWeight: 900 }} noWrap>
-                        {product.name || "Urun"}
+                        {product.name || "Ürün"}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {Math.round(Number(dimensions.width || 0))} x {Math.round(Number(dimensions.height || 0))} cm
+                        {Math.round(Number(dimensions.width || 0))} x{" "}
+                        {Math.round(Number(dimensions.height || 0))} cm
                       </Typography>
-                      <Typography sx={{ display: "block", fontWeight: 900, color: "#0F766E", mt: 0.3 }}>
+                      <Typography
+                        sx={{
+                          display: "block",
+                          fontWeight: 900,
+                          color: "#0F766E",
+                          mt: 0.3,
+                        }}
+                      >
                         {money(line?.line_total || product.base_price)}
                       </Typography>
                     </Box>
@@ -173,9 +204,9 @@ const KitchenSceneItemsDrawer = ({
                 bgcolor: "#FFFFFF",
               }}
             >
-              <Typography sx={{ fontWeight: 900 }}>Sahnede urun yok</Typography>
+              <Typography sx={{ fontWeight: 900 }}>Sahnede ürün yok</Typography>
               <Typography variant="body2" color="text.secondary">
-                Paletten urun ekleyince burada listelenecek.
+                Paletten ürün ekleyince burada listelenecek.
               </Typography>
             </Paper>
           )}
@@ -184,7 +215,11 @@ const KitchenSceneItemsDrawer = ({
         {sceneItems.length > 0 && (
           <>
             <Divider />
-            <Button variant="contained" onClick={onClose} sx={{ textTransform: "none", fontWeight: 900 }}>
+            <Button
+              variant="contained"
+              onClick={onClose}
+              sx={{ textTransform: "none", fontWeight: 900 }}
+            >
               Sahneye Don
             </Button>
           </>
