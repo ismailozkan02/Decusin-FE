@@ -22,6 +22,7 @@ const MainContentWrapper = styled(Box)({
   display: "flex",
   minHeight: "100vh",
   flexDirection: "column",
+  backgroundColor: "#FFFFFF",
 });
 
 const ContentWrapper = styled("main")(({ theme }) => ({
@@ -71,6 +72,8 @@ const Vertical = ({ children, ...rest }) => {
                 height: "calc(100vh - 64px)",
                 minHeight: 0,
                 overflow: "hidden",
+                bgcolor: "#FFFFFF",
+                backgroundColor: "#FFFFFF",
               }),
               ...(contentWidth === "boxed" && {
                 mx: "auto",

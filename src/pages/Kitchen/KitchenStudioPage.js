@@ -107,6 +107,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const [dragState, setDragState] = useState(null);
   const [resizeState, setResizeState] = useState(null);
   const [selectedSceneIndex, setSelectedSceneIndex] = useState(null);
+  const [customizerOpen, setCustomizerOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [installationFee, setInstallationFee] = useState(0);
   const [roomDimensions, setRoomDimensions] = useState({
@@ -436,6 +437,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setSceneItems((current) =>
       current.filter((_, itemIndex) => itemIndex !== index),
     );
+    setCustomizerOpen(false);
     setSelectedSceneIndex((current) => {
       if (current === null) return null;
       if (current === index) return null;
@@ -669,6 +671,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const handleSceneBackgroundMouseDown = (event) => {
     if (event.target === event.currentTarget) {
       setSelectedSceneIndex(null);
+      setCustomizerOpen(false);
       setPaletteOpen(false);
     }
   };
@@ -840,7 +843,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           p: { xs: 1.5, md: 2 },
           mb: 1,
           background: "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)",
-          boxShadow: "0 16px 36px rgba(15,23,42,0.07)",
+          boxShadow: "0 8px 22px rgba(15,23,42,0.04)",
         }}
       >
         <Stack
@@ -901,7 +904,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 whiteSpace: "nowrap",
               }}
             >
-              Urun Paletini Ac
+              Ürün Paletini Ac
             </Button>
             <Button
               variant="outlined"
@@ -1036,14 +1039,21 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             onBackgroundMouseDown={handleSceneBackgroundMouseDown}
             onSceneItemMouseDown={handleSceneItemMouseDown}
             onResizeMouseDown={handleResizeMouseDown}
+            onOpenItemSettings={(index) => {
+              setSelectedSceneIndex(index);
+              setPaletteOpen(false);
+              setSceneItemsOpen(false);
+              setCustomizerOpen(true);
+            }}
             onCopyItem={duplicateSceneItem}
             onDeleteItem={removeSceneItem}
+            onSaveProject={() => setProjectSaveOpen(true)}
           />
         </Grid>
       </Grid>
       <KitchenCustomizer
-        open={Boolean(selectedSceneItem)}
-        onClose={() => setSelectedSceneIndex(null)}
+        open={customizerOpen && Boolean(selectedSceneItem)}
+        onClose={() => setCustomizerOpen(false)}
         selectedSceneIndex={selectedSceneIndex}
         selectedSceneItem={selectedSceneItem}
         selectedProduct={selectedProduct}
@@ -1059,7 +1069,6 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         onRemoveItem={removeSceneItem}
         quote={quote}
         selectedLineQuote={selectedLineQuote}
-        onSaveProject={saveProject}
       />
       <Dialog
         open={projectSaveOpen}
@@ -1223,14 +1232,24 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   );
 
   return (
-    <Page title={pageTitle} noHeader>
+    <Page
+      title={pageTitle}
+      noHeader
+      sx={{
+        ...(tab === 0 && {
+          minHeight: "100%",
+          bgcolor: "#FFFFFF",
+        }),
+      }}
+    >
       <Stack
-        spacing={tab === 0 ? 1 : 2.5}
+        spacing={tab === 0 ? 1 : tab === 1 ? 1.5 : 2.5}
         sx={{
           p: { xs: 2, md: 3 },
           ...(tab === 0 && {
             height: "100%",
             overflow: "hidden",
+            bgcolor: "#FFFFFF",
           }),
         }}
       >

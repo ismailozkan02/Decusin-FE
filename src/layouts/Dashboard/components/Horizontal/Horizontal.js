@@ -26,6 +26,7 @@ const HorizontalLayoutWrapper = styled("div")({
   display: "flex",
   minHeight: "100vh",
   flexDirection: "column",
+  backgroundColor: "#FFFFFF",
   ...(THEME.HORIZONTAL_MENU_ANIMATION && { overflow: "clip" }),
 });
 

@@ -62,7 +62,8 @@ const KitchenCatalogManager = ({
   const [expandedMaterial, setExpandedMaterial] = useState(false);
   const [productDrawerOpen, setProductDrawerOpen] = useState(false);
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
-  const [materialCategoryGroups, setMaterialCategoryGroups] = useState(materialGroups);
+  const [materialCategoryGroups, setMaterialCategoryGroups] =
+    useState(materialGroups);
   const [categoryForm, setCategoryForm] = useState({
     target: "product",
     title: "",
@@ -116,7 +117,8 @@ const KitchenCatalogManager = ({
   };
 
   const getProductCategoryLabel = (value) =>
-    catalogGroups.find((group) => group.key === value)?.title || categoryLabel(value);
+    catalogGroups.find((group) => group.key === value)?.title ||
+    categoryLabel(value);
 
   const previewByCategory = {
     base_cabinet: "/images/kitchen/base-cabinet-premium.svg",
@@ -146,9 +148,15 @@ const KitchenCatalogManager = ({
     if (!newProduct.name || !newProduct.model_url) return;
 
     const minWidth = Math.max(Number(newProduct.min_width) || 1, 1);
-    const maxWidth = Math.max(Number(newProduct.max_width) || minWidth, minWidth);
+    const maxWidth = Math.max(
+      Number(newProduct.max_width) || minWidth,
+      minWidth,
+    );
     const minHeight = Math.max(Number(newProduct.min_height) || 1, 1);
-    const maxHeight = Math.max(Number(newProduct.max_height) || minHeight, minHeight);
+    const maxHeight = Math.max(
+      Number(newProduct.max_height) || minHeight,
+      minHeight,
+    );
     const product = {
       id: `manual-${Date.now()}`,
       sku: `MAN-${Date.now().toString().slice(-6)}`,
@@ -166,7 +174,9 @@ const KitchenCatalogManager = ({
         min_height: minHeight,
         max_height: maxHeight,
       },
-      image_url: previewByCategory[newProduct.category] || "/images/kitchen/base-cabinet-premium.svg",
+      image_url:
+        previewByCategory[newProduct.category] ||
+        "/images/kitchen/base-cabinet-premium.svg",
       model_url: newProduct.model_url,
       original_file_name: newProduct.file_name,
       base_price: Math.max(Number(newProduct.base_price) || 0, 0),
@@ -217,8 +227,8 @@ const KitchenCatalogManager = ({
 
   return (
     <>
-      <Grid container spacing={2.5}>
-        <Grid item xs={12} md={8}>
+      <Grid container spacing={1} sx={{ m: 0, width: "100%" }}>
+        <Grid item xs={12} md={8} sx={{ pl: "0 !important" }}>
           <Stack spacing={1.4}>
             <Paper
               elevation={0}
@@ -230,10 +240,15 @@ const KitchenCatalogManager = ({
                 boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
               }}
             >
-              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={2}
+              >
                 <Box>
                   <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                    Urunler
+                    Ürünler
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Kategorilere gore urun ve 3D model yonetimi.
@@ -244,7 +259,11 @@ const KitchenCatalogManager = ({
                     variant="outlined"
                     startIcon={<CategoryOutlinedIcon />}
                     onClick={() => setCategoryDrawerOpen(true)}
-                    sx={{ textTransform: "none", fontWeight: 900, whiteSpace: "nowrap" }}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 900,
+                      whiteSpace: "nowrap",
+                    }}
                   >
                     Kategori Ekle
                   </Button>
@@ -252,7 +271,11 @@ const KitchenCatalogManager = ({
                     variant="contained"
                     startIcon={<UploadFileIcon />}
                     onClick={() => setProductDrawerOpen(true)}
-                    sx={{ textTransform: "none", fontWeight: 900, whiteSpace: "nowrap" }}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 900,
+                      whiteSpace: "nowrap",
+                    }}
                   >
                     Urun Ekle
                   </Button>
@@ -260,7 +283,9 @@ const KitchenCatalogManager = ({
               </Stack>
             </Paper>
             {catalogGroups.map((group) => {
-              const groupItems = catalogItems.filter((item) => item.category === group.key);
+              const groupItems = catalogItems.filter(
+                (item) => item.category === group.key,
+              );
               if (!groupItems.length) return null;
 
               return (
@@ -274,14 +299,23 @@ const KitchenCatalogManager = ({
                 >
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Stack direction="row" alignItems="center" spacing={1}>
-                      <Typography sx={{ fontWeight: 900 }}>{group.title}</Typography>
+                      <Typography sx={{ fontWeight: 900 }}>
+                        {group.title}
+                      </Typography>
                       <Chip size="small" label={`${groupItems.length} urun`} />
                     </Stack>
                   </AccordionSummary>
                   <AccordionDetails>
                     <Grid container spacing={1}>
                       {groupItems.map((product) => (
-                        <Grid item xs={6} sm={4} md={3} lg={2.4} key={product.id}>
+                        <Grid
+                          item
+                          xs={6}
+                          sm={4}
+                          md={3}
+                          lg={2.4}
+                          key={product.id}
+                        >
                           <Paper
                             elevation={0}
                             onClick={() => onSelectProduct(product)}
@@ -293,13 +327,19 @@ const KitchenCatalogManager = ({
                               borderRadius: 1,
                               p: 0.8,
                               cursor: "pointer",
-                              bgcolor: selectedProduct?.id === product.id ? "#EEF6FF" : "#FFFFFF",
+                              bgcolor:
+                                selectedProduct?.id === product.id
+                                  ? "#EEF6FF"
+                                  : "#FFFFFF",
                             }}
                           >
                             <Stack spacing={0.7}>
                               <Box
                                 component="img"
-                                src={product.image_url || "/images/kitchen/base-cabinet.svg"}
+                                src={
+                                  product.image_url ||
+                                  "/images/kitchen/base-cabinet.svg"
+                                }
                                 alt={product.name}
                                 sx={{
                                   width: "100%",
@@ -311,34 +351,73 @@ const KitchenCatalogManager = ({
                                   p: 0.6,
                                 }}
                               />
-                              <Stack direction="row" justifyContent="space-between" spacing={0.7}>
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                                spacing={0.7}
+                              >
                                 <Box>
-                                  <Typography sx={{ fontWeight: 900, fontSize: 12 }} noWrap>{product.name}</Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    {product.sku} - {getProductCategoryLabel(product.category)}
+                                  <Typography
+                                    sx={{ fontWeight: 900, fontSize: 12 }}
+                                    noWrap
+                                  >
+                                    {product.name}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
+                                    {product.sku} -{" "}
+                                    {getProductCategoryLabel(product.category)}
                                   </Typography>
                                 </Box>
                                 <TuneIcon color="primary" fontSize="small" />
                               </Stack>
-                              <Stack direction="row" justifyContent="space-between">
-                                <Typography variant="caption" color="text.secondary">
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                              >
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
                                   Genislik
                                 </Typography>
-                                <Typography variant="caption" sx={{ fontWeight: 800 }}>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ fontWeight: 800 }}
+                                >
                                   {product.constraints?.min_width || 0} -{" "}
-                                  {product.constraints?.max_width || product.dimensions?.width} cm
+                                  {product.constraints?.max_width ||
+                                    product.dimensions?.width}{" "}
+                                  cm
                                 </Typography>
                               </Stack>
-                              <Stack direction="row" justifyContent="space-between">
-                                <Typography variant="caption" color="text.secondary">
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                              >
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
                                   Yukseklik
                                 </Typography>
-                                <Typography variant="caption" sx={{ fontWeight: 800 }}>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ fontWeight: 800 }}
+                                >
                                   {product.constraints?.min_height || 0} -{" "}
-                                  {product.constraints?.max_height || product.dimensions?.height} cm
+                                  {product.constraints?.max_height ||
+                                    product.dimensions?.height}{" "}
+                                  cm
                                 </Typography>
                               </Stack>
-                              <Chip label={money(product.base_price)} size="small" sx={{ alignSelf: "center" }} />
+                              <Chip
+                                label={money(product.base_price)}
+                                size="small"
+                                sx={{ alignSelf: "center" }}
+                              />
                             </Stack>
                           </Paper>
                         </Grid>
@@ -370,7 +449,9 @@ const KitchenCatalogManager = ({
                 type="number"
                 size="small"
                 value={installationFee || 0}
-                onChange={(event) => onChangeInstallationFee(Number(event.target.value) || 0)}
+                onChange={(event) =>
+                  onChangeInstallationFee(Number(event.target.value) || 0)
+                }
                 helperText="Bu tutar toplam fiyata sabit montaj bedeli olarak eklenir."
               />
             </Paper>
@@ -388,7 +469,9 @@ const KitchenCatalogManager = ({
               </Typography>
               <Stack spacing={1.2}>
                 {materialCategoryGroups.map((group) => {
-                  const groupItems = materials.filter((material) => material.type === group.key);
+                  const groupItems = materials.filter(
+                    (material) => material.type === group.key,
+                  );
                   if (!groupItems.length) return null;
 
                   return (
@@ -402,8 +485,13 @@ const KitchenCatalogManager = ({
                     >
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Stack direction="row" alignItems="center" spacing={1}>
-                          <Typography sx={{ fontWeight: 900 }}>{group.title}</Typography>
-                          <Chip size="small" label={`${groupItems.length} malzeme`} />
+                          <Typography sx={{ fontWeight: 900 }}>
+                            {group.title}
+                          </Typography>
+                          <Chip
+                            size="small"
+                            label={`${groupItems.length} malzeme`}
+                          />
                         </Stack>
                       </AccordionSummary>
                       <AccordionDetails>
@@ -424,10 +512,16 @@ const KitchenCatalogManager = ({
                                 p: 1.2,
                                 cursor: "pointer",
                                 bgcolor:
-                                  selectedMaterial?.id === material.id ? "#EEF6FF" : "#FFFFFF",
+                                  selectedMaterial?.id === material.id
+                                    ? "#EEF6FF"
+                                    : "#FFFFFF",
                               }}
                             >
-                              <Stack direction="row" spacing={1.2} alignItems="center">
+                              <Stack
+                                direction="row"
+                                spacing={1.2}
+                                alignItems="center"
+                              >
                                 <Box
                                   sx={{
                                     width: 26,
@@ -438,15 +532,23 @@ const KitchenCatalogManager = ({
                                   }}
                                 />
                                 <Box>
-                                  <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+                                  <Typography
+                                    sx={{ fontWeight: 800, fontSize: 13 }}
+                                  >
                                     {material.name}
                                   </Typography>
-                                  <Typography variant="caption" color="text.secondary">
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
                                     {material.code}
                                   </Typography>
                                 </Box>
                               </Stack>
-                              <Chip label={materialModifierLabel(material)} size="small" />
+                              <Chip
+                                label={materialModifierLabel(material)}
+                                size="small"
+                              />
                             </Stack>
                           ))}
                         </Stack>
@@ -484,68 +586,87 @@ const KitchenCatalogManager = ({
             onClickAway={onCloseMaterial}
           >
             <Stack spacing={2}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                  Malzeme Yonetimi
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedMaterial.code}
-                </Typography>
-              </Box>
-              <IconButton onClick={onCloseMaterial}>
-                <CloseIcon />
-              </IconButton>
-            </Stack>
-            <TextField
-              label="Malzeme adi"
-              size="small"
-              value={selectedMaterial.name}
-              onChange={(event) => updateSelectedMaterial("name", event.target.value)}
-            />
-            <TextField
-              select
-              label="Kategori"
-              size="small"
-              value={selectedMaterial.type}
-              onChange={(event) => updateSelectedMaterial("type", event.target.value)}
-            >
-              {materialCategoryGroups.map((group) => (
-                <MenuItem key={group.key} value={group.key}>
-                  {group.title}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label="Renk kodu"
-              size="small"
-              value={selectedMaterial.color_hex || ""}
-              onChange={(event) => updateSelectedMaterial("color_hex", event.target.value)}
-            />
-            <TextField
-              label="Onizleme model dosyasi"
-              size="small"
-              value={selectedMaterial.preview_model_url || ""}
-              onChange={(event) => updateSelectedMaterial("preview_model_url", event.target.value)}
-              helperText="Malzemeyi denemek icin kullanilacak demo GLTF yolu."
-            />
-            <TextField
-              label="Fiyat etkisi"
-              type="number"
-              size="small"
-              value={selectedMaterial.price_modifier || 0}
-              onChange={(event) => updateSelectedMaterial("price_modifier", event.target.value)}
-            />
-            <TextField
-              select
-              label="Fiyat tipi"
-              size="small"
-              value={selectedMaterial.modifier_type}
-              onChange={(event) => updateSelectedMaterial("modifier_type", event.target.value)}
-            >
-              <MenuItem value="percent">Yuzde</MenuItem>
-              <MenuItem value="fixed">Sabit</MenuItem>
-            </TextField>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                    Malzeme Yonetimi
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedMaterial.code}
+                  </Typography>
+                </Box>
+                <IconButton onClick={onCloseMaterial}>
+                  <CloseIcon />
+                </IconButton>
+              </Stack>
+              <TextField
+                label="Malzeme adi"
+                size="small"
+                value={selectedMaterial.name}
+                onChange={(event) =>
+                  updateSelectedMaterial("name", event.target.value)
+                }
+              />
+              <TextField
+                select
+                label="Kategori"
+                size="small"
+                value={selectedMaterial.type}
+                onChange={(event) =>
+                  updateSelectedMaterial("type", event.target.value)
+                }
+              >
+                {materialCategoryGroups.map((group) => (
+                  <MenuItem key={group.key} value={group.key}>
+                    {group.title}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                label="Renk kodu"
+                size="small"
+                value={selectedMaterial.color_hex || ""}
+                onChange={(event) =>
+                  updateSelectedMaterial("color_hex", event.target.value)
+                }
+              />
+              <TextField
+                label="Onizleme model dosyasi"
+                size="small"
+                value={selectedMaterial.preview_model_url || ""}
+                onChange={(event) =>
+                  updateSelectedMaterial(
+                    "preview_model_url",
+                    event.target.value,
+                  )
+                }
+                helperText="Malzemeyi denemek icin kullanilacak demo GLTF yolu."
+              />
+              <TextField
+                label="Fiyat etkisi"
+                type="number"
+                size="small"
+                value={selectedMaterial.price_modifier || 0}
+                onChange={(event) =>
+                  updateSelectedMaterial("price_modifier", event.target.value)
+                }
+              />
+              <TextField
+                select
+                label="Fiyat tipi"
+                size="small"
+                value={selectedMaterial.modifier_type}
+                onChange={(event) =>
+                  updateSelectedMaterial("modifier_type", event.target.value)
+                }
+              >
+                <MenuItem value="percent">Yuzde</MenuItem>
+                <MenuItem value="fixed">Sabit</MenuItem>
+              </TextField>
             </Stack>
           </ClickAwayListener>
         )}
@@ -574,7 +695,11 @@ const KitchenCatalogManager = ({
           onClickAway={() => setCategoryDrawerOpen(false)}
         >
           <Stack spacing={2}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+            >
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 900 }}>
                   Kategori Ekle
@@ -593,7 +718,10 @@ const KitchenCatalogManager = ({
               size="small"
               value={categoryForm.target}
               onChange={(event) =>
-                setCategoryForm((current) => ({ ...current, target: event.target.value }))
+                setCategoryForm((current) => ({
+                  ...current,
+                  target: event.target.value,
+                }))
               }
             >
               <MenuItem value="product">Urun kategorisi</MenuItem>
@@ -604,7 +732,10 @@ const KitchenCatalogManager = ({
               size="small"
               value={categoryForm.title}
               onChange={(event) =>
-                setCategoryForm((current) => ({ ...current, title: event.target.value }))
+                setCategoryForm((current) => ({
+                  ...current,
+                  title: event.target.value,
+                }))
               }
               placeholder="Orn: Ozel ust dolaplar"
             />
@@ -644,7 +775,11 @@ const KitchenCatalogManager = ({
           onClickAway={() => setProductDrawerOpen(false)}
         >
           <Stack spacing={2}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+            >
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 900 }}>
                   Urun Ekle
@@ -685,7 +820,10 @@ const KitchenCatalogManager = ({
               size="small"
               value={newProduct.name}
               onChange={(event) =>
-                setNewProduct((current) => ({ ...current, name: event.target.value }))
+                setNewProduct((current) => ({
+                  ...current,
+                  name: event.target.value,
+                }))
               }
             />
             <TextField
@@ -694,7 +832,10 @@ const KitchenCatalogManager = ({
               size="small"
               value={newProduct.category}
               onChange={(event) =>
-                setNewProduct((current) => ({ ...current, category: event.target.value }))
+                setNewProduct((current) => ({
+                  ...current,
+                  category: event.target.value,
+                }))
               }
             >
               {catalogGroups.map((group) => (
@@ -709,7 +850,10 @@ const KitchenCatalogManager = ({
               size="small"
               value={newProduct.base_price}
               onChange={(event) =>
-                setNewProduct((current) => ({ ...current, base_price: event.target.value }))
+                setNewProduct((current) => ({
+                  ...current,
+                  base_price: event.target.value,
+                }))
               }
             />
             <Grid container spacing={1}>
@@ -727,7 +871,10 @@ const KitchenCatalogManager = ({
                     size="small"
                     value={newProduct[field]}
                     onChange={(event) =>
-                      setNewProduct((current) => ({ ...current, [field]: event.target.value }))
+                      setNewProduct((current) => ({
+                        ...current,
+                        [field]: event.target.value,
+                      }))
                     }
                   />
                 </Grid>
@@ -769,110 +916,135 @@ const KitchenCatalogManager = ({
             onClickAway={onCloseProduct}
           >
             <Stack spacing={2}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                  Urun Yonetimi
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedProduct.sku} - {getProductCategoryLabel(selectedProduct.category)}
-                </Typography>
-              </Box>
-              <IconButton onClick={onCloseProduct}>
-                <CloseIcon />
-              </IconButton>
-            </Stack>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                    Urun Yonetimi
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedProduct.sku} -{" "}
+                    {getProductCategoryLabel(selectedProduct.category)}
+                  </Typography>
+                </Box>
+                <IconButton onClick={onCloseProduct}>
+                  <CloseIcon />
+                </IconButton>
+              </Stack>
 
-            <Box
-              component="img"
-              src={selectedProduct.image_url || "/images/kitchen/base-cabinet.svg"}
-              alt={selectedProduct.name}
-              sx={{
-                width: "100%",
-                height: 160,
-                objectFit: "cover",
-                borderRadius: 1,
-                border: "1px solid #E2E8F0",
-                bgcolor: "#F8FAFC",
-              }}
-            />
-            <TextField
-              label="Urun adi"
-              size="small"
-              value={selectedProduct.name}
-              onChange={(event) => updateSelectedProductField("name", event.target.value)}
-            />
-            <TextField
-              label="Urun fiyati"
-              type="number"
-              size="small"
-              value={selectedProduct.base_price || 0}
-              onChange={(event) => updateSelectedProductField("base_price", event.target.value)}
-              helperText="Sahneye eklenen bu urunun ana fiyatini belirler."
-            />
-            <TextField
-              label="Urun resmi"
-              size="small"
-              value={selectedProduct.image_url || ""}
-              onChange={(event) => updateSelectedProductField("image_url", event.target.value)}
-              helperText="public klasorune gore yol: /images/kitchen/base-cabinet.svg"
-            />
-            <TextField
-              label="3D model dosyasi"
-              size="small"
-              value={selectedProduct.model_url || ""}
-              onChange={(event) =>
-                onUpdateProduct(selectedProduct.id, (product) => ({
-                  ...product,
-                  model_url: event.target.value,
-                }))
-              }
-              helperText="public klasorune gore yol: /models/kitchen/base-cabinet-demo.gltf"
-            />
-            <TextField
-              select
-              label="Kategori"
-              size="small"
-              value={selectedProduct.category}
-              onChange={(event) => updateSelectedProductField("category", event.target.value)}
-            >
-              {catalogGroups.map((group) => (
-                <MenuItem key={group.key} value={group.key}>
-                  {group.title}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label="Minimum genislik"
-              type="number"
-              size="small"
-              value={selectedProduct.constraints?.min_width || 0}
-              onChange={(event) => updateSelectedProduct("min_width", event.target.value)}
-            />
-            <TextField
-              label="Maksimum genislik"
-              type="number"
-              size="small"
-              value={selectedProduct.constraints?.max_width || 0}
-              onChange={(event) => updateSelectedProduct("max_width", event.target.value)}
-            />
-            <TextField
-              label="Minimum yukseklik"
-              type="number"
-              size="small"
-              value={selectedProduct.constraints?.min_height || 0}
-              onChange={(event) => updateSelectedProduct("min_height", event.target.value)}
-            />
-            <TextField
-              label="Maksimum yukseklik"
-              type="number"
-              size="small"
-              value={selectedProduct.constraints?.max_height || 0}
-              onChange={(event) => updateSelectedProduct("max_height", event.target.value)}
-            />
-            <Typography variant="caption" color="text.secondary">
-              Bu aralik sahnedeki genislik/yukseklik degistirme ve kose tutamaclari icin sinir olarak kullanilir.
-            </Typography>
+              <Box
+                component="img"
+                src={
+                  selectedProduct.image_url ||
+                  "/images/kitchen/base-cabinet.svg"
+                }
+                alt={selectedProduct.name}
+                sx={{
+                  width: "100%",
+                  height: 160,
+                  objectFit: "cover",
+                  borderRadius: 1,
+                  border: "1px solid #E2E8F0",
+                  bgcolor: "#F8FAFC",
+                }}
+              />
+              <TextField
+                label="Urun adi"
+                size="small"
+                value={selectedProduct.name}
+                onChange={(event) =>
+                  updateSelectedProductField("name", event.target.value)
+                }
+              />
+              <TextField
+                label="Urun fiyati"
+                type="number"
+                size="small"
+                value={selectedProduct.base_price || 0}
+                onChange={(event) =>
+                  updateSelectedProductField("base_price", event.target.value)
+                }
+                helperText="Sahneye eklenen bu urunun ana fiyatini belirler."
+              />
+              <TextField
+                label="Urun resmi"
+                size="small"
+                value={selectedProduct.image_url || ""}
+                onChange={(event) =>
+                  updateSelectedProductField("image_url", event.target.value)
+                }
+                helperText="public klasorune gore yol: /images/kitchen/base-cabinet.svg"
+              />
+              <TextField
+                label="3D model dosyasi"
+                size="small"
+                value={selectedProduct.model_url || ""}
+                onChange={(event) =>
+                  onUpdateProduct(selectedProduct.id, (product) => ({
+                    ...product,
+                    model_url: event.target.value,
+                  }))
+                }
+                helperText="public klasorune gore yol: /models/kitchen/base-cabinet-demo.gltf"
+              />
+              <TextField
+                select
+                label="Kategori"
+                size="small"
+                value={selectedProduct.category}
+                onChange={(event) =>
+                  updateSelectedProductField("category", event.target.value)
+                }
+              >
+                {catalogGroups.map((group) => (
+                  <MenuItem key={group.key} value={group.key}>
+                    {group.title}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                label="Minimum genislik"
+                type="number"
+                size="small"
+                value={selectedProduct.constraints?.min_width || 0}
+                onChange={(event) =>
+                  updateSelectedProduct("min_width", event.target.value)
+                }
+              />
+              <TextField
+                label="Maksimum genislik"
+                type="number"
+                size="small"
+                value={selectedProduct.constraints?.max_width || 0}
+                onChange={(event) =>
+                  updateSelectedProduct("max_width", event.target.value)
+                }
+              />
+              <TextField
+                label="Minimum yukseklik"
+                type="number"
+                size="small"
+                value={selectedProduct.constraints?.min_height || 0}
+                onChange={(event) =>
+                  updateSelectedProduct("min_height", event.target.value)
+                }
+              />
+              <TextField
+                label="Maksimum yukseklik"
+                type="number"
+                size="small"
+                value={selectedProduct.constraints?.max_height || 0}
+                onChange={(event) =>
+                  updateSelectedProduct("max_height", event.target.value)
+                }
+              />
+              <Typography variant="caption" color="text.secondary">
+                Bu aralik sahnedeki genislik/yukseklik degistirme ve kose
+                tutamaclari icin sinir olarak kullanilir.
+              </Typography>
             </Stack>
           </ClickAwayListener>
         )}

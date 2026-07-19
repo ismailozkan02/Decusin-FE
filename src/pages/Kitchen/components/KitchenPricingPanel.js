@@ -1,8 +1,7 @@
-import { Box, Button, Divider, Stack, Typography } from "@mui/material";
-import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
+import { Box, Divider, Typography } from "@mui/material";
 import { money } from "../kitchenUtils";
 
-const KitchenPricingPanel = ({ selectedProduct, selectedLineQuote, onSaveProject }) => (
+const KitchenPricingPanel = ({ selectedProduct, selectedLineQuote }) => (
   <>
     <Divider />
     <Typography variant="h6" sx={{ fontWeight: 800 }}>
@@ -19,16 +18,6 @@ const KitchenPricingPanel = ({ selectedProduct, selectedLineQuote, onSaveProject
         Malzeme dahil satir toplami: {money(selectedLineQuote?.line_total)}
       </Typography>
     </Box>
-    <Stack>
-      <Button
-        variant="contained"
-        startIcon={<SaveOutlinedIcon />}
-        onClick={onSaveProject}
-        sx={{ textTransform: "none", fontWeight: 800 }}
-      >
-        Projeyi kaydet
-      </Button>
-    </Stack>
   </>
 );
 

@@ -268,10 +268,15 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
   const [catalogItems, setCatalogItems] = useState(fallbackCatalog);
   const [materials, setMaterials] = useState(fallbackMaterials);
   const [projects, setProjects] = useState([]);
-  const [selectedTemplate, setSelectedTemplate] = useState("template-l-360-240");
-  const [selectedDoorMaterial, setSelectedDoorMaterial] = useState("mat-door-lake-white");
-  const [selectedGlassMaterial, setSelectedGlassMaterial] = useState("mat-glass-smoked");
-  const [selectedCounterMaterial, setSelectedCounterMaterial] = useState("mat-counter-quartz");
+  const [selectedTemplate, setSelectedTemplate] =
+    useState("template-l-360-240");
+  const [selectedDoorMaterial, setSelectedDoorMaterial] = useState(
+    "mat-door-lake-white",
+  );
+  const [selectedGlassMaterial, setSelectedGlassMaterial] =
+    useState("mat-glass-smoked");
+  const [selectedCounterMaterial, setSelectedCounterMaterial] =
+    useState("mat-counter-quartz");
   const [paletteOpen, setPaletteOpen] = useState(true);
   const [sceneItems, setSceneItems] = useState([
     {
@@ -343,7 +348,15 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
         <Box
           sx={{
             width: isCounter ? 68 : isShelf ? 58 : 44,
-            height: isCounter ? 10 : isShelf ? 8 : isWall ? 50 : isAppliance ? 38 : 56,
+            height: isCounter
+              ? 10
+              : isShelf
+                ? 8
+                : isWall
+                  ? 50
+                  : isAppliance
+                    ? 38
+                    : 56,
             borderRadius: isAppliance ? "50%" : 0.5,
             bgcolor: isCounter
               ? selectedCounter?.color_hex || "#E5E7EB"
@@ -369,7 +382,8 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
     ]).then((results) => {
       if (!mounted) return;
 
-      const [templateResult, catalogResult, materialResult, projectResult] = results;
+      const [templateResult, catalogResult, materialResult, projectResult] =
+        results;
       if (templateResult.status === "fulfilled") {
         setTemplates(templateResult.value?.data || fallbackTemplates);
       }
@@ -383,7 +397,9 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
         setProjects(projectResult.value?.data || []);
       }
       if (results.some((item) => item.status === "rejected")) {
-        setNotice("Backend kapaliysa sorun yok; ekran simdilik mock veriyle calisir.");
+        setNotice(
+          "Backend kapaliysa sorun yok; ekran simdilik mock veriyle calisir.",
+        );
       }
     });
 
@@ -401,7 +417,9 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
       .catch(() => {
         const total = sceneItems.reduce((sum, item) => {
           const product = catalogMap[item.catalog_item_id];
-          return sum + Number(product?.base_price || 0) * Number(item.quantity || 1);
+          return (
+            sum + Number(product?.base_price || 0) * Number(item.quantity || 1)
+          );
         }, 0);
         setQuote({
           currency: "TRY",
@@ -412,10 +430,7 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
           total: total * 1.08,
         });
       });
-  }, [
-    catalogMap,
-    sceneItems,
-  ]);
+  }, [catalogMap, sceneItems]);
 
   const addSceneItem = (product) => {
     const options = {};
@@ -432,7 +447,11 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
     setSceneItems((current) => {
       const nextItem = {
         catalog_item_id: product.id,
-        position: { x: 140 + current.length * 28, y: product.category === "wall_cabinet" ? 145 : 310, z: 0 },
+        position: {
+          x: 140 + current.length * 28,
+          y: product.category === "wall_cabinet" ? 145 : 310,
+          z: 0,
+        },
         rotation: { x: 0, y: 0, z: 0 },
         dimensions: null,
         options,
@@ -473,7 +492,14 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
     setSceneItems((current) =>
       current.map((item, itemIndex) =>
         itemIndex === index
-          ? { ...item, position: { ...item.position, x: Math.max(0, x), y: Math.max(0, y) } }
+          ? {
+              ...item,
+              position: {
+                ...item.position,
+                x: Math.max(0, x),
+                y: Math.max(0, y),
+              },
+            }
           : item,
       ),
     );
@@ -528,7 +554,9 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
 
   const handleSceneDrop = (event) => {
     event.preventDefault();
-    const productId = event.dataTransfer.getData("application/x-kitchen-product");
+    const productId = event.dataTransfer.getData(
+      "application/x-kitchen-product",
+    );
     const product = catalogItems.find((item) => item.id === productId);
     if (!product) return;
 
@@ -545,8 +573,12 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
       const flipsY = resizeState.corner.includes("top");
       const nextWidth = resizeState.startWidth + (flipsX ? -deltaX : deltaX);
       const nextHeight = resizeState.startHeight + (flipsY ? -deltaY : deltaY);
-      const nextX = flipsX ? resizeState.startItemX + deltaX : resizeState.startItemX;
-      const nextY = flipsY ? resizeState.startItemY + deltaY : resizeState.startItemY;
+      const nextX = flipsX
+        ? resizeState.startItemX + deltaX
+        : resizeState.startItemX;
+      const nextY = flipsY
+        ? resizeState.startItemY + deltaY
+        : resizeState.startItemY;
 
       resizeSceneItem(resizeState.index, {
         x: nextX,
@@ -559,7 +591,11 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
 
     if (!dragState) return;
     const point = scenePointFromEvent(event);
-    updateSceneItemPosition(dragState.index, point.x - dragState.offsetX, point.y - dragState.offsetY);
+    updateSceneItemPosition(
+      dragState.index,
+      point.x - dragState.offsetX,
+      point.y - dragState.offsetY,
+    );
   };
 
   const handleSceneMouseUp = () => {
@@ -607,7 +643,9 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
   };
 
   const removeSceneItem = (index) => {
-    setSceneItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    setSceneItems((current) =>
+      current.filter((_, itemIndex) => itemIndex !== index),
+    );
     setSelectedSceneIndex((current) => {
       if (current === null) return null;
       if (current === index) return null;
@@ -619,7 +657,9 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
   const changeQuantity = (index, quantity) => {
     setSceneItems((current) =>
       current.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, quantity: Math.max(Number(quantity) || 1, 1) } : item,
+        itemIndex === index
+          ? { ...item, quantity: Math.max(Number(quantity) || 1, 1) }
+          : item,
       ),
     );
   };
@@ -677,9 +717,15 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
     })
       .then((project) => {
         setProjects((current) => [project, ...current]);
-        setNotice("Proje kaydedildi. MySQL baglaninca kalici tabloya yazilacak.");
+        setNotice(
+          "Proje kaydedildi. MySQL baglaninca kalici tabloya yazilacak.",
+        );
       })
-      .catch(() => setNotice("Backend ulasilamadi; proje kaydi MySQL sonrasi aktif olacak."));
+      .catch(() =>
+        setNotice(
+          "Backend ulasilamadi; proje kaydi MySQL sonrasi aktif olacak.",
+        ),
+      );
   };
 
   const selectedSceneItem =
@@ -712,7 +758,11 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
       }}
     >
       <Stack spacing={2}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 900 }}>
               Urun Paleti
@@ -726,7 +776,12 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
           </IconButton>
         </Stack>
 
-        <Accordion defaultExpanded disableGutters elevation={0} sx={{ border: "1px solid #E2E8F0" }}>
+        <Accordion
+          defaultExpanded
+          disableGutters
+          elevation={0}
+          sx={{ border: "1px solid #E2E8F0" }}
+        >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography sx={{ fontWeight: 900 }}>Hazir Sablonlar</Typography>
           </AccordionSummary>
@@ -741,7 +796,9 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
                     elevation={0}
                     onClick={() => applyTemplate(template.id)}
                     sx={{
-                      border: active ? "2px solid #1976D2" : "1px solid #E5E7EB",
+                      border: active
+                        ? "2px solid #1976D2"
+                        : "1px solid #E5E7EB",
                       borderRadius: 1,
                       p: 1.2,
                       bgcolor: active ? "#EEF6FF" : "#FFFFFF",
@@ -785,7 +842,9 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
                         )}
                       </Box>
                       <Box>
-                        <Typography sx={{ fontWeight: 900 }}>{template.name}</Typography>
+                        <Typography sx={{ fontWeight: 900 }}>
+                          {template.name}
+                        </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {template.type || "custom"}
                         </Typography>
@@ -799,11 +858,19 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
         </Accordion>
 
         {catalogGroups.map((group) => {
-          const groupItems = catalogItems.filter((item) => item.category === group.key);
+          const groupItems = catalogItems.filter(
+            (item) => item.category === group.key,
+          );
           if (!groupItems.length) return null;
 
           return (
-            <Accordion key={group.key} defaultExpanded={group.key === "base_cabinet"} disableGutters elevation={0} sx={{ border: "1px solid #E2E8F0" }}>
+            <Accordion
+              key={group.key}
+              defaultExpanded={group.key === "base_cabinet"}
+              disableGutters
+              elevation={0}
+              sx={{ border: "1px solid #E2E8F0" }}
+            >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography sx={{ fontWeight: 900 }}>{group.title}</Typography>
               </AccordionSummary>
@@ -813,7 +880,9 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
                     <Grid item xs={6} key={product.id}>
                       <Paper
                         draggable
-                        onDragStart={(event) => handlePaletteDragStart(event, product)}
+                        onDragStart={(event) =>
+                          handlePaletteDragStart(event, product)
+                        }
                         elevation={0}
                         sx={{
                           border: "1px solid #E5E7EB",
@@ -828,10 +897,16 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
                         <Stack spacing={0.8} alignItems="center">
                           {productPreview(product)}
                           <Box sx={{ width: "100%" }}>
-                            <Typography sx={{ fontWeight: 900, fontSize: 12 }} noWrap>
+                            <Typography
+                              sx={{ fontWeight: 900, fontSize: 12 }}
+                              noWrap
+                            >
                               {product.name}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               {money(product.base_price)}
                             </Typography>
                           </Box>
@@ -858,341 +933,418 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
           onClick={() => setPaletteOpen(true)}
           sx={{ textTransform: "none", fontWeight: 900 }}
         >
-          Urun Paletini Ac
+          Ürün Paletini Ac
         </Button>
-        <Chip label={templates.find((item) => item.id === selectedTemplate)?.name || "Ozel sahne"} />
+        <Chip
+          label={
+            templates.find((item) => item.id === selectedTemplate)?.name ||
+            "Ozel sahne"
+          }
+        />
       </Stack>
       <Grid container spacing={2.5}>
-      <Grid item xs={12} lg={9}>
-        <Paper
-          elevation={0}
-          sx={{
-            border: "1px solid #E2E8F0",
-            borderRadius: 2,
-            overflow: "hidden",
-            bgcolor: "#F8FAFC",
-          }}
-        >
-          <Box
-            ref={sceneRef}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={handleSceneDrop}
-            onMouseMove={handleSceneMouseMove}
-            onMouseUp={handleSceneMouseUp}
-            onMouseLeave={handleSceneMouseUp}
-            onMouseDown={handleSceneBackgroundMouseDown}
+        <Grid item xs={12} lg={9}>
+          <Paper
+            elevation={0}
             sx={{
-              minHeight: 520,
-              position: "relative",
-              background:
-                "linear-gradient(180deg, #F8FAFC 0%, #EEF2F7 58%, #D9E0EA 58%, #D9E0EA 100%)",
-              perspective: "1000px",
+              border: "1px solid #E2E8F0",
+              borderRadius: 2,
               overflow: "hidden",
+              bgcolor: "#F8FAFC",
             }}
           >
             <Box
-              sx={{
-                position: "absolute",
-                left: "8%",
-                right: "8%",
-                bottom: 78,
-                height: 220,
-                borderLeft: "10px solid #CBD5E1",
-                borderBottom: "12px solid #B7C2D0",
-                transform: "skewY(-1deg)",
-              }}
-            />
-            <Box
-              sx={{
-                position: "absolute",
-                left: "11%",
-                right: "11%",
-                bottom: 68,
-                height: 18,
-                bgcolor: selectedCounter?.color_hex || "#E5E7EB",
-                borderRadius: 0.5,
-                boxShadow: "0 12px 24px rgba(15,23,42,0.16)",
-              }}
-            />
-            <Typography
-              sx={{
-                position: "absolute",
-                left: 18,
-                top: 14,
-                color: "#64748B",
-                fontSize: 12,
-                fontWeight: 700,
-                pointerEvents: "none",
-              }}
-            >
-              Paletten surukle, sahneye birak. Objeleri tutup istedigin yere tasi.
-            </Typography>
-            <Box
+              ref={sceneRef}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={handleSceneDrop}
+              onMouseMove={handleSceneMouseMove}
+              onMouseUp={handleSceneMouseUp}
+              onMouseLeave={handleSceneMouseUp}
               onMouseDown={handleSceneBackgroundMouseDown}
               sx={{
-                position: "absolute",
-                inset: 0,
+                minHeight: 520,
+                position: "relative",
+                background:
+                  "linear-gradient(180deg, #F8FAFC 0%, #EEF2F7 58%, #D9E0EA 58%, #D9E0EA 100%)",
+                perspective: "1000px",
+                overflow: "hidden",
               }}
             >
-              {sceneItems.map((item, index) => {
-                const product = catalogMap[item.catalog_item_id] || {};
-                const isWall = product.category === "wall_cabinet";
-                const isCounter = product.category === "countertop";
-                const isShelf = product.category === "shelf";
-                const itemDimensions = {
-                  ...(product.dimensions || {}),
-                  ...(item.dimensions || {}),
-                };
-                const itemDoor = materialMap[item.options?.door_material_id] || selectedDoor;
-                const itemGlass = materialMap[item.options?.glass_material_id] || selectedGlass;
-                const itemCounter =
-                  materialMap[item.options?.countertop_material_id] || selectedCounter;
-                const width = Math.min(Math.max(Number(itemDimensions.width || 60), 34), 150);
-                const height = Math.min(
-                  Math.max(Number(itemDimensions.height || (isWall ? 72 : isCounter ? 4 : isShelf ? 3 : 72)), 10),
-                  180,
-                );
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: "8%",
+                  right: "8%",
+                  bottom: 78,
+                  height: 220,
+                  borderLeft: "10px solid #CBD5E1",
+                  borderBottom: "12px solid #B7C2D0",
+                  transform: "skewY(-1deg)",
+                }}
+              />
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: "11%",
+                  right: "11%",
+                  bottom: 68,
+                  height: 18,
+                  bgcolor: selectedCounter?.color_hex || "#E5E7EB",
+                  borderRadius: 0.5,
+                  boxShadow: "0 12px 24px rgba(15,23,42,0.16)",
+                }}
+              />
+              <Typography
+                sx={{
+                  position: "absolute",
+                  left: 18,
+                  top: 14,
+                  color: "#64748B",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  pointerEvents: "none",
+                }}
+              >
+                Paletten surukle, sahneye birak. Objeleri tutup istedigin yere
+                tasi.
+              </Typography>
+              <Box
+                onMouseDown={handleSceneBackgroundMouseDown}
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                }}
+              >
+                {sceneItems.map((item, index) => {
+                  const product = catalogMap[item.catalog_item_id] || {};
+                  const isWall = product.category === "wall_cabinet";
+                  const isCounter = product.category === "countertop";
+                  const isShelf = product.category === "shelf";
+                  const itemDimensions = {
+                    ...(product.dimensions || {}),
+                    ...(item.dimensions || {}),
+                  };
+                  const itemDoor =
+                    materialMap[item.options?.door_material_id] || selectedDoor;
+                  const itemGlass =
+                    materialMap[item.options?.glass_material_id] ||
+                    selectedGlass;
+                  const itemCounter =
+                    materialMap[item.options?.countertop_material_id] ||
+                    selectedCounter;
+                  const width = Math.min(
+                    Math.max(Number(itemDimensions.width || 60), 34),
+                    150,
+                  );
+                  const height = Math.min(
+                    Math.max(
+                      Number(
+                        itemDimensions.height ||
+                          (isWall ? 72 : isCounter ? 4 : isShelf ? 3 : 72),
+                      ),
+                      10,
+                    ),
+                    180,
+                  );
 
-                return (
-                  <Box
-                    key={`${item.catalog_item_id}-${index}`}
-                    onMouseDown={(event) => handleSceneItemMouseDown(event, index)}
-                    sx={{
-                      width,
-                      height,
-                      position: "absolute",
-                      left: Number(item.position?.x || 0),
-                      top: Number(item.position?.y || 0),
-                      border: "1px solid rgba(15,23,42,0.18)",
-                      bgcolor: isCounter
-                        ? itemCounter?.color_hex
-                        : isShelf
-                          ? "#A16207"
-                          : itemDoor?.color_hex,
-                      boxShadow: "10px 14px 22px rgba(15,23,42,0.18)",
-                      transform: isShelf ? "none" : "rotateX(2deg) rotateY(-12deg)",
-                      display: "grid",
-                      placeItems: "center",
-                      cursor: dragState?.index === index ? "grabbing" : "grab",
-                      userSelect: "none",
-                      zIndex: dragState?.index === index ? 5 : isWall ? 3 : 2,
-                      outline:
-                        selectedSceneIndex === index
-                          ? "3px solid #1976D2"
-                          : "1px solid transparent",
-                      outlineOffset: 3,
-                    }}
-                  >
-                    {!isCounter && !isShelf && (
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          inset: 8,
-                          border: "1px solid rgba(15,23,42,0.18)",
-                          bgcolor:
-                            isWall && itemGlass
-                              ? `${itemGlass.color_hex}66`
-                              : "rgba(255,255,255,0.18)",
-                        }}
-                      />
-                    )}
-                    <Typography sx={{ fontSize: 11, fontWeight: 800, zIndex: 1 }}>
-                      {isShelf ? "RAF" : `x${item.quantity}`}
-                    </Typography>
-                    {selectedSceneIndex === index &&
-                      [
-                        ["top-left", -7, -7, "nwse-resize"],
-                        ["top-right", -7, width - 7, "nesw-resize"],
-                        ["bottom-left", height - 7, -7, "nesw-resize"],
-                        ["bottom-right", height - 7, width - 7, "nwse-resize"],
-                      ].map(([corner, top, left, cursor]) => (
+                  return (
+                    <Box
+                      key={`${item.catalog_item_id}-${index}`}
+                      onMouseDown={(event) =>
+                        handleSceneItemMouseDown(event, index)
+                      }
+                      sx={{
+                        width,
+                        height,
+                        position: "absolute",
+                        left: Number(item.position?.x || 0),
+                        top: Number(item.position?.y || 0),
+                        border: "1px solid rgba(15,23,42,0.18)",
+                        bgcolor: isCounter
+                          ? itemCounter?.color_hex
+                          : isShelf
+                            ? "#A16207"
+                            : itemDoor?.color_hex,
+                        boxShadow: "10px 14px 22px rgba(15,23,42,0.18)",
+                        transform: isShelf
+                          ? "none"
+                          : "rotateX(2deg) rotateY(-12deg)",
+                        display: "grid",
+                        placeItems: "center",
+                        cursor:
+                          dragState?.index === index ? "grabbing" : "grab",
+                        userSelect: "none",
+                        zIndex: dragState?.index === index ? 5 : isWall ? 3 : 2,
+                        outline:
+                          selectedSceneIndex === index
+                            ? "3px solid #1976D2"
+                            : "1px solid transparent",
+                        outlineOffset: 3,
+                      }}
+                    >
+                      {!isCounter && !isShelf && (
                         <Box
-                          key={corner}
-                          onMouseDown={(event) =>
-                            handleResizeMouseDown(event, index, corner, width, height)
-                          }
                           sx={{
                             position: "absolute",
-                            top,
-                            left,
-                            width: 14,
-                            height: 14,
-                            borderRadius: "50%",
-                            bgcolor: "#1976D2",
-                            border: "2px solid #FFFFFF",
-                            boxShadow: "0 2px 8px rgba(15,23,42,0.28)",
-                            cursor,
-                            zIndex: 8,
-                            "&:before": {
-                              content: '""',
-                              position: "absolute",
-                              inset: 3,
-                              borderTop: "2px solid #FFFFFF",
-                              borderLeft: "2px solid #FFFFFF",
-                              transform:
-                                corner === "top-left"
-                                  ? "rotate(0deg)"
-                                  : corner === "top-right"
-                                    ? "rotate(90deg)"
-                                    : corner === "bottom-right"
-                                      ? "rotate(180deg)"
-                                      : "rotate(270deg)",
-                            },
+                            inset: 8,
+                            border: "1px solid rgba(15,23,42,0.18)",
+                            bgcolor:
+                              isWall && itemGlass
+                                ? `${itemGlass.color_hex}66`
+                                : "rgba(255,255,255,0.18)",
                           }}
                         />
-                      ))}
-                  </Box>
-                );
-              })}
+                      )}
+                      <Typography
+                        sx={{ fontSize: 11, fontWeight: 800, zIndex: 1 }}
+                      >
+                        {isShelf ? "RAF" : `x${item.quantity}`}
+                      </Typography>
+                      {selectedSceneIndex === index &&
+                        [
+                          ["top-left", -7, -7, "nwse-resize"],
+                          ["top-right", -7, width - 7, "nesw-resize"],
+                          ["bottom-left", height - 7, -7, "nesw-resize"],
+                          [
+                            "bottom-right",
+                            height - 7,
+                            width - 7,
+                            "nwse-resize",
+                          ],
+                        ].map(([corner, top, left, cursor]) => (
+                          <Box
+                            key={corner}
+                            onMouseDown={(event) =>
+                              handleResizeMouseDown(
+                                event,
+                                index,
+                                corner,
+                                width,
+                                height,
+                              )
+                            }
+                            sx={{
+                              position: "absolute",
+                              top,
+                              left,
+                              width: 14,
+                              height: 14,
+                              borderRadius: "50%",
+                              bgcolor: "#1976D2",
+                              border: "2px solid #FFFFFF",
+                              boxShadow: "0 2px 8px rgba(15,23,42,0.28)",
+                              cursor,
+                              zIndex: 8,
+                              "&:before": {
+                                content: '""',
+                                position: "absolute",
+                                inset: 3,
+                                borderTop: "2px solid #FFFFFF",
+                                borderLeft: "2px solid #FFFFFF",
+                                transform:
+                                  corner === "top-left"
+                                    ? "rotate(0deg)"
+                                    : corner === "top-right"
+                                      ? "rotate(90deg)"
+                                      : corner === "bottom-right"
+                                        ? "rotate(180deg)"
+                                        : "rotate(270deg)",
+                              },
+                            }}
+                          />
+                        ))}
+                    </Box>
+                  );
+                })}
+              </Box>
             </Box>
-          </Box>
-        </Paper>
-      </Grid>
+          </Paper>
+        </Grid>
 
-      <Grid item xs={12} lg={3}>
-        <Paper elevation={0} sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}>
-          <Stack spacing={2}>
-            <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              Secili item
-            </Typography>
-            {selectedSceneItem && selectedProduct ? (
-              <>
-                <Stack spacing={0.4}>
-                  <Typography sx={{ fontWeight: 900 }}>{selectedProduct.name}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {categoryLabel(selectedProduct.category)} - sahnedeki #{selectedSceneIndex + 1}
-                  </Typography>
-                </Stack>
-
-                <Grid container spacing={1}>
-                  <Grid item xs={6}>
-                    <TextField
-                      label="Genislik"
-                      type="number"
-                      size="small"
-                      value={selectedDimensions.width}
-                      onChange={(event) =>
-                        updateSceneItemDimensions(selectedSceneIndex, "width", event.target.value)
-                      }
-                    />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <TextField
-                      label="Yukseklik"
-                      type="number"
-                      size="small"
-                      value={selectedDimensions.height}
-                      onChange={(event) =>
-                        updateSceneItemDimensions(selectedSceneIndex, "height", event.target.value)
-                      }
-                    />
-                  </Grid>
-                </Grid>
-
-                {["base_cabinet", "wall_cabinet"].includes(selectedProduct.category) && (
-                  <TextField
-                    select
-                    label="Bu item kapagi"
-                    value={selectedOptions.door_material_id || selectedDoorMaterial}
-                    onChange={(event) =>
-                      updateSceneItemOption(selectedSceneIndex, "door_material_id", event.target.value)
-                    }
-                    size="small"
-                  >
-                    {materials
-                      .filter((item) => item.type === "door")
-                      .map((material) => (
-                        <MenuItem key={material.id} value={material.id}>
-                          {material.name}
-                        </MenuItem>
-                      ))}
-                  </TextField>
-                )}
-
-                {selectedProduct.category === "wall_cabinet" && (
-                  <TextField
-                    select
-                    label="Bu item cami"
-                    value={selectedOptions.glass_material_id || selectedGlassMaterial}
-                    onChange={(event) =>
-                      updateSceneItemOption(selectedSceneIndex, "glass_material_id", event.target.value)
-                    }
-                    size="small"
-                  >
-                    {materials
-                      .filter((item) => item.type === "glass")
-                      .map((material) => (
-                        <MenuItem key={material.id} value={material.id}>
-                          {material.name}
-                        </MenuItem>
-                      ))}
-                  </TextField>
-                )}
-
-                {selectedProduct.category === "countertop" && (
-                  <TextField
-                    select
-                    label="Bu tezgah malzemesi"
-                    value={selectedOptions.countertop_material_id || selectedCounterMaterial}
-                    onChange={(event) =>
-                      updateSceneItemOption(selectedSceneIndex, "countertop_material_id", event.target.value)
-                    }
-                    size="small"
-                  >
-                    {materials
-                      .filter((item) => item.type === "countertop")
-                      .map((material) => (
-                        <MenuItem key={material.id} value={material.id}>
-                          {material.name}
-                        </MenuItem>
-                      ))}
-                  </TextField>
-                )}
-
-                <Button
-                  color="error"
-                  variant="outlined"
-                  startIcon={<DeleteOutlineIcon />}
-                  onClick={() => removeSceneItem(selectedSceneIndex)}
-                  sx={{ textTransform: "none", fontWeight: 800 }}
-                >
-                  Secili itemi sil
-                </Button>
-              </>
-            ) : (
-              <Typography color="text.secondary">
-                Ozellestirmek icin sahneden bir item sec.
+        <Grid item xs={12} lg={3}>
+          <Paper
+            elevation={0}
+            sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}
+          >
+            <Stack spacing={2}>
+              <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                Secili item
               </Typography>
-            )}
-            <Divider />
-            <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              Fiyat
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 900 }}>
-              {money(quote?.total)}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Ara toplam {money(quote?.subtotal)} + montaj {money(quote?.installation)}
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<SaveOutlinedIcon />}
-              onClick={saveProject}
-              sx={{ textTransform: "none", fontWeight: 800 }}
-            >
-              Projeyi kaydet
-            </Button>
-          </Stack>
-        </Paper>
+              {selectedSceneItem && selectedProduct ? (
+                <>
+                  <Stack spacing={0.4}>
+                    <Typography sx={{ fontWeight: 900 }}>
+                      {selectedProduct.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {categoryLabel(selectedProduct.category)} - sahnedeki #
+                      {selectedSceneIndex + 1}
+                    </Typography>
+                  </Stack>
+
+                  <Grid container spacing={1}>
+                    <Grid item xs={6}>
+                      <TextField
+                        label="Genislik"
+                        type="number"
+                        size="small"
+                        value={selectedDimensions.width}
+                        onChange={(event) =>
+                          updateSceneItemDimensions(
+                            selectedSceneIndex,
+                            "width",
+                            event.target.value,
+                          )
+                        }
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        label="Yukseklik"
+                        type="number"
+                        size="small"
+                        value={selectedDimensions.height}
+                        onChange={(event) =>
+                          updateSceneItemDimensions(
+                            selectedSceneIndex,
+                            "height",
+                            event.target.value,
+                          )
+                        }
+                      />
+                    </Grid>
+                  </Grid>
+
+                  {["base_cabinet", "wall_cabinet"].includes(
+                    selectedProduct.category,
+                  ) && (
+                    <TextField
+                      select
+                      label="Bu item kapagi"
+                      value={
+                        selectedOptions.door_material_id || selectedDoorMaterial
+                      }
+                      onChange={(event) =>
+                        updateSceneItemOption(
+                          selectedSceneIndex,
+                          "door_material_id",
+                          event.target.value,
+                        )
+                      }
+                      size="small"
+                    >
+                      {materials
+                        .filter((item) => item.type === "door")
+                        .map((material) => (
+                          <MenuItem key={material.id} value={material.id}>
+                            {material.name}
+                          </MenuItem>
+                        ))}
+                    </TextField>
+                  )}
+
+                  {selectedProduct.category === "wall_cabinet" && (
+                    <TextField
+                      select
+                      label="Bu item cami"
+                      value={
+                        selectedOptions.glass_material_id ||
+                        selectedGlassMaterial
+                      }
+                      onChange={(event) =>
+                        updateSceneItemOption(
+                          selectedSceneIndex,
+                          "glass_material_id",
+                          event.target.value,
+                        )
+                      }
+                      size="small"
+                    >
+                      {materials
+                        .filter((item) => item.type === "glass")
+                        .map((material) => (
+                          <MenuItem key={material.id} value={material.id}>
+                            {material.name}
+                          </MenuItem>
+                        ))}
+                    </TextField>
+                  )}
+
+                  {selectedProduct.category === "countertop" && (
+                    <TextField
+                      select
+                      label="Bu tezgah malzemesi"
+                      value={
+                        selectedOptions.countertop_material_id ||
+                        selectedCounterMaterial
+                      }
+                      onChange={(event) =>
+                        updateSceneItemOption(
+                          selectedSceneIndex,
+                          "countertop_material_id",
+                          event.target.value,
+                        )
+                      }
+                      size="small"
+                    >
+                      {materials
+                        .filter((item) => item.type === "countertop")
+                        .map((material) => (
+                          <MenuItem key={material.id} value={material.id}>
+                            {material.name}
+                          </MenuItem>
+                        ))}
+                    </TextField>
+                  )}
+
+                  <Button
+                    color="error"
+                    variant="outlined"
+                    startIcon={<DeleteOutlineIcon />}
+                    onClick={() => removeSceneItem(selectedSceneIndex)}
+                    sx={{ textTransform: "none", fontWeight: 800 }}
+                  >
+                    Secili itemi sil
+                  </Button>
+                </>
+              ) : (
+                <Typography color="text.secondary">
+                  Ozellestirmek icin sahneden bir item sec.
+                </Typography>
+              )}
+              <Divider />
+              <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                Fiyat
+              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 900 }}>
+                {money(quote?.total)}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Ara toplam {money(quote?.subtotal)} + montaj{" "}
+                {money(quote?.installation)}
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<SaveOutlinedIcon />}
+                onClick={saveProject}
+                sx={{ textTransform: "none", fontWeight: 800 }}
+              >
+                Projeyi kaydet
+              </Button>
+            </Stack>
+          </Paper>
+        </Grid>
       </Grid>
-    </Grid>
     </>
   );
 
   const renderCatalog = () => (
     <Grid container spacing={2.5}>
       <Grid item xs={12} md={7}>
-        <Paper elevation={0} sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}>
+        <Paper
+          elevation={0}
+          sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}
+        >
           <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
             Suruklenecek urunler
           </Typography>
@@ -1206,7 +1358,9 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
                 sx={{ border: "1px solid #E5E7EB", borderRadius: 1, p: 1.5 }}
               >
                 <Box>
-                  <Typography sx={{ fontWeight: 800 }}>{product.name}</Typography>
+                  <Typography sx={{ fontWeight: 800 }}>
+                    {product.name}
+                  </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {product.sku} - {categoryLabel(product.category)}
                   </Typography>
@@ -1218,7 +1372,10 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
         </Paper>
       </Grid>
       <Grid item xs={12} md={5}>
-        <Paper elevation={0} sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}>
+        <Paper
+          elevation={0}
+          sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}
+        >
           <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
             Malzeme ve renkler
           </Typography>
@@ -1242,7 +1399,9 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
                     }}
                   />
                   <Box>
-                    <Typography sx={{ fontWeight: 800 }}>{material.name}</Typography>
+                    <Typography sx={{ fontWeight: 800 }}>
+                      {material.name}
+                    </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {material.type}
                     </Typography>
@@ -1258,7 +1417,10 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
   );
 
   const renderPricing = () => (
-    <Paper elevation={0} sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}>
+    <Paper
+      elevation={0}
+      sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}
+    >
       <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
         Fiyat motoru taslagi
       </Typography>
@@ -1266,19 +1428,29 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
         {sceneItems.map((item, index) => {
           const product = catalogMap[item.catalog_item_id] || {};
           return (
-            <Grid item xs={12} md={6} key={`${item.catalog_item_id}-price-${index}`}>
+            <Grid
+              item
+              xs={12}
+              md={6}
+              key={`${item.catalog_item_id}-price-${index}`}
+            >
               <Stack
                 spacing={1.2}
                 sx={{ border: "1px solid #E5E7EB", borderRadius: 1, p: 1.5 }}
               >
                 <Stack direction="row" justifyContent="space-between">
                   <Box>
-                    <Typography sx={{ fontWeight: 800 }}>{product.name}</Typography>
+                    <Typography sx={{ fontWeight: 800 }}>
+                      {product.name}
+                    </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Baz fiyat {money(product.base_price)}
                     </Typography>
                   </Box>
-                  <IconButton size="small" onClick={() => removeSceneItem(index)}>
+                  <IconButton
+                    size="small"
+                    onClick={() => removeSceneItem(index)}
+                  >
                     <DeleteOutlineIcon fontSize="small" />
                   </IconButton>
                 </Stack>
@@ -1287,7 +1459,9 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
                   type="number"
                   size="small"
                   value={item.quantity}
-                  onChange={(event) => changeQuantity(index, event.target.value)}
+                  onChange={(event) =>
+                    changeQuantity(index, event.target.value)
+                  }
                 />
               </Stack>
             </Grid>
@@ -1307,7 +1481,10 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
   );
 
   const renderProjects = () => (
-    <Paper elevation={0} sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}>
+    <Paper
+      elevation={0}
+      sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}
+    >
       <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
         Kayitli projeler
       </Typography>
@@ -1324,7 +1501,8 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
               <Box>
                 <Typography sx={{ fontWeight: 800 }}>{project.name}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {project.customer_name || "Musteri yok"} - {project.items?.length || 0} kalem
+                  {project.customer_name || "Musteri yok"} -{" "}
+                  {project.items?.length || 0} kalem
                 </Typography>
               </Box>
               <Chip label={project.template_id || "ozel"} />
@@ -1340,67 +1518,72 @@ const KitchenStudio = ({ initialTab = "designer" }) => {
   );
 
   return (
-
-      <Stack spacing={2.5} sx={{ p: { xs: 2, md: 3 } }}>
-        <Paper elevation={0} sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}>
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            justifyContent="space-between"
-            alignItems={{ xs: "flex-start", md: "center" }}
-            spacing={2}
-          >
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <Box
-                sx={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 1,
-                  display: "grid",
-                  placeItems: "center",
-                  bgcolor: "#0F766E",
-                  color: "#FFFFFF",
-                }}
-              >
-                <ViewInArOutlinedIcon />
-              </Box>
-              <Box>
-                <Typography variant="h5" sx={{ fontWeight: 900 }}>
-                  3D Mutfak Tasarim Sistemi
-                </Typography>
-                <Typography color="text.secondary">
-                  Sahne, urun katalogu, malzeme secimi ve fiyat endpointleri hazir.
-                </Typography>
-              </Box>
-            </Stack>
+    <Stack spacing={2.5} sx={{ p: { xs: 2, md: 3 } }}>
+      <Paper
+        elevation={0}
+        sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}
+      >
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", md: "center" }}
+          spacing={2}
+        >
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 1,
+                display: "grid",
+                placeItems: "center",
+                bgcolor: "#0F766E",
+                color: "#FFFFFF",
+              }}
+            >
+              <ViewInArOutlinedIcon />
+            </Box>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                3D Mutfak Tasarim Sistemi
+              </Typography>
+              <Typography color="text.secondary">
+                Sahne, urun katalogu, malzeme secimi ve fiyat endpointleri
+                hazir.
+              </Typography>
+            </Box>
           </Stack>
-          {notice && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              {notice}
-            </Alert>
-          )}
-        </Paper>
+        </Stack>
+        {notice && (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            {notice}
+          </Alert>
+        )}
+      </Paper>
 
-        <Paper elevation={0} sx={{ border: "1px solid #E2E8F0", borderRadius: 2 }}>
-          <Tabs
-            value={tab}
-            onChange={(_, value) => setTab(value)}
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{ px: 1 }}
-          >
-            <Tab label="Tasarim sahnesi" />
-            <Tab label="Urunler & malzemeler" />
-            <Tab label="Fiyatlandirma" />
-            <Tab label="Projeler" />
-          </Tabs>
-        </Paper>
+      <Paper
+        elevation={0}
+        sx={{ border: "1px solid #E2E8F0", borderRadius: 2 }}
+      >
+        <Tabs
+          value={tab}
+          onChange={(_, value) => setTab(value)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ px: 1 }}
+        >
+          <Tab label="Tasarim sahnesi" />
+          <Tab label="Urunler & malzemeler" />
+          <Tab label="Fiyatlandirma" />
+          <Tab label="Projeler" />
+        </Tabs>
+      </Paper>
 
-        {tab === 0 && renderDesigner()}
-        {tab === 1 && renderCatalog()}
-        {tab === 2 && renderPricing()}
-        {tab === 3 && renderProjects()}
-      </Stack>
-
+      {tab === 0 && renderDesigner()}
+      {tab === 1 && renderCatalog()}
+      {tab === 2 && renderPricing()}
+      {tab === 3 && renderProjects()}
+    </Stack>
   );
 };
 

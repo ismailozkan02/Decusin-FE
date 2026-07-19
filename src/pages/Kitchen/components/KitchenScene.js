@@ -1,7 +1,9 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Box, IconButton, Paper, Stack } from "@mui/material";
+import { Box, Button, IconButton, Paper, Stack } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Environment, useGLTF } from "@react-three/drei";
 import { Box3, Vector3 } from "three";
@@ -117,8 +119,10 @@ const KitchenScene = ({
   onBackgroundMouseDown,
   onSceneItemMouseDown,
   onResizeMouseDown,
+  onOpenItemSettings,
   onCopyItem,
   onDeleteItem,
+  onSaveProject,
 }) => {
   const wrapperRef = useRef(null);
   const [sceneBox, setSceneBox] = useState({ width: 0, top: 0 });
@@ -166,9 +170,10 @@ const KitchenScene = ({
       borderRadius: 2.5,
       overflow: "visible",
       bgcolor: "#DCEEFF",
-      boxShadow: "0 18px 45px rgba(15,23,42,0.08)",
+      boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
       display: "flex",
       justifyContent: "center",
+      position: "relative",
       p: { xs: 1, md: 2 },
       background: "linear-gradient(135deg, #E8F4FF 0%, #D8EBFF 100%)",
     }}
@@ -320,6 +325,24 @@ const KitchenScene = ({
                       onMouseDown={(event) => event.stopPropagation()}
                       onClick={(event) => {
                         event.stopPropagation();
+                        onOpenItemSettings(index);
+                      }}
+                      sx={{
+                        width: 22,
+                        height: 22,
+                        color: "#0F766E",
+                        borderRadius: "50%",
+                        "& .MuiSvgIcon-root": { fontSize: 15 },
+                        "&:hover": { bgcolor: "#ECFDF5", transform: "translateY(-1px)" },
+                      }}
+                    >
+                      <SettingsOutlinedIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onMouseDown={(event) => event.stopPropagation()}
+                      onClick={(event) => {
+                        event.stopPropagation();
                         onCopyItem(index);
                       }}
                       sx={{
@@ -405,6 +428,25 @@ const KitchenScene = ({
         })}
       </Box>
     </Box>
+    <Button
+      variant="contained"
+      startIcon={<SaveOutlinedIcon />}
+      onClick={onSaveProject}
+      disabled={!sceneItems.length}
+      sx={{
+        position: "absolute",
+        right: { xs: 12, md: 20 },
+        bottom: { xs: 12, md: 20 },
+        textTransform: "none",
+        fontWeight: 900,
+        borderRadius: 1.5,
+        px: 2.2,
+        py: 1,
+        boxShadow: "0 14px 28px rgba(25,118,210,0.28)",
+      }}
+    >
+      Projeyi Kaydet
+    </Button>
   </Paper>
   );
 };

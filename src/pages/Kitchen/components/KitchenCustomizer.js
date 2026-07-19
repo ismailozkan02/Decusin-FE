@@ -36,7 +36,6 @@ const KitchenCustomizer = ({
   onRotateItem,
   onRemoveItem,
   selectedLineQuote,
-  onSaveProject,
 }) => (
   <Drawer
     anchor="right"
@@ -238,7 +237,6 @@ const KitchenCustomizer = ({
       <KitchenPricingPanel
         selectedProduct={selectedProduct}
         selectedLineQuote={selectedLineQuote}
-        onSaveProject={onSaveProject}
       />
       </Stack>
     </ClickAwayListener>
