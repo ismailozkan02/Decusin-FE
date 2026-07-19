@@ -2,6 +2,9 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Button, IconButton, Paper, Stack } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import OpenInFullOutlinedIcon from "@mui/icons-material/OpenInFullOutlined";
+import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
+import RestartAltOutlinedIcon from "@mui/icons-material/RestartAltOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Environment, useGLTF } from "@react-three/drei";
@@ -173,7 +176,10 @@ const KitchenScene = ({
   onResizeMouseDown,
   onCopyItem,
   onDeleteItem,
+  onNewProject,
   onSaveProject,
+  onExportPdf,
+  onToggleFullscreen,
 }) => {
   const wrapperRef = useRef(null);
   const [sceneBox, setSceneBox] = useState({ width: 0, top: 0 });
@@ -248,6 +254,15 @@ const KitchenScene = ({
           overflow: "visible",
           border: "1px dashed rgba(15,23,42,0.18)",
           borderRadius: 1.5,
+          "&:fullscreen": {
+            width: "100vw",
+            height: "100vh",
+            maxWidth: "100vw",
+            minWidth: "100vw",
+            borderRadius: 0,
+            border: "none",
+            background: "#FFFFFF",
+          },
         }}
       >
         <Box
@@ -377,6 +392,7 @@ const KitchenScene = ({
                 {selected && (
                   <>
                     <Stack
+                      data-kitchen-scene-controls="true"
                       direction="row"
                       spacing={0.25}
                       sx={{
@@ -446,6 +462,7 @@ const KitchenScene = ({
                     ].map(([corner, top, left, cursor]) => (
                       <Box
                         key={corner}
+                        data-kitchen-scene-controls="true"
                         onMouseDown={(event) =>
                           onResizeMouseDown(
                             event,
@@ -497,26 +514,93 @@ const KitchenScene = ({
           })}
         </Box>
       </Box>
-      <Button
-        variant="contained"
-        startIcon={<SaveOutlinedIcon />}
-        onClick={onSaveProject}
-        disabled={!sceneItems.length}
-        color="success"
+      <Stack
+        data-kitchen-scene-controls="true"
+        direction="row"
+        spacing={1}
+        sx={{
+          position: "absolute",
+          left: { xs: 12, md: 20 },
+          top: { xs: 12, md: 20 },
+          zIndex: 1200,
+        }}
+      >
+        <Button
+          variant="contained"
+          startIcon={<PictureAsPdfOutlinedIcon />}
+          onClick={onExportPdf}
+          sx={{
+            textTransform: "none",
+            fontWeight: 900,
+            borderRadius: 1.5,
+            px: 1.8,
+            boxShadow: "0 12px 24px rgba(25,118,210,0.22)",
+          }}
+        >
+          PDF
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<OpenInFullOutlinedIcon />}
+          onClick={onToggleFullscreen}
+          sx={{
+            bgcolor: "rgba(255,255,255,0.92)",
+            textTransform: "none",
+            fontWeight: 900,
+            borderRadius: 1.5,
+            px: 1.8,
+            "&:hover": { bgcolor: "#FFFFFF" },
+          }}
+        >
+          Buyut
+        </Button>
+      </Stack>
+      <Stack
+        data-kitchen-scene-controls="true"
+        direction="row"
+        spacing={1}
         sx={{
           position: "absolute",
           right: { xs: 12, md: 20 },
           bottom: { xs: 12, md: 20 },
-          textTransform: "none",
-          fontWeight: 900,
-          borderRadius: 1.5,
-          px: 2.2,
-          py: 1,
-          boxShadow: "0 14px 28px rgba(25,118,210,0.28)",
+          zIndex: 1200,
         }}
       >
-        Projeyi Kaydet
-      </Button>
+        <Button
+          variant="contained"
+          startIcon={<RestartAltOutlinedIcon />}
+          onClick={onNewProject}
+          sx={{
+            textTransform: "none",
+            fontWeight: 900,
+            borderRadius: 1.5,
+            px: 2.2,
+            py: 1,
+            bgcolor: "#1976D2",
+            boxShadow: "0 14px 28px rgba(25,118,210,0.24)",
+            "&:hover": { bgcolor: "#1565C0" },
+          }}
+        >
+          Yeni Proje
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<SaveOutlinedIcon />}
+          onClick={onSaveProject}
+          disabled={!sceneItems.length}
+          color="success"
+          sx={{
+            textTransform: "none",
+            fontWeight: 900,
+            borderRadius: 1.5,
+            px: 2.2,
+            py: 1,
+            boxShadow: "0 14px 28px rgba(25,118,210,0.28)",
+          }}
+        >
+          Projeyi Kaydet
+        </Button>
+      </Stack>
     </Paper>
   );
 };

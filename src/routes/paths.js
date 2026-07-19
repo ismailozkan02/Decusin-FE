@@ -60,6 +60,7 @@ export const DASHBOARD = {
   kitchenCatalog: path(DASHBOARD_ROOT, "kitchen-catalog"),
   kitchenPricing: path(DASHBOARD_ROOT, "kitchen-pricing"),
   kitchenProjects: path(DASHBOARD_ROOT, "kitchen-projects"),
+  kitchenCustomers: path(DASHBOARD_ROOT, "kitchen-customers"),
 
   my: {
     root: MY_ROOT,

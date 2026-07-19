@@ -3,6 +3,7 @@ export const TABS = {
   catalog: 1,
   pricing: 2,
   projects: 3,
+  customers: 4,
 };
 
 export const fallbackTemplates = [

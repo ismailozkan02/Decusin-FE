@@ -9,13 +9,19 @@ import {
   DialogTitle,
   Grid,
   IconButton,
+  InputAdornment,
+  Pagination,
   Paper,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
+import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
+import SearchIcon from "@mui/icons-material/Search";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import ZoomOutIcon from "@mui/icons-material/ZoomOut";
@@ -80,10 +86,27 @@ const buildLocalQuote = (items, catalogMap, materialMap, installationFee) => {
   };
 };
 
+const consumePendingProject = (initialTab) => {
+  if (initialTab !== "designer") return null;
+
+  const rawProject = window.localStorage.getItem("decusinOpenProject");
+  if (!rawProject) return null;
+
+  try {
+    return JSON.parse(rawProject);
+  } catch {
+    return null;
+  } finally {
+    window.localStorage.removeItem("decusinOpenProject");
+  }
+};
+
 const KitchenStudioPage = ({ initialTab = "designer" }) => {
+  const navigate = useNavigate();
   const sceneRef = useRef(null);
   const copiedSceneItemRef = useRef(null);
   const tab = TABS[initialTab] || 0;
+  const [pendingProject] = useState(() => consumePendingProject(initialTab));
   const [catalogItems, setCatalogItems] = useState(fallbackCatalog);
   const [catalogGroups, setCatalogGroups] = useState(fallbackCatalogGroups);
   const [materials, setMaterials] = useState(fallbackMaterials);
@@ -99,7 +122,18 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     customer_name: "",
     notes: "",
   });
-  const [sceneItems, setSceneItems] = useState([]);
+  const [projectSearch, setProjectSearch] = useState("");
+  const [projectPage, setProjectPage] = useState(1);
+  const [customers, setCustomers] = useState([]);
+  const [customerForm, setCustomerForm] = useState({
+    first_name: "",
+    last_name: "",
+    address: "",
+    phone: "",
+  });
+  const [sceneItems, setSceneItems] = useState(
+    () => pendingProject?.items || [],
+  );
   const [selectedCatalogProductId, setSelectedCatalogProductId] =
     useState(null);
   const [selectedMaterialId, setSelectedMaterialId] = useState(null);
@@ -108,12 +142,15 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const [selectedSceneIndex, setSelectedSceneIndex] = useState(null);
   const [customizerOpen, setCustomizerOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const [installationFee, setInstallationFee] = useState(0);
+  const [installationFee, setInstallationFee] = useState(
+    () => Number(pendingProject?.installation_fee || 0),
+  );
   const [roomDimensions, setRoomDimensions] = useState({
     width: 360,
     height: 260,
     depth: 240,
     unit: "cm",
+    ...(pendingProject?.room_dimensions || {}),
   });
 
   const materialMap = useMemo(
@@ -135,6 +172,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       catalog: "Ürünler & Malzemeler",
       pricing: "Fiyatlandırma",
       projects: "Projeler",
+      customers: "Müşteriler",
     }[initialTab] || "Tasarım Sahnesi";
 
   const selectedSceneItem =
@@ -167,6 +205,18 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     selectedSceneIndex === null
       ? null
       : localQuote.lines[selectedSceneIndex] || null;
+  const filteredProjects = useMemo(() => {
+    const query = projectSearch.trim().toLocaleLowerCase("tr-TR");
+    if (!query) return projects;
+
+    return projects.filter((project) =>
+      `${project.name || ""} ${project.customer_name || ""}`
+        .toLocaleLowerCase("tr-TR")
+        .includes(query),
+    );
+  }, [projectSearch, projects]);
+  const projectPageCount = Math.max(Math.ceil(filteredProjects.length / 10), 1);
+  const pagedProjects = filteredProjects.slice((projectPage - 1) * 10, projectPage * 10);
 
   const getSceneMetrics = useCallback(
     (dimensions = roomDimensions) => {
@@ -817,6 +867,132 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       .catch(() => undefined);
   };
 
+  const startNewProject = useCallback(() => {
+    setSceneItems([]);
+    setSelectedSceneIndex(null);
+    setCustomizerOpen(false);
+    setPaletteOpen(false);
+    setSceneItemsOpen(false);
+    setProjectSaveOpen(false);
+    setProjectForm({ name: "", customer_name: "", notes: "" });
+    setInstallationFee(0);
+    setDragState(null);
+    setResizeState(null);
+    setRoomDimensions({ width: 360, height: 260, depth: 240, unit: "cm" });
+  }, []);
+
+  const exportScenePdf = useCallback(() => {
+    const stage = sceneRef.current;
+    if (!stage || typeof window === "undefined") return;
+
+    const clone = stage.cloneNode(true);
+    clone.querySelectorAll("[data-kitchen-scene-controls]").forEach((node) => {
+      node.remove();
+    });
+    clone.querySelectorAll("[data-kitchen-scene-item='true']").forEach((node) => {
+      node.style.boxShadow = "none";
+      node.style.outline = "none";
+    });
+
+    const styles = Array.from(
+      document.querySelectorAll("style, link[rel='stylesheet']"),
+    )
+      .map((node) => node.outerHTML)
+      .join("");
+    const printWindow = window.open("", "_blank", "width=1280,height=820");
+
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <title>Decusin tasarim PDF</title>
+          ${styles}
+          <style>
+            @page { size: A4 landscape; margin: 10mm; }
+            * { box-sizing: border-box; }
+            html, body {
+              width: 100%;
+              min-height: 100%;
+              margin: 0;
+              background: #ffffff;
+            }
+            body {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 0;
+              overflow: hidden;
+            }
+            .decusin-pdf-stage {
+              width: 100%;
+              height: calc(100vh - 20mm);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #ffffff;
+            }
+            .decusin-pdf-stage > div {
+              transform-origin: center center;
+              box-shadow: none !important;
+            }
+            [data-kitchen-scene-controls="true"] {
+              display: none !important;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="decusin-pdf-stage">${clone.outerHTML}</div>
+          <script>
+            window.onload = function () {
+              setTimeout(function () {
+                window.focus();
+                window.print();
+              }, 350);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }, []);
+
+  const toggleSceneFullscreen = useCallback(() => {
+    const stage = sceneRef.current;
+    if (!stage || typeof document === "undefined") return;
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+      return;
+    }
+
+    stage.requestFullscreen?.();
+  }, []);
+
+  const inspectProject = (project) => {
+    window.localStorage.setItem("decusinOpenProject", JSON.stringify(project));
+    navigate("/kitchen-designer");
+  };
+
+  const addCustomer = () => {
+    const firstName = customerForm.first_name.trim();
+    const lastName = customerForm.last_name.trim();
+    if (!firstName && !lastName) return;
+
+    setCustomers((current) => [
+      {
+        id: `customer-${Date.now()}`,
+        ...customerForm,
+        first_name: firstName,
+        last_name: lastName,
+        created_at: new Date().toISOString(),
+      },
+      ...current,
+    ]);
+    setCustomerForm({ first_name: "", last_name: "", address: "", phone: "" });
+  };
+
   const addCatalogItem = (product) => {
     setCatalogItems((current) => [product, ...current]);
     setSelectedCatalogProductId(product.id);
@@ -1066,7 +1242,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             onResizeMouseDown={handleResizeMouseDown}
             onCopyItem={duplicateSceneItem}
             onDeleteItem={removeSceneItem}
+            onNewProject={startNewProject}
             onSaveProject={() => setProjectSaveOpen(true)}
+            onExportPdf={exportScenePdf}
+            onToggleFullscreen={toggleSceneFullscreen}
           />
         </Grid>
       </Grid>
@@ -1216,40 +1395,236 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   );
 
   const renderProjects = () => (
-    <Paper
-      elevation={0}
-      sx={{ border: "1px solid #E2E8F0", borderRadius: 2, p: 2 }}
-    >
-      <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-        Kayitli projeler
-      </Typography>
-      <Stack spacing={1.2}>
-        {projects.length ? (
-          projects.map((project) => (
-            <Stack
-              key={project.id}
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ border: "1px solid #E5E7EB", borderRadius: 1, p: 1.5 }}
-            >
+    <Stack spacing={1.5}>
+      <Paper
+        elevation={0}
+        sx={{
+          border: "1px solid #E2E8F0",
+          borderRadius: 2,
+          p: 2,
+          background: "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)",
+          boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
+        }}
+      >
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          alignItems={{ xs: "stretch", md: "center" }}
+          justifyContent="space-between"
+          spacing={1.5}
+        >
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 900 }}>
+              Kayitli projeler
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Musteri veya proje adina gore ara.
+            </Typography>
+          </Box>
+          <TextField
+            size="small"
+            placeholder="Proje veya musteri ara"
+            value={projectSearch}
+            onChange={(event) => {
+              setProjectSearch(event.target.value);
+              setProjectPage(1);
+            }}
+            sx={{ width: { xs: "100%", md: 360 } }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Stack>
+      </Paper>
+
+      <Paper
+        elevation={0}
+        sx={{
+          border: "1px solid #E2E8F0",
+          borderRadius: 2,
+          p: 1.5,
+          boxShadow: "0 14px 34px rgba(15,23,42,0.05)",
+        }}
+      >
+        <Stack spacing={1}>
+          {pagedProjects.length ? (
+            pagedProjects.map((project) => (
+              <Stack
+                key={project.id}
+                direction={{ xs: "column", md: "row" }}
+                alignItems={{ xs: "stretch", md: "center" }}
+                justifyContent="space-between"
+                spacing={1.5}
+                sx={{
+                  border: "1px solid #E5E7EB",
+                  borderRadius: 1.5,
+                  p: 1.5,
+                  bgcolor: "#FFFFFF",
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 900 }} noWrap>
+                    {project.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {project.customer_name || "Musteri yok"} - {project.items?.length || 0} kalem
+                  </Typography>
+                </Box>
+                <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={1}>
+                  <Chip label={money(project.quote?.total || 0)} />
+                  <Button
+                    variant="outlined"
+                    startIcon={<VisibilityOutlinedIcon />}
+                    onClick={() => inspectProject(project)}
+                    sx={{ textTransform: "none", fontWeight: 900 }}
+                  >
+                    Incele
+                  </Button>
+                </Stack>
+              </Stack>
+            ))
+          ) : (
+            <Typography color="text.secondary" sx={{ p: 2 }}>
+              Aramaya uygun proje bulunamadi.
+            </Typography>
+          )}
+        </Stack>
+        <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1.5 }}>
+          <Pagination
+            page={projectPage}
+            count={projectPageCount}
+            onChange={(_, page) => setProjectPage(page)}
+            color="primary"
+            shape="rounded"
+          />
+        </Stack>
+      </Paper>
+    </Stack>
+  );
+
+  const renderCustomers = () => (
+    <Grid container spacing={2.5}>
+      <Grid item xs={12} md={4}>
+        <Paper
+          elevation={0}
+          sx={{
+            border: "1px solid #E2E8F0",
+            borderRadius: 2,
+            p: 2,
+            background: "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)",
+            boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
+          }}
+        >
+          <Stack spacing={2}>
+            <Stack direction="row" spacing={1.2} alignItems="center">
+              <Box
+                sx={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 1,
+                  display: "grid",
+                  placeItems: "center",
+                  bgcolor: "#0F766E",
+                  color: "#FFFFFF",
+                }}
+              >
+                <PersonAddAltOutlinedIcon />
+              </Box>
               <Box>
-                <Typography sx={{ fontWeight: 800 }}>{project.name}</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {project.customer_name || "Musteri yok"} -{" "}
-                  {project.items?.length || 0} kalem
+                <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                  Kullanici Ekle
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Musteri bilgilerini kaydet.
                 </Typography>
               </Box>
-              <Chip label={project.template_id || "ozel"} />
             </Stack>
-          ))
-        ) : (
-          <Typography color="text.secondary">
-            Henuz proje yok. Tasarim ekranindan mock proje kaydedebilirsin.
+            {[
+              ["first_name", "Ad"],
+              ["last_name", "Soyad"],
+              ["phone", "Telefon"],
+              ["address", "Adres"],
+            ].map(([field, label]) => (
+              <TextField
+                key={field}
+                label={label}
+                size="small"
+                multiline={field === "address"}
+                minRows={field === "address" ? 3 : undefined}
+                value={customerForm[field]}
+                onChange={(event) =>
+                  setCustomerForm((current) => ({
+                    ...current,
+                    [field]: event.target.value,
+                  }))
+                }
+              />
+            ))}
+            <Button
+              variant="contained"
+              startIcon={<PersonAddAltOutlinedIcon />}
+              onClick={addCustomer}
+              disabled={!customerForm.first_name.trim() && !customerForm.last_name.trim()}
+              sx={{ textTransform: "none", fontWeight: 900 }}
+            >
+              Musteriyi Kaydet
+            </Button>
+          </Stack>
+        </Paper>
+      </Grid>
+      <Grid item xs={12} md={8}>
+        <Paper
+          elevation={0}
+          sx={{
+            border: "1px solid #E2E8F0",
+            borderRadius: 2,
+            p: 2,
+            boxShadow: "0 14px 34px rgba(15,23,42,0.05)",
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
+            Musteri Listesi
           </Typography>
-        )}
-      </Stack>
-    </Paper>
+          <Stack spacing={1}>
+            {customers.length ? (
+              customers.map((customer) => (
+                <Stack
+                  key={customer.id}
+                  direction={{ xs: "column", md: "row" }}
+                  justifyContent="space-between"
+                  spacing={1}
+                  sx={{
+                    border: "1px solid #E5E7EB",
+                    borderRadius: 1.5,
+                    p: 1.5,
+                    bgcolor: "#FFFFFF",
+                  }}
+                >
+                  <Box>
+                    <Typography sx={{ fontWeight: 900 }}>
+                      {customer.first_name} {customer.last_name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {customer.phone || "Telefon yok"}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {customer.address || "Adres yok"}
+                  </Typography>
+                </Stack>
+              ))
+            ) : (
+              <Typography color="text.secondary">
+                Henuz musteri eklenmedi.
+              </Typography>
+            )}
+          </Stack>
+        </Paper>
+      </Grid>
+    </Grid>
   );
 
   return (
@@ -1323,6 +1698,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         {tab === 1 && renderCatalog()}
         {tab === 2 && renderPricing()}
         {tab === 3 && renderProjects()}
+        {tab === 4 && renderCustomers()}
       </Stack>
     </Page>
   );

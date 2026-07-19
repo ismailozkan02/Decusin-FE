@@ -77,6 +77,7 @@ const Router = () =>
         { path: "kitchen-catalog", element: <KitchenStudio initialTab="catalog" /> },
         { path: "kitchen-pricing", element: <KitchenStudio initialTab="pricing" /> },
         { path: "kitchen-projects", element: <KitchenStudio initialTab="projects" /> },
+        { path: "kitchen-customers", element: <KitchenStudio initialTab="customers" /> },
 
         {
           path: "profile",

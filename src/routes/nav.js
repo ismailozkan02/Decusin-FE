@@ -4,24 +4,12 @@ import { DASHBOARD } from "routes/paths";
 import StateMachine from "mdi-material-ui/StateMachine";
 import HomeOutline from "mdi-material-ui/HomeOutline";
 import StoreSearchOutline from "mdi-material-ui/StoreSearchOutline";
-import StackedLineChartIcon from "@mui/icons-material/StackedLineChart";
-import AddReactionOutlinedIcon from "@mui/icons-material/AddReactionOutlined";
 import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
-import AccountTie from "mdi-material-ui/AccountTie";
 import BellCogOutline from "mdi-material-ui/BellCogOutline";
-import PortraitOutlinedIcon from "@mui/icons-material/PortraitOutlined";
-import Finance from "mdi-material-ui/Finance";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import BankTransferOut from "mdi-material-ui/BankTransferOut";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
-import ListAltIcon from "@mui/icons-material/ListAlt";
 import SourceOutlinedIcon from "@mui/icons-material/SourceOutlined";
-import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
-import CollectionsOutlinedIcon from "@mui/icons-material/CollectionsOutlined";
-import ContentPasteSearchOutlinedIcon from "@mui/icons-material/ContentPasteSearchOutlined";
 import PrivacyTipOutlinedIcon from "@mui/icons-material/PrivacyTipOutlined";
-import BusinessIcon from "@mui/icons-material/Business";
 import AccountBoxIcon from "@mui/icons-material/AccountBox";
 import DescriptionIcon from "@mui/icons-material/Description";
 import LanguageIcon from "@mui/icons-material/Language";
@@ -29,7 +17,7 @@ import ApartmentIcon from "@mui/icons-material/Apartment";
 import SchoolIcon from "@mui/icons-material/School";
 import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
 import KitchenOutlinedIcon from "@mui/icons-material/KitchenOutlined";
-import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
+import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 
 const nav = (me, formatMessage) => [
   {
@@ -53,9 +41,9 @@ const nav = (me, formatMessage) => [
         path: DASHBOARD.kitchenCatalog,
       },
       {
-        title: formatMessage("nav.kitchenPricing", "Fiyatlandırma"),
-        icon: RequestQuoteOutlinedIcon,
-        path: DASHBOARD.kitchenPricing,
+        title: formatMessage("nav.kitchenCustomers", "Müşteriler"),
+        icon: PersonAddAltOutlinedIcon,
+        path: DASHBOARD.kitchenCustomers,
       },
       {
         title: formatMessage("nav.kitchenProjects", "Projeler"),
