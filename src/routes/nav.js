@@ -41,9 +41,10 @@ const nav = (me, formatMessage) => [
         path: DASHBOARD.kitchenCatalog,
       },
       {
-        title: formatMessage("nav.kitchenCustomers", "Müşteriler"),
+        title: "Müşteriler",
         icon: PersonAddAltOutlinedIcon,
         path: DASHBOARD.kitchenCustomers,
+        public: true,
       },
       {
         title: formatMessage("nav.kitchenProjects", "Projeler"),

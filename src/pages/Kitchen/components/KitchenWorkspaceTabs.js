@@ -11,8 +11,8 @@ const KitchenWorkspaceTabs = ({ tab, onChange }) => (
     >
       <Tab label="Tasarim sahnesi" />
       <Tab label="Ürünler & malzemeler" />
-      <Tab label="Fiyatlandırma" />
       <Tab label="Projeler" />
+      <Tab label="Müşteriler" />
     </Tabs>
   </Paper>
 );

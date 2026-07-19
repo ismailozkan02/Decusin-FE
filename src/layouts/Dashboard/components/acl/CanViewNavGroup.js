@@ -4,6 +4,8 @@ import can from "utils/can";
 const CanViewNavGroup = ({ children, navGroup }) => {
   const { me } = useAuth();
   const canViewMenuGroup = (item) => {
+    if (item?.public) return true;
+
     if (!Array.isArray(item.children)) {
       return can(me, item?.path, "read");
     }
@@ -12,6 +14,8 @@ const CanViewNavGroup = ({ children, navGroup }) => {
       if (Array.isArray(child.children)) {
         return canViewMenuGroup(child);
       }
+
+      if (child?.public) return true;
 
       return can(me, child.path, "read");
     });

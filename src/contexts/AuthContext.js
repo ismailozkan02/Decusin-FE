@@ -72,6 +72,7 @@ const createDemoAuthPayload = (values = {}) => ({
       { name: "kitchen-catalog", list: [{ name: "read", granted: true }] },
       { name: "kitchen-pricing", list: [{ name: "read", granted: true }] },
       { name: "kitchen-projects", list: [{ name: "read", granted: true }] },
+      { name: "kitchen-customers", list: [{ name: "read", granted: true }] },
     ],
   },
   settings: {},
