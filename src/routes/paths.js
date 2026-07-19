@@ -36,6 +36,14 @@ export const SERVER = {
   },
 
   lookups: (type) => path("v1", "lookup", type),
+
+  kitchen: {
+    templates: path("v1", "kitchen", "templates"),
+    catalogItems: path("v1", "kitchen", "catalog-items"),
+    materials: path("v1", "kitchen", "materials"),
+    projects: path("v1", "kitchen", "projects"),
+    quote: path("v1", "kitchen", "pricing", "quote"),
+  },
 };
 
 export const AUTH = {
@@ -48,6 +56,10 @@ export const AUTH = {
 export const DASHBOARD = {
   root: DASHBOARD_ROOT,
   overview: path(DASHBOARD_ROOT, "overview"),
+  kitchenDesigner: path(DASHBOARD_ROOT, "kitchen-designer"),
+  kitchenCatalog: path(DASHBOARD_ROOT, "kitchen-catalog"),
+  kitchenPricing: path(DASHBOARD_ROOT, "kitchen-pricing"),
+  kitchenProjects: path(DASHBOARD_ROOT, "kitchen-projects"),
 
   my: {
     root: MY_ROOT,

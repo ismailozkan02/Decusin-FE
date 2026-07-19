@@ -27,12 +27,42 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import LanguageIcon from "@mui/icons-material/Language";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import SchoolIcon from "@mui/icons-material/School";
+import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
+import KitchenOutlinedIcon from "@mui/icons-material/KitchenOutlined";
+import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
 
 const nav = (me, formatMessage) => [
   {
     title: formatMessage("nav.overview", "Overview"),
     icon: HomeOutline,
     path: DASHBOARD.overview,
+  },
+  {
+    type: "section",
+    icon: ViewInArOutlinedIcon,
+    title: formatMessage("nav.kitchenStudio", "Mutfak Tasarim"),
+    children: [
+      {
+        title: formatMessage("nav.kitchenDesigner", "Tasarim Sahnesi"),
+        icon: ViewInArOutlinedIcon,
+        path: DASHBOARD.kitchenDesigner,
+      },
+      {
+        title: formatMessage("nav.kitchenCatalog", "Urunler & Malzemeler"),
+        icon: KitchenOutlinedIcon,
+        path: DASHBOARD.kitchenCatalog,
+      },
+      {
+        title: formatMessage("nav.kitchenPricing", "Fiyatlandirma"),
+        icon: RequestQuoteOutlinedIcon,
+        path: DASHBOARD.kitchenPricing,
+      },
+      {
+        title: formatMessage("nav.kitchenProjects", "Projeler"),
+        icon: NoteOutlinedIcon,
+        path: DASHBOARD.kitchenProjects,
+      },
+    ],
   },
   {
     title: formatMessage("myProfile", "My Profile"),

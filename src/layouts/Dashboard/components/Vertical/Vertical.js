@@ -3,7 +3,6 @@ import { Backdrop, Box, Fab } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import ArrowUp from "mdi-material-ui/ArrowUp";
 import { THEME } from "config";
-import Customizer from "components/Customizer";
 import useTheming from "hooks/useTheming";
 import ScrollToTop from "layouts/Dashboard/components/ScrollToTop";
 import DatePickerWrapper from "styles/libs/react-datepicker";
@@ -81,7 +80,6 @@ const Vertical = ({ children, ...rest }) => {
         </MainContentWrapper>
         <Backdrop open={Boolean(showBackdrop)} onClick={() => setShowBackdrop(false)} sx={{ zIndex: 12 }} />
       </VerticalLayoutWrapper>
-      {THEME.DISABLE_CUSTOMIZER ? null : <Customizer />}
       <ScrollToTop className={"mui-fixed"}>
         <Fab color={"primary"} size={"small"} aria-label={"scroll back to top"}>
           <ArrowUp />

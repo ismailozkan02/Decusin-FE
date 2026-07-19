@@ -21,6 +21,7 @@ const Login = Loadable(lazy(() => import("pages/Auth")));
 const Signup = Loadable(lazy(() => import("pages/Auth")));
 // Dashboard
 const Overview = Loadable(lazy(() => import("pages/Overview")));
+const KitchenStudio = Loadable(lazy(() => import("pages/Kitchen/KitchenStudioPage")));
 
 const EmptyPage = Loadable(lazy(() => import("pages/EmptyPage")));
 
@@ -72,6 +73,10 @@ const Router = () =>
         { element: <Navigate to={"/overview"} replace />, index: true },
 
         { path: "overview", element: <Overview /> },
+        { path: "kitchen-designer", element: <KitchenStudio initialTab="designer" /> },
+        { path: "kitchen-catalog", element: <KitchenStudio initialTab="catalog" /> },
+        { path: "kitchen-pricing", element: <KitchenStudio initialTab="pricing" /> },
+        { path: "kitchen-projects", element: <KitchenStudio initialTab="projects" /> },
 
         {
           path: "profile",

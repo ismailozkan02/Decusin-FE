@@ -43,6 +43,40 @@ const reducer = (state, { action, payload }) => {
 const AuthContext = createContext(initialState);
 
 let authMeRequested = false;
+const DEMO_AUTH_ENABLED = import.meta.env.VITE_DEMO_AUTH !== "false";
+
+const isDemoSession = (value) => value?.access?.token === "decusin-demo-access";
+
+const createDemoAuthPayload = (values = {}) => ({
+  session: {
+    access: {
+      token: "decusin-demo-access",
+      expire: Date.now() + 60 * 60 * 1000,
+    },
+    refresh: {
+      token: "decusin-demo-refresh",
+      expire: Date.now() + 60 * 60 * 1000,
+    },
+  },
+  user: {
+    id: "00000000-0000-0000-0000-000000000001",
+    email: values.email || "demo@decusin.local",
+    first_name: "Decusin",
+    last_name: "Demo",
+    role: "designer",
+    is_active: true,
+    language: APP.MAIN_LANG_SHORT || "tr",
+    permissions: [
+      { name: "overview", list: [{ name: "read", granted: true }] },
+      { name: "kitchen-designer", list: [{ name: "read", granted: true }] },
+      { name: "kitchen-catalog", list: [{ name: "read", granted: true }] },
+      { name: "kitchen-pricing", list: [{ name: "read", granted: true }] },
+      { name: "kitchen-projects", list: [{ name: "read", granted: true }] },
+    ],
+  },
+  settings: {},
+  unread: 0,
+});
 
 const SUBDOMAIN = import.meta.env.VITE_SUBDOMAIN;
 const currentSubdomain = window.location.hostname.split(".")[0];
@@ -159,6 +193,14 @@ export const AuthProvider = ({ children }) => {
 
       authMeRequested = true;
 
+      if (isDemoSession(session)) {
+        dispatch({
+          action: "SET_ME",
+          payload: createDemoAuthPayload(),
+        });
+        return;
+      }
+
       getData(SERVER.auth.me, null, () => {})
         .then((payload) => {
           dispatch({
@@ -216,6 +258,23 @@ export const AuthProvider = ({ children }) => {
   // }, []);
 
   const login = useCallback(async (values) => {
+    if (DEMO_AUTH_ENABLED) {
+      const demoPayload = createDemoAuthPayload(values);
+
+      dispatch({
+        action: "SET_ME",
+        payload: demoPayload,
+      });
+
+      setSession(demoPayload.session);
+      if ("localStorage" in window) {
+        localStorage.setItem("session", JSON.stringify(demoPayload.session));
+        localStorage.setItem("locale", demoPayload.user.language);
+      }
+
+      return Promise.resolve(demoPayload);
+    }
+
     try {
       const { data } = await axios().post(SERVER.auth.login, values);
 

@@ -12,12 +12,17 @@ const MenuNavLink = styled(ListItemButton)(({ theme }) => ({
   borderBottomRightRadius: 100,
   color: theme.palette.text.primary,
   padding: theme.spacing(2.25, 3.5),
-  transition: 'opacity .25s ease-in-out',
+  transition: 'background-color .2s ease, color .2s ease, box-shadow .2s ease',
   '&.active, &.active:hover': {
     boxShadow: theme.shadows[3],
-    backgroundImage: `linear-gradient(98deg, ${theme.palette.customColors.primaryGradient}, ${theme.palette.primary.main} 94%)`
+    backgroundColor: theme.palette.primary.main,
+    backgroundImage: 'none',
+    color: theme.palette.common.white
   },
   '&.active .MuiTypography-root, &.active .MuiSvgIcon-root': {
+    color: `${theme.palette.common.white} !important`
+  },
+  '&.active .MuiListItemIcon-root': {
     color: `${theme.palette.common.white} !important`
   }
 }));
