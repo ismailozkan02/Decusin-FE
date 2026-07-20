@@ -199,14 +199,43 @@ const isCountertopMountedProduct = (product) => {
   );
 };
 
+const isWallMountedProduct = (product, dimensions = product?.dimensions || {}) => {
+  const text = `${product?.name || ""} ${product?.sku || ""} ${product?.category || ""}`
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const depth = Number(dimensions?.depth || product?.dimensions?.depth || 0);
+  const height = Number(dimensions?.height || product?.dimensions?.height || 0);
+
+  return (
+    product?.category === "wall_cabinet" ||
+    product?.category === "shelf" ||
+    text.includes("ust") ||
+    text.includes("ust dolap") ||
+    text.includes("üst dolap") ||
+    text.includes("ãœst dolap") ||
+    text.includes("ust-") ||
+    text.includes("ust_") ||
+    (depth > 0 && depth <= 40 && height >= 40 && product?.category !== "countertop")
+  );
+};
+
+const getProductPlacement = (product, dimensions = product?.dimensions || {}) =>
+  isWallMountedProduct(product, dimensions) ? "wall" : "floor";
+
 const normalizeProductDimensions = (product, dimensions = {}) => {
   const mounted = isCountertopMountedProduct(product);
+  const sourceDimensions = {
+    ...(product?.dimensions || {}),
+    ...(dimensions || {}),
+  };
+  const wallMounted = isWallMountedProduct(product, sourceDimensions);
   const nextDimensions = {
     width: 60,
     height: product?.category === "countertop" ? 4 : mounted ? 6 : 72,
-    depth: product?.category === "wall_cabinet" ? 34 : mounted ? 48 : 56,
+    depth: wallMounted ? 34 : mounted ? 48 : 56,
     unit: "cm",
-    ...(dimensions || {}),
+    ...sourceDimensions,
   };
 
   if (mounted && Number(nextDimensions.height || 0) > 20) {
@@ -804,15 +833,19 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const addSceneItemAt = (product, x, y) => {
     setSceneItems((current) => {
       const dimensions = getDefaultProductDimensions(product);
+      const metrics = getSceneMetrics();
+      const wallTopCm = isWallMountedProduct(product, dimensions) ? 28 : null;
+      const nextY = wallTopCm === null ? y : wallTopCm * metrics.cmToPx;
       const nextItem = {
         catalog_item_id: product.id,
-        position: { x, y, z: 0 },
+        position: { x, y: nextY, z: 0 },
+        placement: getProductPlacement(product, dimensions),
         rotation: { x: 0, y: 0, z: 0 },
         dimensions,
         options: buildItemOptions(product),
         quantity: 1,
       };
-      const position = clampScenePosition(nextItem, product, x, y);
+      const position = clampScenePosition(nextItem, product, x, nextY);
       return [
         ...current,
         { ...nextItem, position: { ...nextItem.position, ...position } },

@@ -276,7 +276,7 @@ const KitchenScene = ({
   const isWallDrag = (index) => {
     const item = sceneItems[index];
     const product = catalogMap[item?.catalog_item_id] || {};
-    return product.category === "wall_cabinet" || product.category === "shelf";
+    return isWallMountedItem(item, product, getSceneItemDimensions(product, item));
   };
   const getDragSurfaceHeight = (index) => {
     const item = sceneItems[index];
@@ -290,7 +290,11 @@ const KitchenScene = ({
       cmToPx,
     });
 
-    return cmToUnit(Number.isFinite(Number(elevation)) ? elevation : 0.035);
+    return cmToUnit(
+      elevation !== null && elevation !== undefined && Number.isFinite(Number(elevation))
+        ? elevation
+        : 0.035,
+    );
   };
 
   const moveItemFromWorldPoint = (index, point) => {
@@ -305,7 +309,7 @@ const KitchenScene = ({
     const rawXCm = (point.x + cmToUnit(roomWidthCm) / 2) * 100 - widthCm / 2;
     const xCm = snapRoomValue(rawXCm, roomWidthCm, widthCm);
 
-    if (product.category === "wall_cabinet" || product.category === "shelf") {
+    if (isWallMountedItem(item, product, dimensions)) {
       const rawTopCm = roomHeightCm - point.y * 100 - heightCm / 2;
       const yCm = snapRoomValue(rawTopCm, roomHeightCm, heightCm);
 
@@ -712,18 +716,46 @@ const isCountertopMountedProduct = (product) => {
   );
 };
 
+const isWallMountedProduct = (product, dimensions = product?.dimensions || {}) => {
+  const text = `${product?.name || ""} ${product?.sku || ""} ${product?.category || ""}`
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const depth = Number(dimensions?.depth || product?.dimensions?.depth || 0);
+  const height = Number(dimensions?.height || product?.dimensions?.height || 0);
+
+  return (
+    product?.category === "wall_cabinet" ||
+    product?.category === "shelf" ||
+    text.includes("ust") ||
+    text.includes("ust dolap") ||
+    text.includes("üst dolap") ||
+    text.includes("ãœst dolap") ||
+    text.includes("ust-") ||
+    text.includes("ust_") ||
+    (depth > 0 && depth <= 40 && height >= 40 && product?.category !== "countertop")
+  );
+};
+
+const isWallMountedItem = (item, product, dimensions = item?.dimensions || product?.dimensions || {}) =>
+  item?.placement === "wall" || isWallMountedProduct(product, dimensions);
+
 const getSceneItemDimensions = (product, item = {}) => {
   const mounted = isCountertopMountedProduct(product);
+  const sourceDimensions = {
+    ...(product.dimensions || {}),
+    ...(item.dimensions || {}),
+  };
+  const wallMounted = isWallMountedItem(item, product, sourceDimensions);
   const defaults = {
     width: mounted ? 60 : 60,
     height: product.category === "countertop" ? 4 : mounted ? 6 : 72,
-    depth: product.category === "wall_cabinet" ? 34 : mounted ? 48 : 56,
+    depth: wallMounted ? 34 : mounted ? 48 : 56,
     unit: "cm",
   };
   const dimensions = {
     ...defaults,
-    ...(product.dimensions || {}),
-    ...(item.dimensions || {}),
+    ...sourceDimensions,
   };
 
   if (mounted && Number(dimensions.height || 0) > 20) {
@@ -843,17 +875,21 @@ const getDynamicElevationCm = ({ item, index, product, sceneItems, catalogMap, c
   return Number.isFinite(elevation) ? elevation : null;
 };
 
-const getCategoryPlacement = (product, roomHeightCm, dimensions, topCm, elevationCm) => {
+const getCategoryPlacement = (item, product, roomHeightCm, dimensions, topCm, elevationCm) => {
   const category = product?.category;
   const height = Number(dimensions.height || 72);
+  const hasElevation =
+    elevationCm !== null &&
+    elevationCm !== undefined &&
+    Number.isFinite(Number(elevationCm));
   const elevation = Number(elevationCm);
 
-  if (Number.isFinite(elevation)) {
+  if (hasElevation) {
     const maxElevation = Math.max(roomHeightCm - height, 0);
     return cmToUnit(Math.min(Math.max(elevation, 0), maxElevation) + height / 2);
   }
 
-  if (category === "wall_cabinet" || category === "shelf") {
+  if (isWallMountedItem(item, product, dimensions)) {
     return Math.max(cmToUnit(roomHeightCm - topCm - height / 2), cmToUnit(height / 2));
   }
 
@@ -890,7 +926,7 @@ const getItem3DTransform = ({ item, index, product, sceneItems, catalogMap, room
     catalogMap,
     cmToPx,
   });
-  const y = getCategoryPlacement(product, roomHeightCm, dimensions, topCm, dynamicElevation);
+  const y = getCategoryPlacement(item, product, roomHeightCm, dimensions, topCm, dynamicElevation);
   const z =
     product.category === "room"
       ? 0
