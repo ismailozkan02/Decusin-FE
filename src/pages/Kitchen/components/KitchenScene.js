@@ -1,15 +1,15 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, CircularProgress, IconButton, Paper, Stack, Typography } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import DeleteSweepOutlinedIcon from "@mui/icons-material/DeleteSweepOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteSweepOutlinedIcon from "@mui/icons-material/DeleteSweepOutlined";
 import OpenInFullOutlinedIcon from "@mui/icons-material/OpenInFullOutlined";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
 import RestartAltOutlinedIcon from "@mui/icons-material/RestartAltOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Edges, Environment, Html, OrbitControls, useGLTF } from "@react-three/drei";
-import { Box3, Color, DoubleSide, Plane, Vector2, Vector3 } from "three";
+import { Box3, CanvasTexture, Color, DoubleSide, Plane, RepeatWrapping, Vector2, Vector3 } from "three";
 
 const modelScaleByCategory = {
   base_cabinet: 1,
@@ -159,6 +159,32 @@ const ProductModelCanvas = ({ product, rotation, materialPalette }) => {
   );
 };
 
+const sceneToolPanelSx = {
+  position: "absolute",
+  left: { xs: 12, md: 18 },
+  top: { xs: 12, md: 18 },
+  zIndex: 1200,
+  p: 0.65,
+  borderRadius: 1.5,
+  bgcolor: "rgba(255,255,255,0.96)",
+  border: "1px solid rgba(226,232,240,0.95)",
+  boxShadow: "0 14px 30px rgba(15,23,42,0.14)",
+};
+
+const sceneIconButtonSx = (color) => ({
+  width: 38,
+  height: 38,
+  borderRadius: 1,
+  color,
+  bgcolor: "#FFFFFF",
+  "&:hover": { bgcolor: "#F8FAFC" },
+  "& .MuiSvgIcon-root": { fontSize: 25 },
+  "&.Mui-disabled": {
+    color: "rgba(100,116,139,0.38)",
+    bgcolor: "#FFFFFF",
+  },
+});
+
 const KitchenScene = ({
   sceneRef,
   sceneItems,
@@ -188,8 +214,6 @@ const KitchenScene = ({
   onNewProject,
   onSaveProject,
   onClearItems,
-  onChangeRoomDimension,
-  onChangeRoomSurface,
   onExportPdf,
   onToggleFullscreen,
 }) => {
@@ -367,14 +391,14 @@ const KitchenScene = ({
         border: "1px solid #E2E8F0",
         borderRadius: 2.5,
         overflow: "visible",
-        bgcolor: "#DCEEFF",
+        bgcolor: "#FFFFFF",
         boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
         display: "flex",
         justifyContent: "center",
         position: "relative",
         minHeight: layoutReady ? fittedHeight + 32 : placeholderHeight,
         p: { xs: 1, md: 2 },
-        background: "linear-gradient(135deg, #E8F4FF 0%, #D8EBFF 100%)",
+        background: "#FFFFFF",
       }}
     >
       {sceneLoading && (
@@ -386,7 +410,7 @@ const KitchenScene = ({
             position: "absolute",
             inset: 0,
             zIndex: 1300,
-            background: "linear-gradient(135deg, #E8F4FF 0%, #D8EBFF 100%)",
+            background: "#FFFFFF",
             color: "#1976D2",
             borderRadius: 2.5,
           }}
@@ -401,6 +425,33 @@ const KitchenScene = ({
           )}
         </Stack>
       )}
+      <Stack data-kitchen-scene-controls="true" direction="column" spacing={0.45} sx={sceneToolPanelSx}>
+        <IconButton aria-label="Yeni proje" onClick={onNewProject} sx={sceneIconButtonSx("#1976D2")}>
+          <RestartAltOutlinedIcon />
+        </IconButton>
+        <IconButton
+          aria-label="Projeyi kaydet"
+          onClick={onSaveProject}
+          disabled={!sceneItems.length}
+          sx={sceneIconButtonSx("#16A34A")}
+        >
+          <SaveOutlinedIcon />
+        </IconButton>
+        <IconButton aria-label="PDF aktar" onClick={onExportPdf} sx={sceneIconButtonSx("#F97316")}>
+          <PictureAsPdfOutlinedIcon />
+        </IconButton>
+        <IconButton aria-label="Sahneyi buyut" onClick={onToggleFullscreen} sx={sceneIconButtonSx("#111827")}>
+          <OpenInFullOutlinedIcon />
+        </IconButton>
+        <IconButton
+          aria-label="Sahneyi temizle"
+          onClick={onClearItems}
+          disabled={!sceneItems.length}
+          sx={sceneIconButtonSx("#DC2626")}
+        >
+          <DeleteSweepOutlinedIcon />
+        </IconButton>
+      </Stack>
       <Box
         ref={sceneRef}
         onDragOver={onDragOver}
@@ -415,9 +466,7 @@ const KitchenScene = ({
           minWidth: 320,
           maxWidth: "100%",
           position: "relative",
-          background: sceneReady
-            ? "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)"
-            : "transparent",
+          background: sceneReady ? "#FFFFFF" : "transparent",
           perspective: "1000px",
           overflow: "visible",
           border: sceneReady ? "1px dashed rgba(15,23,42,0.18)" : "1px dashed transparent",
@@ -475,10 +524,12 @@ const KitchenScene = ({
                 if (drag3DIndex === null) onClearSelection();
               }}
             />
-            <gridHelper
-              args={[Math.max(cmToUnit(roomWidthCm), cmToUnit(roomDimensions?.depth || 240)), 24, "#D8DEE8", "#EEF2F7"]}
-              position={[0, 0.008, 0]}
-            />
+            {!floorPatternPalettes[roomSurfaces?.floorPattern] && (
+              <gridHelper
+                args={[Math.max(cmToUnit(roomWidthCm), cmToUnit(roomDimensions?.depth || 240)), 24, "#D8DEE8", "#EEF2F7"]}
+                position={[0, 0.008, 0]}
+              />
+            )}
             {drag3DIndex !== null && (
               <>
                 <SceneDragController
@@ -549,80 +600,6 @@ const KitchenScene = ({
           )}
         </Box>
       </Box>
-      <Stack
-        data-kitchen-scene-controls="true"
-        direction="column"
-        spacing={0.8}
-        sx={{
-          position: "absolute",
-          left: { xs: 12, md: 20 },
-          top: { xs: 12, md: 20 },
-          zIndex: 1200,
-          ...sceneToolPanelSx,
-        }}
-      >
-          <IconButton aria-label="Yeni proje" onClick={onNewProject} sx={sceneIconButtonSx("#1976D2")}>
-            <RestartAltOutlinedIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            aria-label="Projeyi kaydet"
-            onClick={onSaveProject}
-            disabled={!sceneItems.length}
-            sx={sceneIconButtonSx("#16A34A")}
-          >
-            <SaveOutlinedIcon fontSize="small" />
-          </IconButton>
-          <IconButton aria-label="PDF aktar" onClick={onExportPdf} sx={sceneIconButtonSx("#F97316")}>
-            <PictureAsPdfOutlinedIcon fontSize="small" />
-          </IconButton>
-          <IconButton aria-label="Sahneyi buyut" onClick={onToggleFullscreen} sx={sceneIconButtonSx("#111827")}>
-            <OpenInFullOutlinedIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            aria-label="Sahneyi temizle"
-            onClick={onClearItems}
-            disabled={!sceneItems.length}
-            sx={sceneIconButtonSx("#DC2626")}
-          >
-            <DeleteSweepOutlinedIcon fontSize="small" />
-          </IconButton>
-      </Stack>
-      <Stack
-        data-kitchen-scene-controls="true"
-        direction="column"
-        spacing={0.75}
-        sx={{
-          position: "absolute",
-          right: { xs: 12, md: 20 },
-          top: { xs: 12, md: 20 },
-          zIndex: 1200,
-          ...sceneToolPanelSx,
-        }}
-      >
-          <SceneNumberControl
-            label="Genislik"
-            value={roomDimensions.width}
-            onChange={(value) => onChangeRoomDimension("width", value)}
-          />
-          <SceneNumberControl
-            label="Yukseklik"
-            value={roomDimensions.height}
-            onChange={(value) => onChangeRoomDimension("height", value)}
-          />
-          {[
-            ["floor", "Zemin"],
-            ["backWall", "Arka"],
-            ["sideWall", "Yan"],
-            ["ceiling", "Tavan"],
-          ].map(([field, label]) => (
-            <SceneColorControl
-              key={field}
-              label={label}
-              value={roomSurfaces?.[field] || "#FFFFFF"}
-              onChange={(value) => onChangeRoomSurface(field, value)}
-            />
-          ))}
-      </Stack>
     </Paper>
   );
 };
@@ -639,111 +616,6 @@ const InitialCameraView = ({ controlsRef, applyView, onReady }) => {
 
   return null;
 };
-
-const sceneToolPanelSx = {
-  p: 0.7,
-  borderRadius: 1.5,
-  bgcolor: "rgba(255,255,255,0.94)",
-  border: "1px solid rgba(226,232,240,0.95)",
-  boxShadow: "0 14px 30px rgba(15,23,42,0.14)",
-};
-
-const sceneIconButtonSx = (color) => ({
-  width: 48,
-  height: 48,
-  borderRadius: 1,
-  color,
-  bgcolor: "transparent",
-  boxShadow: "none",
-  border: "none",
-  "&:hover": {
-    bgcolor: "rgba(255,255,255,0.72)",
-  },
-  "& .MuiSvgIcon-root": {
-    fontSize: 30,
-  },
-  "&.Mui-disabled": {
-    color: "rgba(100,116,139,0.45)",
-    bgcolor: "transparent",
-  },
-});
-
-const sceneControlBoxSx = {
-  width: 64,
-  minHeight: 48,
-  p: 0.45,
-  borderRadius: 1,
-  border: "1px solid rgba(148,163,184,0.36)",
-  bgcolor: "#FFFFFF",
-  boxShadow: "0 6px 14px rgba(15,23,42,0.08)",
-};
-
-const sceneControlLabelSx = {
-  display: "block",
-  mb: 0.35,
-  fontSize: 9,
-  fontWeight: 900,
-  color: "#475569",
-  lineHeight: 1,
-  textAlign: "center",
-};
-
-const SceneNumberControl = ({ label, value, onChange }) => (
-  <Box sx={sceneControlBoxSx}>
-    <Typography component="label" sx={sceneControlLabelSx}>
-      {label}
-    </Typography>
-    <Box
-      component="input"
-      type="number"
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      sx={{
-        width: "100%",
-        height: 26,
-        border: "1px solid rgba(148,163,184,0.45)",
-        borderRadius: 0.8,
-        px: 0.4,
-        fontSize: 11,
-        fontWeight: 900,
-        color: "#111827",
-        outline: "none",
-        textAlign: "center",
-        bgcolor: "#F8FAFC",
-      }}
-    />
-  </Box>
-);
-
-const SceneColorControl = ({ label, value, onChange }) => (
-  <Box component="label" title={label} sx={{ ...sceneControlBoxSx, cursor: "pointer" }}>
-    <Typography component="span" sx={sceneControlLabelSx}>
-      {label}
-    </Typography>
-    <Box
-      sx={{
-        width: "100%",
-        height: 28,
-        borderRadius: 0.8,
-        border: "1px solid rgba(148,163,184,0.48)",
-        bgcolor: value,
-        boxShadow: "inset 0 0 0 3px rgba(255,255,255,0.76)",
-      }}
-    />
-    <Box
-      component="input"
-      type="color"
-      aria-label={label}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      sx={{
-        position: "absolute",
-        opacity: 0,
-        pointerEvents: "none",
-      }}
-    />
-  </Box>
-);
 
 const cmToUnit = (value) => Number(value || 0) / 100;
 
@@ -958,18 +830,222 @@ const getItem3DTransform = ({ item, index, product, sceneItems, catalogMap, room
   };
 };
 
+const floorPatternPalettes = {
+  oakHerringbone: {
+    base: "#E7C37C",
+    colors: ["#F2D99C", "#D9AE65", "#E9C782", "#C9964F", "#F6E0AB"],
+    mode: "herringbone",
+    sheen: 0.12,
+  },
+  warmPlank: {
+    base: "#C98F43",
+    colors: ["#D6A35A", "#BF7F35", "#E0B46E", "#A96D2F", "#C88E45"],
+    mode: "plank",
+    sheen: 0.1,
+  },
+  naturalChevron: {
+    base: "#D5A760",
+    colors: ["#E5BE7D", "#C28B44", "#F0D39B", "#B9843E", "#D7A15A"],
+    mode: "chevron",
+    sheen: 0.1,
+  },
+  paleOak: {
+    base: "#EED9A6",
+    colors: ["#F4E2B4", "#D9BA78", "#FFE9B7", "#CFA766", "#EBD29A"],
+    mode: "plank",
+    sheen: 0.16,
+  },
+  classicOak: {
+    base: "#C28A40",
+    colors: ["#C89247", "#E0B66F", "#B97A32", "#D59A4E", "#A96A2E"],
+    mode: "plank",
+    sheen: 0.08,
+  },
+  goldenChevron: {
+    base: "#C98930",
+    colors: ["#C98930", "#EAB961", "#A96A24", "#D99B3F", "#F0C875"],
+    mode: "chevron",
+    sheen: 0.08,
+  },
+  walnutPlank: {
+    base: "#5B351F",
+    colors: ["#5B351F", "#8A542D", "#3E2418", "#704224", "#9A6034"],
+    mode: "plank",
+    sheen: 0.04,
+    dark: true,
+  },
+  darkWalnut: {
+    base: "#2D1A13",
+    colors: ["#2D1A13", "#5B3524", "#1F130E", "#42261A", "#6C4430"],
+    mode: "plank",
+    sheen: 0.03,
+    dark: true,
+  },
+  smokedOak: {
+    base: "#5C5A50",
+    colors: ["#5C5A50", "#8B8778", "#3D3B35", "#737064", "#A29D8F"],
+    mode: "plank",
+    sheen: 0.045,
+    dark: true,
+  },
+  blackChevron: {
+    base: "#161616",
+    colors: ["#161616", "#3A332B", "#0C0C0C", "#2A2621", "#4A4035"],
+    mode: "chevron",
+    sheen: 0.025,
+    dark: true,
+  },
+  grayAsh: {
+    base: "#A9A99F",
+    colors: ["#A9A99F", "#D2D0C5", "#7B7B73", "#BDBBAF", "#96968D"],
+    mode: "plank",
+    sheen: 0.09,
+  },
+  rusticBrown: {
+    base: "#70421F",
+    colors: ["#70421F", "#A66B34", "#4A2C18", "#8A562B", "#BD7B3B"],
+    mode: "plank",
+    sheen: 0.04,
+    dark: true,
+  },
+};
+
+const drawWoodGrain = (context, x, y, width, height, seed = 0, dark = false) => {
+  for (let grain = 0; grain < 7; grain += 1) {
+    const grainY = y + 10 + grain * (height / 8) + ((seed + grain) % 5);
+    context.strokeStyle = dark
+      ? `rgba(245,222,179,${0.035 + grain * 0.007})`
+      : `rgba(91,58,24,${0.08 + grain * 0.012})`;
+    context.lineWidth = 1.1;
+    context.beginPath();
+    context.moveTo(x + 8, grainY);
+    context.bezierCurveTo(
+      x + width * 0.32,
+      grainY - 7,
+      x + width * 0.68,
+      grainY + 9,
+      x + width - 8,
+      grainY - 2,
+    );
+    context.stroke();
+  }
+};
+
+const paintWoodTile = (context, x, y, width, height, color, seed = 0, dark = false) => {
+  const gradient = context.createLinearGradient(x, y, x + width, y + height);
+
+  gradient.addColorStop(0, color);
+  gradient.addColorStop(0.48, dark ? "rgba(92,64,42,0.92)" : "rgba(255,238,184,0.9)");
+  gradient.addColorStop(1, color);
+  context.fillStyle = gradient;
+  context.fillRect(x, y, width, height);
+  context.strokeStyle = dark ? "rgba(0,0,0,0.38)" : "rgba(92,58,24,0.24)";
+  context.lineWidth = 2;
+  context.strokeRect(x + 1, y + 1, width - 2, height - 2);
+  drawWoodGrain(context, x, y, width, height, seed, dark);
+};
+
+const createParquetTexture = (pattern = "oakHerringbone") => {
+  if (typeof document === "undefined") return null;
+
+  const palette = floorPatternPalettes[pattern] || floorPatternPalettes.oakHerringbone;
+  const canvas = document.createElement("canvas");
+  canvas.width = 768;
+  canvas.height = 768;
+  const context = canvas.getContext("2d");
+
+  if (!context) return null;
+
+  context.fillStyle = palette.base;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (palette.mode === "herringbone" || palette.mode === "chevron") {
+    const tile = 96;
+
+    for (let y = -tile; y < canvas.height + tile; y += tile) {
+      for (let x = -tile; x < canvas.width + tile; x += tile) {
+        const color = palette.colors[((x / tile) + (y / tile) + 8) % palette.colors.length];
+        context.save();
+        context.translate(x + tile / 2, y + tile / 2);
+        context.rotate(Math.PI / 4);
+        paintWoodTile(context, -tile / 2, -tile / 8, tile, tile / 4, color, x + y, palette.dark);
+        context.restore();
+
+        context.save();
+        context.translate(x + tile / 2, y + tile / 2);
+        context.rotate(palette.mode === "chevron" ? -Math.PI / 4 : (Math.PI * 3) / 4);
+        paintWoodTile(
+          context,
+          -tile / 2,
+          -tile / 8,
+          tile,
+          tile / 4,
+          palette.colors[((x / tile) + (y / tile) + 11) % palette.colors.length],
+          x - y,
+          palette.dark,
+        );
+        context.restore();
+      }
+    }
+  } else {
+    const plankHeight = 96;
+    const plankWidths = [192, 256, 160, 224];
+
+    for (let row = 0; row < canvas.height / plankHeight; row += 1) {
+      let x = row % 2 === 0 ? 0 : -96;
+      let plankIndex = row % plankWidths.length;
+
+      while (x < canvas.width) {
+        const plankWidth = plankWidths[plankIndex % plankWidths.length];
+        const y = row * plankHeight;
+        const color = palette.colors[(row + plankIndex) % palette.colors.length];
+
+        paintWoodTile(context, x, y, plankWidth, plankHeight, color, row + plankIndex, palette.dark);
+        x += plankWidth;
+        plankIndex += 1;
+      }
+    }
+  }
+
+  context.fillStyle = `rgba(255,255,255,${palette.sheen ?? 0.08})`;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const texture = new CanvasTexture(canvas);
+  texture.wrapS = RepeatWrapping;
+  texture.wrapT = RepeatWrapping;
+  texture.needsUpdate = true;
+  return texture;
+};
+
 const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
   const width = cmToUnit(roomDimensions?.width || 360);
   const height = cmToUnit(roomDimensions?.height || 260);
   const depth = cmToUnit(roomDimensions?.depth || 240);
   const surfaces = {
     floor: "#DDBF86",
+    floorPattern: "oakHerringbone",
     backWall: "#F4F1E9",
     sideWall: "#EFECE3",
     ceiling: "#D8D8D2",
     trim: "#D5D5D0",
+    backWallVisible: true,
+    leftWallVisible: true,
+    rightWallVisible: true,
+    ceilingVisible: true,
     ...(roomSurfaces || {}),
   };
+  const floorTexture = useMemo(() => {
+    if (!floorPatternPalettes[surfaces.floorPattern]) return null;
+
+    const texture = createParquetTexture(surfaces.floorPattern);
+    if (texture) {
+      texture.repeat.set(Math.max(width * 0.9, 1), Math.max(depth * 0.9, 1));
+    }
+    return texture;
+  }, [depth, surfaces.floorPattern, width]);
+
+  useEffect(() => () => floorTexture?.dispose(), [floorTexture]);
+
   const handleEmptyClick = (event) => {
     event.stopPropagation();
     onEmptyClick();
@@ -979,36 +1055,55 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
     <group>
       <mesh position={[0, -0.015, 0]} receiveShadow onClick={handleEmptyClick}>
         <boxGeometry args={[width, 0.03, depth]} />
-        <meshStandardMaterial color={surfaces.floor} roughness={0.58} metalness={0.02} />
+        <meshStandardMaterial
+          color={floorTexture ? "#FFFFFF" : surfaces.floor}
+          map={floorTexture || null}
+          roughness={0.58}
+          metalness={0.02}
+        />
       </mesh>
-      <mesh position={[0, height / 2, -depth / 2]} receiveShadow onClick={handleEmptyClick}>
-        <boxGeometry args={[width, height, 0.06]} />
-        <meshStandardMaterial color={surfaces.backWall} roughness={0.72} />
-      </mesh>
-      <mesh position={[-width / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
-        <boxGeometry args={[0.06, height, depth]} />
-        <meshStandardMaterial color={surfaces.sideWall} roughness={0.76} />
-      </mesh>
-      <mesh position={[width / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
-        <boxGeometry args={[0.06, height, depth]} />
-        <meshStandardMaterial color={surfaces.sideWall} roughness={0.76} />
-      </mesh>
-      <mesh position={[0, height + 0.015, 0]} receiveShadow onClick={handleEmptyClick}>
-        <boxGeometry args={[width, 0.03, depth]} />
-        <meshStandardMaterial color={surfaces.ceiling} roughness={0.74} />
-      </mesh>
-      <mesh position={[0, 0.025, -depth / 2 - 0.02]}>
-        <boxGeometry args={[width + 0.08, 0.05, 0.08]} />
-        <meshStandardMaterial color={surfaces.trim} />
-      </mesh>
-      <mesh position={[-width / 2 - 0.02, height / 2, 0]}>
-        <boxGeometry args={[0.08, height + 0.08, depth + 0.08]} />
-        <meshStandardMaterial color={surfaces.trim} />
-      </mesh>
-      <mesh position={[width / 2 + 0.02, height / 2, 0]}>
-        <boxGeometry args={[0.08, height + 0.08, depth + 0.08]} />
-        <meshStandardMaterial color={surfaces.trim} />
-      </mesh>
+      {surfaces.backWallVisible !== false && (
+        <>
+          <mesh position={[0, height / 2, -depth / 2]} receiveShadow onClick={handleEmptyClick}>
+            <boxGeometry args={[width, height, 0.06]} />
+            <meshStandardMaterial color={surfaces.backWall} roughness={0.72} />
+          </mesh>
+          <mesh position={[0, 0.025, -depth / 2 - 0.02]}>
+            <boxGeometry args={[width + 0.08, 0.05, 0.08]} />
+            <meshStandardMaterial color={surfaces.trim} />
+          </mesh>
+        </>
+      )}
+      {surfaces.leftWallVisible !== false && (
+        <mesh position={[-width / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
+          <boxGeometry args={[0.06, height, depth]} />
+          <meshStandardMaterial color={surfaces.sideWall} roughness={0.76} />
+        </mesh>
+      )}
+      {surfaces.rightWallVisible !== false && (
+        <mesh position={[width / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
+          <boxGeometry args={[0.06, height, depth]} />
+          <meshStandardMaterial color={surfaces.sideWall} roughness={0.76} />
+        </mesh>
+      )}
+      {surfaces.ceilingVisible !== false && (
+        <mesh position={[0, height + 0.015, 0]} receiveShadow onClick={handleEmptyClick}>
+          <boxGeometry args={[width, 0.03, depth]} />
+          <meshStandardMaterial color={surfaces.ceiling} roughness={0.74} />
+        </mesh>
+      )}
+      {surfaces.leftWallVisible !== false && (
+        <mesh position={[-width / 2 - 0.02, height / 2, 0]}>
+          <boxGeometry args={[0.08, height + 0.08, depth + 0.08]} />
+          <meshStandardMaterial color={surfaces.trim} />
+        </mesh>
+      )}
+      {surfaces.rightWallVisible !== false && (
+        <mesh position={[width / 2 + 0.02, height / 2, 0]}>
+          <boxGeometry args={[0.08, height + 0.08, depth + 0.08]} />
+          <meshStandardMaterial color={surfaces.trim} />
+        </mesh>
+      )}
     </group>
   );
 };

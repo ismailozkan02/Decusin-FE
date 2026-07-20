@@ -11,6 +11,7 @@ import {
   InputAdornment,
   Pagination,
   Paper,
+  Popover,
   Stack,
   TextField,
   Typography,
@@ -20,6 +21,7 @@ import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import SearchIcon from "@mui/icons-material/Search";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
 import Page from "components/Page";
@@ -102,11 +104,91 @@ const PROJECT_CACHE_KEY = "decusinKitchenProjects";
 
 const defaultRoomSurfaces = {
   floor: "#DDBF86",
+  floorPattern: "oakHerringbone",
   backWall: "#F4F1E9",
   sideWall: "#EFECE3",
   ceiling: "#D8D8D2",
   trim: "#D5D5D0",
+  backWallVisible: true,
+  leftWallVisible: true,
+  rightWallVisible: true,
+  ceilingVisible: true,
 };
+
+const floorPatternOptions = [
+  {
+    value: "oakHerringbone",
+    label: "Açık balıksırtı",
+    preview:
+      "repeating-linear-gradient(45deg, #E8C888 0 7px, #D9AE65 7px 14px, #F1D99E 14px 21px), repeating-linear-gradient(-45deg, rgba(151,95,36,0.24) 0 5px, transparent 5px 16px)",
+  },
+  {
+    value: "warmPlank",
+    label: "Sıcak meşe",
+    preview:
+      "repeating-linear-gradient(90deg, #B87832 0 14px, #D8A85A 14px 28px, #9C642C 28px 42px)",
+  },
+  {
+    value: "naturalChevron",
+    label: "Doğal chevron",
+    preview:
+      "repeating-linear-gradient(135deg, #D8AB66 0 9px, #F0D39B 9px 18px, #B9843E 18px 27px)",
+  },
+  {
+    value: "paleOak",
+    label: "Soluk meşe",
+    preview:
+      "repeating-linear-gradient(90deg, #F1DCA8 0 16px, #D9BA78 16px 32px, #FFE9B7 32px 48px)",
+  },
+  {
+    value: "classicOak",
+    label: "Klasik meşe",
+    preview:
+      "repeating-linear-gradient(90deg, #C89247 0 16px, #E0B66F 16px 32px, #B97A32 32px 48px)",
+  },
+  {
+    value: "goldenChevron",
+    label: "Altın chevron",
+    preview:
+      "repeating-linear-gradient(135deg, #C98930 0 8px, #EAB961 8px 16px, #A96A24 16px 24px)",
+  },
+  {
+    value: "walnutPlank",
+    label: "Ceviz",
+    preview:
+      "repeating-linear-gradient(90deg, #5B351F 0 16px, #8A542D 16px 32px, #3E2418 32px 48px)",
+  },
+  {
+    value: "darkWalnut",
+    label: "Koyu ceviz",
+    preview:
+      "repeating-linear-gradient(90deg, #2D1A13 0 16px, #5B3524 16px 32px, #1F130E 32px 48px)",
+  },
+  {
+    value: "smokedOak",
+    label: "Füme meşe",
+    preview:
+      "repeating-linear-gradient(90deg, #5C5A50 0 16px, #8B8778 16px 32px, #3D3B35 32px 48px)",
+  },
+  {
+    value: "blackChevron",
+    label: "Siyah chevron",
+    preview:
+      "repeating-linear-gradient(135deg, #161616 0 8px, #3A332B 8px 16px, #0C0C0C 16px 24px)",
+  },
+  {
+    value: "grayAsh",
+    label: "Gri dişbudak",
+    preview:
+      "repeating-linear-gradient(90deg, #A9A99F 0 16px, #D2D0C5 16px 32px, #7B7B73 32px 48px)",
+  },
+  {
+    value: "rusticBrown",
+    label: "Rustik kahve",
+    preview:
+      "repeating-linear-gradient(90deg, #70421F 0 16px, #A66B34 16px 32px, #4A2C18 32px 48px)",
+  },
+];
 
 const isCountertopMountedProduct = (product) => {
   const name = `${product?.name || ""} ${product?.category || ""}`.toLowerCase();
@@ -133,6 +215,236 @@ const normalizeProductDimensions = (product, dimensions = {}) => {
   }
 
   return nextDimensions;
+};
+
+const toolbarControlBoxSx = {
+  width: 66,
+  height: 42,
+  p: 0.35,
+  boxSizing: "border-box",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "flex-start",
+  borderRadius: 1,
+  border: "1px solid rgba(148,163,184,0.36)",
+  bgcolor: "#FFFFFF",
+  boxShadow: "0 6px 14px rgba(15,23,42,0.08)",
+};
+
+const toolbarControlLabelSx = {
+  display: "block",
+  mb: 0.25,
+  fontSize: 9,
+  fontWeight: 900,
+  color: "#475569",
+  lineHeight: "11px",
+  textAlign: "center",
+};
+
+const ToolbarNumberControl = ({ label, value, onChange }) => (
+  <Box sx={toolbarControlBoxSx}>
+    <Typography component="label" sx={toolbarControlLabelSx}>
+      {label}
+    </Typography>
+    <Box
+      component="input"
+      type="number"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      sx={{
+        width: "100%",
+        height: 23,
+        border: "1px solid rgba(148,163,184,0.45)",
+        borderRadius: 0.8,
+        px: 0.4,
+        fontSize: 11,
+        fontWeight: 900,
+        color: "#111827",
+        outline: "none",
+        textAlign: "center",
+        bgcolor: "#F8FAFC",
+      }}
+    />
+  </Box>
+);
+
+const ToolbarColorControl = ({ label, value, onChange }) => (
+  <Box component="label" title={label} sx={{ ...toolbarControlBoxSx, cursor: "pointer" }}>
+    <Typography component="span" sx={toolbarControlLabelSx}>
+      {label}
+    </Typography>
+    <Box
+      sx={{
+        width: "100%",
+        height: 23,
+        borderRadius: 0.8,
+        border: "1px solid rgba(148,163,184,0.48)",
+        bgcolor: value,
+        boxShadow: "inset 0 0 0 3px rgba(255,255,255,0.76)",
+      }}
+    />
+    <Box
+      component="input"
+      type="color"
+      aria-label={label}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      sx={{ position: "absolute", opacity: 0, pointerEvents: "none" }}
+    />
+  </Box>
+);
+
+const ToolbarVisibilityControl = ({ label, visible, onToggle }) => (
+  <Box
+    component="button"
+    type="button"
+    title={`${label} ${visible ? "gizle" : "goster"}`}
+    aria-label={`${label} ${visible ? "gizle" : "goster"}`}
+    onClick={onToggle}
+    sx={{
+      ...toolbarControlBoxSx,
+      width: 48,
+      cursor: "pointer",
+      outline: "none",
+      appearance: "none",
+      font: "inherit",
+      textAlign: "initial",
+    }}
+  >
+    <Typography component="span" sx={toolbarControlLabelSx}>
+      {label}
+    </Typography>
+    <Box
+      sx={{
+        width: "100%",
+        height: 23,
+        borderRadius: 0.8,
+        display: "grid",
+        placeItems: "center",
+        border: "1px solid rgba(148,163,184,0.42)",
+        color: visible ? "#1976D2" : "#94A3B8",
+        bgcolor: visible ? "#EFF6FF" : "#F8FAFC",
+      }}
+    >
+      {visible ? (
+        <VisibilityOutlinedIcon sx={{ fontSize: 17 }} />
+      ) : (
+        <VisibilityOffOutlinedIcon sx={{ fontSize: 17 }} />
+      )}
+    </Box>
+  </Box>
+);
+
+const ToolbarFloorPatternControl = ({ value, onChange }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const selectedOption =
+    floorPatternOptions.find((option) => option.value === value) || floorPatternOptions[0];
+  const open = Boolean(anchorEl);
+
+  return (
+    <>
+      <Box
+        component="button"
+        type="button"
+        title="Parke seç"
+        onClick={(event) => setAnchorEl(event.currentTarget)}
+        sx={{
+          ...toolbarControlBoxSx,
+          width: 76,
+          cursor: "pointer",
+          outline: "none",
+          appearance: "none",
+          font: "inherit",
+          textAlign: "initial",
+        }}
+      >
+        <Typography component="span" sx={toolbarControlLabelSx}>
+          Parke
+        </Typography>
+        <Box
+          sx={{
+            width: "100%",
+            height: 23,
+            borderRadius: 0.8,
+            border: "1px solid rgba(120,72,24,0.32)",
+            background: selectedOption.preview,
+            boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.38)",
+          }}
+        />
+      </Box>
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        PaperProps={{
+          sx: {
+            mt: 0.7,
+            p: 1,
+            width: 270,
+            borderRadius: 1.5,
+            border: "1px solid rgba(226,232,240,0.95)",
+            boxShadow: "0 18px 42px rgba(15,23,42,0.18)",
+          },
+        }}
+      >
+        <Typography sx={{ mb: 0.8, fontSize: 12, fontWeight: 900, color: "#334155" }}>
+          Parke Seç
+        </Typography>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 0.8,
+          }}
+        >
+          {floorPatternOptions.map((option) => (
+            <Box
+              key={option.value}
+              component="button"
+              type="button"
+              title={option.label}
+              aria-label={option.label}
+              onClick={() => {
+                onChange(option.value);
+                setAnchorEl(null);
+              }}
+              sx={{
+                p: 0.45,
+                borderRadius: 1,
+                cursor: "pointer",
+                border: value === option.value ? "2px solid #1976D2" : "1px solid rgba(148,163,184,0.38)",
+                bgcolor: "#FFFFFF",
+                outline: "none",
+                textAlign: "left",
+              }}
+            >
+              <Box
+                sx={{
+                  height: 38,
+                  borderRadius: 0.8,
+                  background: option.preview,
+                  boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.34)",
+                }}
+              />
+              <Typography
+                sx={{
+                  mt: 0.35,
+                  fontSize: 9.5,
+                  fontWeight: 900,
+                  color: "#334155",
+                  lineHeight: 1.1,
+                }}
+              >
+                {option.label}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </Popover>
+    </>
+  );
 };
 
 const cloneProjectData = (value) => {
@@ -1238,8 +1550,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         elevation={0}
         sx={{
           border: "1px solid #E2E8F0",
-          borderRadius: 2.25,
-          p: { xs: 1.5, md: 2 },
+          borderRadius: 1.5,
+          p: 1,
           mb: 1,
           background: "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)",
           boxShadow: "0 8px 22px rgba(15,23,42,0.04)",
@@ -1255,7 +1567,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             direction="row"
             spacing={1.5}
             alignItems="center"
-            sx={{ minWidth: 0 }}
+            sx={{ display: "none", minWidth: 0 }}
           >
             <Box
               sx={{
@@ -1285,9 +1597,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           <Stack
             direction={{ xs: "column", md: "row" }}
             alignItems={{ xs: "stretch", md: "center" }}
-            justifyContent={{ xs: "flex-start", md: "flex-end" }}
+            justifyContent="flex-start"
             spacing={1}
-            sx={{ flexWrap: "wrap" }}
+            sx={{ flexWrap: "wrap", width: "100%" }}
           >
             <Button
               variant="contained"
@@ -1320,6 +1632,62 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             >
               Ekli Ürünler
             </Button>
+            <Box sx={{ flexGrow: 1, minWidth: { xs: "100%", md: 24 } }} />
+            <ToolbarNumberControl
+              label="Genislik"
+              value={roomDimensions.width}
+              onChange={(value) => updateRoomDimension("width", value)}
+            />
+            <ToolbarNumberControl
+              label="Yukseklik"
+              value={roomDimensions.height}
+              onChange={(value) => updateRoomDimension("height", value)}
+            />
+            <ToolbarFloorPatternControl
+              value={roomSurfaces.floorPattern}
+              onChange={(floorPattern) =>
+                setRoomSurfaces((current) => ({
+                  ...current,
+                  floorPattern,
+                }))
+              }
+            />
+            {[
+              ["floor", "Zemin"],
+              ["backWall", "Arka"],
+              ["sideWall", "Yan"],
+              ["ceiling", "Tavan"],
+            ].map(([field, label]) => (
+              <ToolbarColorControl
+                key={field}
+                label={label}
+                value={roomSurfaces[field]}
+                onChange={(value) =>
+                  setRoomSurfaces((current) => ({
+                    ...current,
+                    [field]: value,
+                  }))
+                }
+              />
+            ))}
+            {[
+              ["backWallVisible", "Arka"],
+              ["leftWallVisible", "Sol"],
+              ["rightWallVisible", "Sag"],
+              ["ceilingVisible", "Tavan"],
+            ].map(([field, label]) => (
+              <ToolbarVisibilityControl
+                key={field}
+                label={label}
+                visible={roomSurfaces[field] !== false}
+                onToggle={() =>
+                  setRoomSurfaces((current) => ({
+                    ...current,
+                    [field]: current[field] === false,
+                  }))
+                }
+              />
+            ))}
             <Paper
               elevation={0}
               sx={{
@@ -1561,15 +1929,15 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           border: "1px solid #E2E8F0",
           borderRadius: 2,
           p: 2,
-          background: "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)",
+          bgcolor: "#FFFFFF",
           boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
         }}
       >
         <Stack
           direction={{ xs: "column", md: "row" }}
           alignItems={{ xs: "stretch", md: "center" }}
-          justifyContent="space-between"
-          spacing={1.5}
+          justifyContent="flex-start"
+          spacing={1}
         >
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 900 }}>
