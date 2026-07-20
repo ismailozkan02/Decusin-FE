@@ -369,11 +369,19 @@ const KitchenScene = ({
     pendingDragRef.current = null;
     setDrag3DIndex(null);
     setControlsLocked(false);
+    if (controlsRef.current) {
+      controlsRef.current.enabled = true;
+    }
   };
 
   const prepareItemDrag = (index, event) => {
     const sourceEvent = event.sourceEvent || event;
 
+    sourceEvent.preventDefault?.();
+    sourceEvent.stopPropagation?.();
+    if (controlsRef.current) {
+      controlsRef.current.enabled = false;
+    }
     pendingDragRef.current = {
       index,
       x: Number(sourceEvent.clientX || 0),
@@ -395,6 +403,22 @@ const KitchenScene = ({
 
     setDrag3DIndex(index);
   };
+
+  const clearSelectionForOrbit = useCallback(() => {
+    pendingDragRef.current = null;
+    setDrag3DIndex(null);
+    setControlsLocked(false);
+    if (controlsRef.current) {
+      controlsRef.current.enabled = true;
+    }
+    onClearSelection?.();
+  }, [onClearSelection]);
+
+  useEffect(() => {
+    if (!controlsRef.current) return;
+
+    controlsRef.current.enabled = drag3DIndex === null && !controlsLocked;
+  }, [controlsLocked, drag3DIndex]);
 
   useEffect(() => {
     const handleViewportResize = () => setViewportHeight(window.innerHeight);
@@ -603,8 +627,12 @@ const KitchenScene = ({
                 applyDefaultCameraView(camera, controlsRef.current);
               }}
               onPointerMissed={() => {
-                setControlsLocked(false);
-                if (drag3DIndex === null) onClearSelection();
+                if (drag3DIndex === null) clearSelectionForOrbit();
+              }}
+              onPointerDown={(event) => {
+                if (drag3DIndex === null && event.intersections.length === 0) {
+                  clearSelectionForOrbit();
+                }
               }}
             >
             <color attach="background" args={["#FAFAF8"]} />
@@ -621,9 +649,8 @@ const KitchenScene = ({
             <RoomShell
               roomDimensions={roomDimensions}
               roomSurfaces={roomSurfaces}
-              onEmptyClick={() => {
-                if (drag3DIndex === null) onClearSelection();
-              }}
+              onEmptyPointerDown={clearSelectionForOrbit}
+              onEmptyClick={clearSelectionForOrbit}
             />
             {!floorPatternPalettes[roomSurfaces?.floorPattern] && (
               <gridHelper
@@ -1255,7 +1282,7 @@ const createParquetTexture = (pattern = "oakHerringbone") => {
   return texture;
 };
 
-const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
+const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick, onEmptyPointerDown }) => {
   const width = cmToUnit(roomDimensions?.width || 450);
   const height = cmToUnit(roomDimensions?.height || 250);
   const depth = cmToUnit(roomDimensions?.depth || 240);
@@ -1291,9 +1318,19 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
     onEmptyClick();
   };
 
+  const handleEmptyPointerDown = (event) => {
+    event.stopPropagation();
+    onEmptyPointerDown();
+  };
+
   return (
     <group>
-      <mesh position={[0, -0.015, 0]} receiveShadow onClick={handleEmptyClick}>
+      <mesh
+        position={[0, -0.015, 0]}
+        receiveShadow
+        onPointerDown={handleEmptyPointerDown}
+        onClick={handleEmptyClick}
+      >
         <boxGeometry args={[width, 0.04, depth]} />
         <meshStandardMaterial
           color={floorTexture ? "#FFFFFF" : surfaces.floor}
@@ -1304,11 +1341,16 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
       </mesh>
       {surfaces.backWallVisible !== false && (
         <>
-          <mesh position={[0, height / 2, -depth / 2 - wallThickness / 2]} receiveShadow onClick={handleEmptyClick}>
+          <mesh
+            position={[0, height / 2, -depth / 2 - wallThickness / 2]}
+            receiveShadow
+            onClick={handleEmptyClick}
+            raycast={() => null}
+          >
             <boxGeometry args={[width + wallThickness * 2, height, wallThickness]} />
             <meshStandardMaterial color={surfaces.backWall} roughness={0.88} metalness={0} />
           </mesh>
-          <mesh position={[0, height - 0.025, -depth / 2 + 0.035]}>
+          <mesh position={[0, height - 0.025, -depth / 2 + 0.035]} raycast={() => null}>
             <boxGeometry args={[width + 0.02, 0.035, 0.035]} />
             <meshStandardMaterial color={trimColor} roughness={0.82} />
           </mesh>
@@ -1316,7 +1358,12 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
       )}
       {surfaces.leftWallVisible !== false && (
         <>
-          <mesh position={[-width / 2 - wallThickness / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
+          <mesh
+            position={[-width / 2 - wallThickness / 2, height / 2, 0]}
+            receiveShadow
+            onClick={handleEmptyClick}
+            raycast={() => null}
+          >
             <boxGeometry args={[wallThickness, height, depth]} />
             <meshStandardMaterial color={surfaces.sideWall} roughness={0.92} metalness={0} />
           </mesh>
@@ -1324,26 +1371,36 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
       )}
       {surfaces.rightWallVisible !== false && (
         <>
-          <mesh position={[width / 2 + wallThickness / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
+          <mesh
+            position={[width / 2 + wallThickness / 2, height / 2, 0]}
+            receiveShadow
+            onClick={handleEmptyClick}
+            raycast={() => null}
+          >
             <boxGeometry args={[wallThickness, height, depth]} />
             <meshStandardMaterial color={surfaces.sideWall} roughness={0.92} metalness={0} />
           </mesh>
         </>
       )}
       {surfaces.ceilingVisible !== false && (
-        <mesh position={[0, height + wallThickness / 2, 0]} receiveShadow onClick={handleEmptyClick}>
+        <mesh
+          position={[0, height + wallThickness / 2, 0]}
+          receiveShadow
+          onClick={handleEmptyClick}
+          raycast={() => null}
+        >
           <boxGeometry args={[width + wallThickness * 2, wallThickness, depth + wallThickness]} />
           <meshStandardMaterial color={surfaces.ceiling} roughness={0.9} metalness={0} />
         </mesh>
       )}
       {surfaces.backWallVisible !== false && surfaces.leftWallVisible !== false && (
-        <mesh position={[-width / 2 + 0.018, height / 2, -depth / 2 + 0.018]}>
+        <mesh position={[-width / 2 + 0.018, height / 2, -depth / 2 + 0.018]} raycast={() => null}>
           <boxGeometry args={[0.028, height, 0.028]} />
           <meshStandardMaterial color={trimColor} roughness={0.88} />
         </mesh>
       )}
       {surfaces.backWallVisible !== false && surfaces.rightWallVisible !== false && (
-        <mesh position={[width / 2 - 0.018, height / 2, -depth / 2 + 0.018]}>
+        <mesh position={[width / 2 - 0.018, height / 2, -depth / 2 + 0.018]} raycast={() => null}>
           <boxGeometry args={[0.028, height, 0.028]} />
           <meshStandardMaterial color={trimColor} roughness={0.88} />
         </mesh>
@@ -1363,7 +1420,6 @@ const DragSurface = ({ roomDimensions, wallMode, surfaceHeight, onPointerMove, o
         position={[0, height / 2, -depth / 2 + 0.035]}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
       >
         <planeGeometry args={[width, height]} />
         <meshBasicMaterial transparent opacity={0.01} depthWrite={false} side={DoubleSide} />
@@ -1377,7 +1433,6 @@ const DragSurface = ({ roomDimensions, wallMode, surfaceHeight, onPointerMove, o
       position={[0, surfaceHeight, 0]}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
     >
       <planeGeometry args={[width, depth]} />
       <meshBasicMaterial transparent opacity={0.01} depthWrite={false} side={DoubleSide} />
@@ -1537,6 +1592,7 @@ const DimensionLabel = ({ position, children, distanceFactor = 7 }) => (
     <Box
       data-kitchen-scene-controls="true"
       sx={{
+        pointerEvents: "none",
         px: 0.65,
         py: 0.28,
         borderRadius: 0.8,
@@ -1555,14 +1611,14 @@ const DimensionLabel = ({ position, children, distanceFactor = 7 }) => (
 );
 
 const DimensionLine = ({ position, size }) => (
-  <mesh position={position}>
+  <mesh position={position} raycast={() => null}>
     <boxGeometry args={size} />
     <meshBasicMaterial color="#686868" />
   </mesh>
 );
 
 const DimensionEndCap = ({ position, vertical = false }) => (
-  <mesh position={position}>
+  <mesh position={position} raycast={() => null}>
     <boxGeometry args={vertical ? [0.055, 0.01, 0.01] : [0.01, 0.055, 0.01]} />
     <meshBasicMaterial color="#686868" />
   </mesh>
@@ -1677,9 +1733,12 @@ const SceneItem3D = ({
       position={transform.position}
       onPointerDown={(event) => {
         event.stopPropagation();
+        event.sourceEvent?.preventDefault?.();
+        event.sourceEvent?.stopPropagation?.();
         onSelectItem(index);
         onPrepareDrag(index, event);
         event.target.setPointerCapture?.(event.pointerId);
+        event.currentTarget.setPointerCapture?.(event.pointerId);
       }}
       onPointerMove={(event) => {
         event.stopPropagation();
@@ -1689,6 +1748,7 @@ const SceneItem3D = ({
         event.stopPropagation();
         onEndDrag();
         event.target.releasePointerCapture?.(event.pointerId);
+        event.currentTarget.releasePointerCapture?.(event.pointerId);
       }}
       onClick={(event) => {
         event.stopPropagation();
