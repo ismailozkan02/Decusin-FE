@@ -313,21 +313,43 @@ const KitchenScene = ({
       const rawTopCm = roomHeightCm - point.y * 100 - heightCm / 2;
       const yCm = snapRoomValue(rawTopCm, roomHeightCm, heightCm);
 
-      onMoveItem3D?.(index, {
-        x: xCm * cmToPx,
-        y: yCm * cmToPx,
-        z: 0,
+      const nextPosition = resolveDragCollisionCm({
+        item,
+        index,
+        product,
+        dimensions,
+        sceneItems,
+        catalogMap,
+        cmToPx,
+        nextPosition: {
+          x: xCm * cmToPx,
+          y: yCm * cmToPx,
+          z: 0,
+        },
       });
+
+      onMoveItem3D?.(index, nextPosition);
       return;
     }
 
     const rawZCm = (point.z + cmToUnit(roomDepthCm) / 2) * 100 - depthCm / 2;
     const zCm = snapRoomValue(rawZCm, roomDepthCm, depthCm);
 
-    onMoveItem3D?.(index, {
-      x: xCm * cmToPx,
-      z: zCm,
+    const nextPosition = resolveDragCollisionCm({
+      item,
+      index,
+      product,
+      dimensions,
+      sceneItems,
+      catalogMap,
+      cmToPx,
+      nextPosition: {
+        x: xCm * cmToPx,
+        z: zCm,
+      },
     });
+
+    onMoveItem3D?.(index, nextPosition);
   };
 
   const handle3DDragPoint = (point) => {
@@ -770,6 +792,113 @@ const getSceneItemDimensions = (product, item = {}) => {
 
 const rangesOverlap = (startA, sizeA, startB, sizeB) =>
   Math.min(startA + sizeA, startB + sizeB) - Math.max(startA, startB) > 1;
+
+const isCollisionBlockingProduct = (product) =>
+  Boolean(product) &&
+  product.category !== "room" &&
+  product.category !== "countertop" &&
+  !isCountertopMountedProduct(product);
+
+const resolveDragCollisionCm = ({
+  item,
+  index,
+  product,
+  dimensions,
+  sceneItems,
+  catalogMap,
+  cmToPx,
+  nextPosition,
+}) => {
+  if (!isCollisionBlockingProduct(product)) return nextPosition;
+
+  const width = Math.max(Number(dimensions.width || 60), 1);
+  const height = Math.max(Number(dimensions.height || 72), 1);
+  const depth = Math.max(Number(dimensions.depth || 56), 1);
+  const wallMode = isWallMountedItem(item, product, dimensions);
+  const current = {
+    x: Number(item.position?.x || 0) / cmToPx,
+    y: Number(item.position?.y || 0) / cmToPx,
+    z: Number(item.position?.z || 0),
+  };
+  const resolved = {
+    x: Number(nextPosition.x ?? item.position?.x ?? 0) / cmToPx,
+    y: Number(nextPosition.y ?? item.position?.y ?? 0) / cmToPx,
+    z: Number(nextPosition.z ?? item.position?.z ?? 0),
+  };
+  const movement = {
+    x: resolved.x - current.x,
+    y: resolved.y - current.y,
+    z: resolved.z - current.z,
+  };
+
+  sceneItems.forEach((otherItem, otherIndex) => {
+    if (otherIndex === index) return;
+
+    const otherProduct = catalogMap[otherItem.catalog_item_id] || {};
+    if (!isCollisionBlockingProduct(otherProduct)) return;
+
+    const otherDimensions = getSceneItemDimensions(otherProduct, otherItem);
+    if (isWallMountedItem(otherItem, otherProduct, otherDimensions) !== wallMode) return;
+
+    const other = {
+      x: Number(otherItem.position?.x || 0) / cmToPx,
+      y: Number(otherItem.position?.y || 0) / cmToPx,
+      z: Number(otherItem.position?.z || 0),
+      width: Math.max(Number(otherDimensions.width || 60), 1),
+      height: Math.max(Number(otherDimensions.height || 72), 1),
+      depth: Math.max(Number(otherDimensions.depth || 56), 1),
+    };
+
+    if (wallMode) {
+      if (
+        !rangesOverlap(resolved.x, width, other.x, other.width) ||
+        !rangesOverlap(resolved.y, height, other.y, other.height)
+      ) {
+        return;
+      }
+
+      const xPenLeft = resolved.x + width - other.x;
+      const xPenRight = other.x + other.width - resolved.x;
+      const yPenTop = resolved.y + height - other.y;
+      const yPenBottom = other.y + other.height - resolved.y;
+      const xPen = Math.min(xPenLeft, xPenRight);
+      const yPen = Math.min(yPenTop, yPenBottom);
+
+      if (Math.abs(movement.x) >= Math.abs(movement.y) || xPen <= yPen) {
+        resolved.x = movement.x >= 0 ? other.x - width : other.x + other.width;
+      } else {
+        resolved.y = movement.y >= 0 ? other.y - height : other.y + other.height;
+      }
+      return;
+    }
+
+    if (
+      !rangesOverlap(resolved.x, width, other.x, other.width) ||
+      !rangesOverlap(resolved.z, depth, other.z, other.depth)
+    ) {
+      return;
+    }
+
+    const xPenLeft = resolved.x + width - other.x;
+    const xPenRight = other.x + other.width - resolved.x;
+    const zPenFront = resolved.z + depth - other.z;
+    const zPenBack = other.z + other.depth - resolved.z;
+    const xPen = Math.min(xPenLeft, xPenRight);
+    const zPen = Math.min(zPenFront, zPenBack);
+
+    if (Math.abs(movement.x) >= Math.abs(movement.z) || xPen <= zPen) {
+      resolved.x = movement.x >= 0 ? other.x - width : other.x + other.width;
+    } else {
+      resolved.z = movement.z >= 0 ? other.z - depth : other.z + other.depth;
+    }
+  });
+
+  return {
+    ...nextPosition,
+    x: resolved.x * cmToPx,
+    ...(wallMode ? { y: resolved.y * cmToPx, z: 0 } : { z: resolved.z }),
+  };
+};
 
 const getItemFootprintCm = (item, product, cmToPx) => {
   const dimensions = getSceneItemDimensions(product, item);
