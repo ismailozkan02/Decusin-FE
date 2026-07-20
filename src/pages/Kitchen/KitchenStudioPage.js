@@ -721,6 +721,91 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     };
   }, []);
 
+  const resolveInitialSceneItemPosition = useCallback(
+    (items, nextItem, product, position) => {
+      if (product.category === "countertop" || isCountertopMountedProduct(product)) {
+        return position;
+      }
+
+      const metrics = getSceneMetrics();
+      const cmToPx = metrics.cmToPx || 1;
+      const dimensions = normalizeProductDimensions(product, nextItem.dimensions);
+      const placement = nextItem.placement || getProductPlacement(product, dimensions);
+      const roomWidthCm = Math.max(Number(roomDimensions.width || 450), 1);
+      const roomDepthCm = Math.max(Number(roomDimensions.depth || 240), 1);
+      const roomHeightCm = Math.max(Number(roomDimensions.height || 250), 1);
+      const width = Math.max(Number(dimensions.width || 60), 1);
+      const height = Math.max(Number(dimensions.height || 72), 1);
+      const depth = Math.max(Number(dimensions.depth || 56), 1);
+      const candidates =
+        placement === "wall"
+          ? [
+              { x: Number(position.x || 0) / cmToPx, y: Number(position.y || 0) / cmToPx },
+              { x: Number(position.x || 0) / cmToPx + width, y: Number(position.y || 0) / cmToPx },
+              { x: Number(position.x || 0) / cmToPx - width, y: Number(position.y || 0) / cmToPx },
+              { x: Number(position.x || 0) / cmToPx, y: Number(position.y || 0) / cmToPx + height },
+            ]
+          : [
+              { x: Number(position.x || 0) / cmToPx, z: Number(position.z || 0) },
+              { x: Number(position.x || 0) / cmToPx + width, z: Number(position.z || 0) },
+              { x: Number(position.x || 0) / cmToPx - width, z: Number(position.z || 0) },
+              { x: Number(position.x || 0) / cmToPx, z: Number(position.z || 0) + depth },
+            ];
+
+      const overlapsExisting = (candidate) =>
+        items.some((item) => {
+          const otherProduct = catalogMap[item.catalog_item_id] || {};
+          if (otherProduct.category === "countertop" || isCountertopMountedProduct(otherProduct)) return false;
+
+          const otherDimensions = normalizeProductDimensions(otherProduct, item.dimensions);
+          const otherPlacement = item.placement || getProductPlacement(otherProduct, otherDimensions);
+          if (otherPlacement !== placement) return false;
+
+          const otherX = Number(item.position?.x || 0) / cmToPx;
+          const otherWidth = Math.max(Number(otherDimensions.width || 60), 1);
+
+          if (placement === "wall") {
+            const otherY = Number(item.position?.y || 0) / cmToPx;
+            const otherHeight = Math.max(Number(otherDimensions.height || 72), 1);
+            return (
+              Math.min(candidate.x + width, otherX + otherWidth) - Math.max(candidate.x, otherX) > 1 &&
+              Math.min(candidate.y + height, otherY + otherHeight) - Math.max(candidate.y, otherY) > 1
+            );
+          }
+
+          const otherZ = Number(item.position?.z || 0);
+          const otherDepth = Math.max(Number(otherDimensions.depth || 56), 1);
+          return (
+            Math.min(candidate.x + width, otherX + otherWidth) - Math.max(candidate.x, otherX) > 1 &&
+            Math.min(candidate.z + depth, otherZ + otherDepth) - Math.max(candidate.z, otherZ) > 1
+          );
+        });
+
+      const inRoom = (candidate) =>
+        placement === "wall"
+          ? candidate.x >= 0 &&
+            candidate.x + width <= roomWidthCm &&
+            candidate.y >= 0 &&
+            candidate.y + height <= roomHeightCm
+          : candidate.x >= 0 &&
+            candidate.x + width <= roomWidthCm &&
+            candidate.z >= 0 &&
+            candidate.z + depth <= roomDepthCm;
+
+      const freeCandidate = candidates.find((candidate) => inRoom(candidate) && !overlapsExisting(candidate));
+      if (!freeCandidate) return position;
+
+      return {
+        ...position,
+        x: freeCandidate.x * cmToPx,
+        ...(placement === "wall"
+          ? { y: freeCandidate.y * cmToPx, z: 0 }
+          : { z: freeCandidate.z }),
+      };
+    },
+    [catalogMap, getSceneMetrics, roomDimensions.depth, roomDimensions.height, roomDimensions.width],
+  );
+
   useEffect(() => {
     let mounted = true;
 
@@ -846,9 +931,13 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         quantity: 1,
       };
       const position = clampScenePosition(nextItem, product, x, nextY);
+      const resolvedPosition = resolveInitialSceneItemPosition(current, nextItem, product, {
+        ...nextItem.position,
+        ...position,
+      });
       return [
         ...current,
-        { ...nextItem, position: { ...nextItem.position, ...position } },
+        { ...nextItem, position: { ...nextItem.position, ...position, ...resolvedPosition } },
       ];
     });
     setSelectedSceneIndex(null);
