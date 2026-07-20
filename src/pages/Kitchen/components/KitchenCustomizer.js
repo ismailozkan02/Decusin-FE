@@ -306,7 +306,7 @@ const KitchenCustomizer = ({
               </TextField>
             )}
 
-            <Box>
+            <Box sx={{ display: "none" }}>
               <Typography
                 variant="caption"
                 color="text.secondary"

@@ -40,7 +40,7 @@ import {
 } from "./kitchenData";
 import { money } from "./kitchenUtils";
 
-const buildLocalQuote = (items, catalogMap, materialMap, installationFee) => {
+const buildLocalQuote = (items, catalogMap, materialMap, installationFee, shippingFee) => {
   const lines = items.map((item) => {
     const product = catalogMap[item.catalog_item_id] || {};
     const quantity = Number(item.quantity || 1);
@@ -74,14 +74,16 @@ const buildLocalQuote = (items, catalogMap, materialMap, installationFee) => {
   });
   const subtotal = lines.reduce((sum, line) => sum + line.line_total, 0);
   const installation = Math.max(Number(installationFee || 0), 0);
+  const shipping = Math.max(Number(shippingFee || 0), 0);
 
   return {
     currency: "TRY",
     lines,
     subtotal,
     installation,
+    shipping,
     discount: 0,
-    total: subtotal + installation,
+    total: subtotal + installation + shipping,
   };
 };
 
@@ -461,14 +463,15 @@ const normalizeProjectSnapshot = (project) => {
   return {
     ...snapshot,
     room_dimensions: {
-      width: 360,
-      height: 260,
+      width: 450,
+      height: 250,
       depth: 240,
       unit: "cm",
       ...(snapshot.room_dimensions || {}),
     },
     items: Array.isArray(snapshot.items) ? snapshot.items : [],
     installation_fee: Number(snapshot.installation_fee || 0),
+    shipping_fee: Number(snapshot.shipping_fee || 0),
     room_surfaces: {
       ...defaultRoomSurfaces,
       ...(snapshot.room_surfaces || {}),
@@ -556,9 +559,12 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const [installationFee, setInstallationFee] = useState(
     () => Number(pendingProject?.installation_fee || 0),
   );
+  const [shippingFee, setShippingFee] = useState(
+    () => Number(pendingProject?.shipping_fee || 0),
+  );
   const [roomDimensions, setRoomDimensions] = useState({
-    width: 360,
-    height: 260,
+    width: 450,
+    height: 250,
     depth: 240,
     unit: "cm",
     ...(pendingProject?.room_dimensions || {}),
@@ -620,8 +626,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     ? materials.find((item) => item.id === selectedMaterialId) || null
     : null;
   const localQuote = useMemo(
-    () => buildLocalQuote(sceneItems, catalogMap, materialMap, installationFee),
-    [catalogMap, installationFee, materialMap, sceneItems],
+    () => buildLocalQuote(sceneItems, catalogMap, materialMap, installationFee, shippingFee),
+    [catalogMap, installationFee, materialMap, sceneItems, shippingFee],
   );
   const quote = localQuote;
   const selectedLineQuote =
@@ -644,8 +650,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const getSceneMetrics = useCallback(
     (dimensions = roomDimensions) => {
       const rect = sceneRef.current?.getBoundingClientRect();
-      const roomWidthCm = Math.max(Number(dimensions.width || 360), 1);
-      const roomHeightCm = Math.max(Number(dimensions.height || 260), 1);
+      const roomWidthCm = Math.max(Number(dimensions.width || 450), 1);
+      const roomHeightCm = Math.max(Number(dimensions.height || 250), 1);
       const cmToPx = rect
         ? Math.max((rect.width / roomWidthCm) * zoom, 0.6)
         : 1;
@@ -726,10 +732,25 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       items: sceneItems,
       include_installation: true,
       installation_fee: installationFee,
+      shipping_fee: shippingFee,
     })
       .then(() => undefined)
       .catch(() => undefined);
-  }, [installationFee, sceneItems]);
+  }, [installationFee, sceneItems, shippingFee]);
+
+  useEffect(() => {
+    const updateQuoteFees = (event) => {
+      if (event.detail?.installation_fee !== undefined) {
+        setInstallationFee(Math.max(Number(event.detail.installation_fee) || 0, 0));
+      }
+      if (event.detail?.shipping_fee !== undefined) {
+        setShippingFee(Math.max(Number(event.detail.shipping_fee) || 0, 0));
+      }
+    };
+
+    window.addEventListener("decusin:update-quote-fees", updateQuoteFees);
+    return () => window.removeEventListener("decusin:update-quote-fees", updateQuoteFees);
+  }, []);
 
   useEffect(() => {
     const total = Number(localQuote?.total || 0);
@@ -840,7 +861,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           ...(item.dimensions || {}),
         };
         const maxElevation = Math.max(
-          Number(roomDimensions.height || 260) - Number(dimensions.height || 72),
+          Number(roomDimensions.height || 250) - Number(dimensions.height || 72),
           0,
         );
         const elevation = Math.min(Math.max(Number(value) || 0, 0), maxElevation);
@@ -860,7 +881,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setPaletteOpen(false);
     setSceneItemsOpen(false);
     setSelectedSceneIndex(index);
-    setCustomizerOpen(true);
+    setCustomizerOpen(false);
     setDragState(null);
     setResizeState(null);
   };
@@ -1224,7 +1245,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     event.stopPropagation();
     setPaletteOpen(false);
     setSelectedSceneIndex(index);
-    setCustomizerOpen(true);
+    setCustomizerOpen(false);
     const point = scenePointFromEvent(event);
     const item = sceneItems[index];
     setDragState({
@@ -1248,7 +1269,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     const item = sceneItems[index];
 
     setSelectedSceneIndex(index);
-    setCustomizerOpen(true);
+    setCustomizerOpen(false);
     setDragState(null);
     setResizeState({
       index,
@@ -1307,6 +1328,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       room_surfaces: cloneProjectData(roomSurfaces),
       items: cloneProjectData(sceneItems),
       installation_fee: installationFee,
+      shipping_fee: shippingFee,
       quote: cloneProjectData(quote),
       notes: projectForm.notes || "FE uzerinden kaydedilen proje.",
       created_at: new Date().toISOString(),
@@ -1350,9 +1372,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setProjectSaveOpen(false);
     setProjectForm({ name: "", customer_name: "", notes: "" });
     setInstallationFee(0);
+    setShippingFee(0);
     setDragState(null);
     setResizeState(null);
-    setRoomDimensions({ width: 360, height: 260, depth: 240, unit: "cm" });
+    setRoomDimensions({ width: 450, height: 250, depth: 240, unit: "cm" });
     setRoomSurfaces(defaultRoomSurfaces);
   }, []);
 
@@ -1458,6 +1481,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setRoomDimensions(snapshot.room_dimensions);
     setRoomSurfaces(snapshot.room_surfaces);
     setInstallationFee(snapshot.installation_fee);
+    setShippingFee(snapshot.shipping_fee);
     setSelectedSceneIndex(null);
     setCustomizerOpen(false);
     setPaletteOpen(false);
@@ -1541,7 +1565,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           setPaletteOpen(false);
           setSceneItemsOpen(false);
           setSelectedSceneIndex(index);
-          setCustomizerOpen(true);
+          setCustomizerOpen(false);
         }}
         onDeleteItem={removeSceneItem}
         quote={quote}
@@ -1760,6 +1784,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             onResizeMouseDown={handleResizeMouseDown}
             onCopyItem={duplicateSceneItem}
             onDeleteItem={removeSceneItem}
+            onOpenCustomizer={() => setCustomizerOpen(true)}
+            onRotateItem={rotateSceneItem}
             onNewProject={startNewProject}
             onSaveProject={() => setProjectSaveOpen(true)}
             onClearItems={clearSceneItems}
@@ -1881,7 +1907,6 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       catalogItems={catalogItems}
       catalogGroups={catalogGroups}
       materials={materials}
-      installationFee={installationFee}
       selectedProduct={selectedCatalogProduct}
       selectedMaterial={selectedMaterial}
       onSelectProduct={(product) => {
@@ -1892,7 +1917,6 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       onUpdateProduct={updateCatalogItem}
       onAddProduct={addCatalogItem}
       onAddCatalogGroup={addCatalogGroup}
-      onChangeInstallationFee={setInstallationFee}
       onSelectMaterial={(material) => {
         setSelectedCatalogProductId(null);
         setSelectedMaterialId(material.id);

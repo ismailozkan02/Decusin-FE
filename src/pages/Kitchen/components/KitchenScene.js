@@ -3,10 +3,15 @@ import { Box, CircularProgress, IconButton, Paper, Stack, Typography } from "@mu
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DeleteSweepOutlinedIcon from "@mui/icons-material/DeleteSweepOutlined";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import OpenInFullOutlinedIcon from "@mui/icons-material/OpenInFullOutlined";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
 import RestartAltOutlinedIcon from "@mui/icons-material/RestartAltOutlined";
+import RotateLeftIcon from "@mui/icons-material/RotateLeft";
+import RotateRightIcon from "@mui/icons-material/RotateRight";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Edges, Environment, Html, OrbitControls, useGLTF } from "@react-three/drei";
 import { Box3, CanvasTexture, Color, DoubleSide, Plane, RepeatWrapping, Vector2, Vector3 } from "three";
@@ -211,6 +216,8 @@ const KitchenScene = ({
   onResizeMouseDown,
   onCopyItem,
   onDeleteItem,
+  onOpenCustomizer,
+  onRotateItem,
   onNewProject,
   onSaveProject,
   onClearItems,
@@ -230,8 +237,8 @@ const KitchenScene = ({
   const [viewportHeight, setViewportHeight] = useState(
     typeof window === "undefined" ? 900 : window.innerHeight,
   );
-  const roomWidthCm = Math.max(Number(roomDimensions?.width || 360), 1);
-  const roomHeightCm = Math.max(Number(roomDimensions?.height || 260), 1);
+  const roomWidthCm = Math.max(Number(roomDimensions?.width || 450), 1);
+  const roomHeightCm = Math.max(Number(roomDimensions?.height || 250), 1);
   const roomRatio = roomHeightCm / roomWidthCm;
   const availableWidth = Math.max((sceneBox.width || 1000) - 34, 300);
   const availableHeight = Math.max(viewportHeight - sceneBox.top - 128, 300);
@@ -246,11 +253,11 @@ const KitchenScene = ({
     const roomWidth = cmToUnit(roomWidthCm);
     const roomHeight = cmToUnit(roomHeightCm);
     const roomDepth = cmToUnit(roomDepthCm);
-    const cameraDistance = Math.max(roomWidth, roomDepth) * 1.12;
+    const cameraDistance = Math.max(roomWidth, roomDepth) * 1.48;
 
     return {
-      position: [0, roomHeight * 0.58, cameraDistance],
-      target: [0, roomHeight * 0.38, -roomDepth * 0.22],
+      position: [0, roomHeight * 0.62, cameraDistance],
+      target: [0, roomHeight * 0.52, -roomDepth * 0.16],
     };
   }, [roomDepthCm, roomHeightCm, roomWidthCm]);
   const handleSceneReady = useCallback(() => setSceneReady(true), []);
@@ -397,6 +404,7 @@ const KitchenScene = ({
         bgcolor: "#FFFFFF",
         boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
         display: "flex",
+        alignItems: "center",
         justifyContent: "center",
         position: "relative",
         minHeight: layoutReady ? fittedHeight + 32 : placeholderHeight,
@@ -455,6 +463,67 @@ const KitchenScene = ({
           <DeleteSweepOutlinedIcon />
         </IconButton>
       </Stack>
+      {selectedSceneIndex !== null && (
+        <Stack
+          data-kitchen-scene-controls="true"
+          direction="column"
+          spacing={0.45}
+          sx={{
+            ...sceneToolPanelSx,
+            top: { xs: 240, md: 246 },
+          }}
+        >
+          <IconButton
+            aria-label="Secili urun ayarlari"
+            onClick={onOpenCustomizer}
+            sx={sceneIconButtonSx("#111827")}
+          >
+            <SettingsOutlinedIcon />
+          </IconButton>
+          <IconButton
+            aria-label="Secili urunu kopyala"
+            onClick={() => onCopyItem?.(selectedSceneIndex)}
+            sx={sceneIconButtonSx("#2563EB")}
+          >
+            <ContentCopyIcon />
+          </IconButton>
+          <IconButton
+            aria-label="Secili urunu sil"
+            onClick={() => onDeleteItem?.(selectedSceneIndex)}
+            sx={sceneIconButtonSx("#EF4444")}
+          >
+            <DeleteOutlineIcon />
+          </IconButton>
+          <IconButton
+            aria-label="Secili urunu sola dondur"
+            onClick={() => onRotateItem?.(selectedSceneIndex, "y", -10)}
+            sx={sceneIconButtonSx("#64748B")}
+          >
+            <RotateLeftIcon />
+          </IconButton>
+          <IconButton
+            aria-label="Secili urunu yukari dondur"
+            onClick={() => onRotateItem?.(selectedSceneIndex, "x", -10)}
+            sx={sceneIconButtonSx("#64748B")}
+          >
+            <KeyboardArrowUpIcon />
+          </IconButton>
+          <IconButton
+            aria-label="Secili urunu asagi dondur"
+            onClick={() => onRotateItem?.(selectedSceneIndex, "x", 10)}
+            sx={sceneIconButtonSx("#64748B")}
+          >
+            <KeyboardArrowDownIcon />
+          </IconButton>
+          <IconButton
+            aria-label="Secili urunu saga dondur"
+            onClick={() => onRotateItem?.(selectedSceneIndex, "y", 10)}
+            sx={sceneIconButtonSx("#64748B")}
+          >
+            <RotateRightIcon />
+          </IconButton>
+        </Stack>
+      )}
       <Box
         ref={sceneRef}
         onDragOver={onDragOver}
@@ -577,8 +646,6 @@ const KitchenScene = ({
                   onPrepareDrag={prepareItemDrag}
                   onMaybeStartDrag={maybeStartItemDrag}
                   onEndDrag={handle3DPointerUp}
-                  onCopyItem={onCopyItem}
-                  onDeleteItem={onDeleteItem}
                 />
               );
             })}
@@ -799,8 +866,8 @@ const getCategoryPlacement = (product, roomHeightCm, dimensions, topCm, elevatio
 };
 
 const getItem3DTransform = ({ item, index, product, sceneItems, catalogMap, roomDimensions, cmToPx }) => {
-  const roomWidthCm = Math.max(Number(roomDimensions?.width || 360), 1);
-  const roomHeightCm = Math.max(Number(roomDimensions?.height || 260), 1);
+  const roomWidthCm = Math.max(Number(roomDimensions?.width || 450), 1);
+  const roomHeightCm = Math.max(Number(roomDimensions?.height || 250), 1);
   const roomDepthCm = Math.max(Number(roomDimensions?.depth || 240), 1);
   const dimensions = getSceneItemDimensions(product, item);
   const widthCm = Math.max(Number(dimensions.width || 60), 1);
@@ -1024,8 +1091,8 @@ const createParquetTexture = (pattern = "oakHerringbone") => {
 };
 
 const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
-  const width = cmToUnit(roomDimensions?.width || 360);
-  const height = cmToUnit(roomDimensions?.height || 260);
+  const width = cmToUnit(roomDimensions?.width || 450);
+  const height = cmToUnit(roomDimensions?.height || 250);
   const depth = cmToUnit(roomDimensions?.depth || 240);
   const wallThickness = 0.075;
   const trimColor = "#D0D0CA";
@@ -1121,8 +1188,8 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
 };
 
 const DragSurface = ({ roomDimensions, wallMode, surfaceHeight, onPointerMove, onPointerUp }) => {
-  const width = cmToUnit(roomDimensions?.width || 360);
-  const height = cmToUnit(roomDimensions?.height || 260);
+  const width = cmToUnit(roomDimensions?.width || 450);
+  const height = cmToUnit(roomDimensions?.height || 250);
   const depth = cmToUnit(roomDimensions?.depth || 240);
 
   if (wallMode) {
@@ -1372,8 +1439,8 @@ const SceneItemDimensionGuides = ({ size, dimensions }) => {
 };
 
 const isCameraBehindVisibleRoomWall = ({ cameraPosition, roomDimensions, roomSurfaces }) => {
-  const roomWidth = cmToUnit(roomDimensions?.width || 360);
-  const roomHeight = cmToUnit(roomDimensions?.height || 260);
+  const roomWidth = cmToUnit(roomDimensions?.width || 450);
+  const roomHeight = cmToUnit(roomDimensions?.height || 250);
   const roomDepth = cmToUnit(roomDimensions?.depth || 240);
   const margin = 0.025;
 
@@ -1403,8 +1470,6 @@ const SceneItem3D = ({
   onPrepareDrag,
   onMaybeStartDrag,
   onEndDrag,
-  onCopyItem,
-  onDeleteItem,
 }) => {
   const camera = useThree((state) => state.camera);
   const overlayHiddenRef = useRef(false);
@@ -1485,48 +1550,6 @@ const SceneItem3D = ({
             <Edges color="#1976D2" linewidth={2} />
           </mesh>
           <SceneItemDimensionGuides size={transform.size} dimensions={transform.dimensions} />
-          <Html
-            position={[0, transform.size[1] / 2 + 0.2, -transform.size[2] / 2 - 0.04]}
-            center
-            distanceFactor={6}
-            occlude
-          >
-            <Stack
-              data-kitchen-scene-controls="true"
-              direction="row"
-              spacing={0.4}
-              sx={{
-                p: 0.35,
-                borderRadius: 999,
-                bgcolor: "rgba(255,255,255,0.96)",
-                border: "1px solid rgba(226,232,240,0.95)",
-                boxShadow: "0 12px 28px rgba(15,23,42,0.18)",
-              }}
-            >
-              <IconButton
-                size="small"
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onCopyItem(index);
-                }}
-                sx={{ width: 24, height: 24, color: "#2563EB" }}
-              >
-                <ContentCopyIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-              <IconButton
-                size="small"
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onDeleteItem(index);
-                }}
-                sx={{ width: 24, height: 24, color: "#EF4444" }}
-              >
-                <DeleteOutlineIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Stack>
-          </Html>
         </>
       )}
     </group>

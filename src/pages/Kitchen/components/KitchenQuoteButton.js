@@ -64,6 +64,10 @@ const KitchenQuoteButton = ({ quote, open, onOpen, onClose }) => (
             <Typography sx={{ fontWeight: 800 }}>{money(quote?.installation)}</Typography>
           </Stack>
           <Stack direction="row" justifyContent="space-between">
+            <Typography>Nakliye</Typography>
+            <Typography sx={{ fontWeight: 800 }}>{money(quote?.shipping)}</Typography>
+          </Stack>
+          <Stack direction="row" justifyContent="space-between">
             <Typography variant="h6" sx={{ fontWeight: 900 }}>
               Toplam
             </Typography>

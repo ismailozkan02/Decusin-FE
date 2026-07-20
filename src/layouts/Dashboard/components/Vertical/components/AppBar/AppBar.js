@@ -8,6 +8,7 @@ import {
   Divider,
   IconButton,
   Stack,
+  TextField,
   Typography,
   useScrollTrigger,
 } from "@mui/material";
@@ -77,6 +78,14 @@ const AppBar = ({ hidden, toggleNavVisibility }) => {
     window.addEventListener("decusin:quote-total", updateQuoteTotal);
     return () => window.removeEventListener("decusin:quote-total", updateQuoteTotal);
   }, []);
+
+  const updateQuoteFee = (field, value) => {
+    window.dispatchEvent(
+      new CustomEvent("decusin:update-quote-fees", {
+        detail: { [field]: Math.max(Number(value) || 0, 0) },
+      }),
+    );
+  };
 
   const appBarFixedStyles = () => {
     return {
@@ -183,6 +192,28 @@ const AppBar = ({ hidden, toggleNavVisibility }) => {
                   <Stack direction="row" justifyContent="space-between">
                     <Typography>Montaj</Typography>
                     <Typography sx={{ fontWeight: 800 }}>{money(quote?.installation)}</Typography>
+                  </Stack>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                    <TextField
+                      fullWidth
+                      label="Montaj"
+                      type="number"
+                      size="small"
+                      value={Number(quote?.installation || 0)}
+                      onChange={(event) => updateQuoteFee("installation_fee", event.target.value)}
+                    />
+                    <TextField
+                      fullWidth
+                      label="Nakliye"
+                      type="number"
+                      size="small"
+                      value={Number(quote?.shipping || 0)}
+                      onChange={(event) => updateQuoteFee("shipping_fee", event.target.value)}
+                    />
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography>Nakliye</Typography>
+                    <Typography sx={{ fontWeight: 800 }}>{money(quote?.shipping)}</Typography>
                   </Stack>
                   <Stack direction="row" justifyContent="space-between">
                     <Typography variant="h6" sx={{ fontWeight: 900 }}>

@@ -45,7 +45,6 @@ const KitchenCatalogManager = ({
   catalogItems,
   catalogGroups,
   materials,
-  installationFee,
   selectedProduct,
   selectedMaterial,
   onSelectProduct,
@@ -53,7 +52,6 @@ const KitchenCatalogManager = ({
   onUpdateProduct,
   onAddProduct,
   onAddCatalogGroup,
-  onChangeInstallationFee,
   onSelectMaterial,
   onCloseMaterial,
   onUpdateMaterial,
@@ -431,30 +429,6 @@ const KitchenCatalogManager = ({
         </Grid>
         <Grid item xs={12} md={4}>
           <Stack spacing={1.5}>
-            <Paper
-              elevation={0}
-              sx={{
-                border: "1px solid #E2E8F0",
-                borderRadius: 1.5,
-                p: 2,
-                boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
-              }}
-            >
-              <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
-                Montaj
-              </Typography>
-              <TextField
-                fullWidth
-                label="Montaj fiyati"
-                type="number"
-                size="small"
-                value={installationFee || 0}
-                onChange={(event) =>
-                  onChangeInstallationFee(Number(event.target.value) || 0)
-                }
-                helperText="Bu tutar toplam fiyata sabit montaj bedeli olarak eklenir."
-              />
-            </Paper>
             <Paper
               elevation={0}
               sx={{
