@@ -7,7 +7,7 @@ import OpenInFullOutlinedIcon from "@mui/icons-material/OpenInFullOutlined";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
 import RestartAltOutlinedIcon from "@mui/icons-material/RestartAltOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Edges, Environment, Html, OrbitControls, useGLTF } from "@react-three/drei";
 import { Box3, CanvasTexture, Color, DoubleSide, Plane, RepeatWrapping, Vector2, Vector3 } from "three";
 
@@ -225,6 +225,7 @@ const KitchenScene = ({
   const pendingDragRef = useRef(null);
   const [sceneBox, setSceneBox] = useState({ width: 0, top: 0 });
   const [drag3DIndex, setDrag3DIndex] = useState(null);
+  const [controlsLocked, setControlsLocked] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(
     typeof window === "undefined" ? 900 : window.innerHeight,
@@ -334,6 +335,7 @@ const KitchenScene = ({
   const handle3DPointerUp = () => {
     pendingDragRef.current = null;
     setDrag3DIndex(null);
+    setControlsLocked(false);
   };
 
   const prepareItemDrag = (index, event) => {
@@ -344,6 +346,7 @@ const KitchenScene = ({
       x: Number(sourceEvent.clientX || 0),
       y: Number(sourceEvent.clientY || 0),
     };
+    setControlsLocked(true);
   };
 
   const maybeStartItemDrag = (index, event) => {
@@ -505,18 +508,21 @@ const KitchenScene = ({
                 applyDefaultCameraView(camera, controlsRef.current);
               }}
               onPointerMissed={() => {
+                setControlsLocked(false);
                 if (drag3DIndex === null) onClearSelection();
               }}
             >
-            <color attach="background" args={["#F7F7F5"]} />
-            <ambientLight intensity={0.74} />
+            <color attach="background" args={["#FAFAF8"]} />
+            <ambientLight intensity={0.66} />
+            <hemisphereLight args={["#FFFFFF", "#D8D0C2", 0.42]} />
             <directionalLight
               castShadow
-              position={[2.8, 4.8, 3.4]}
-              intensity={2}
-              shadow-mapSize={[1024, 1024]}
+              position={[0.8, 4.8, 3.2]}
+              intensity={1.35}
+              shadow-mapSize={[2048, 2048]}
+              shadow-bias={-0.0003}
             />
-            <directionalLight position={[-3, 2.6, 2]} intensity={0.55} />
+            <directionalLight position={[-2.4, 2.8, 2.4]} intensity={0.22} />
             <RoomShell
               roomDimensions={roomDimensions}
               roomSurfaces={roomSurfaces}
@@ -565,9 +571,9 @@ const KitchenScene = ({
                   sceneItems={sceneItems}
                   catalogMap={catalogMap}
                   roomDimensions={roomDimensions}
+                  roomSurfaces={roomSurfaces}
                   cmToPx={cmToPx}
                   onSelectItem={onSelectItem}
-                  dragging={drag3DIndex === index}
                   onPrepareDrag={prepareItemDrag}
                   onMaybeStartDrag={maybeStartItemDrag}
                   onEndDrag={handle3DPointerUp}
@@ -579,7 +585,7 @@ const KitchenScene = ({
             <OrbitControls
               ref={controlsRef}
               makeDefault
-              enabled={drag3DIndex === null}
+              enabled={drag3DIndex === null && !controlsLocked}
               enableDamping
               dampingFactor={0.08}
               enablePan
@@ -1021,13 +1027,15 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
   const width = cmToUnit(roomDimensions?.width || 360);
   const height = cmToUnit(roomDimensions?.height || 260);
   const depth = cmToUnit(roomDimensions?.depth || 240);
+  const wallThickness = 0.075;
+  const trimColor = "#D0D0CA";
   const surfaces = {
     floor: "#DDBF86",
     floorPattern: "oakHerringbone",
-    backWall: "#F4F1E9",
-    sideWall: "#EFECE3",
-    ceiling: "#D8D8D2",
-    trim: "#D5D5D0",
+    backWall: "#E8E6DE",
+    sideWall: "#E1DED5",
+    ceiling: "#D4CDC0",
+    trim: "#D1D1CA",
     backWallVisible: true,
     leftWallVisible: true,
     rightWallVisible: true,
@@ -1054,54 +1062,58 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick }) => {
   return (
     <group>
       <mesh position={[0, -0.015, 0]} receiveShadow onClick={handleEmptyClick}>
-        <boxGeometry args={[width, 0.03, depth]} />
+        <boxGeometry args={[width, 0.04, depth]} />
         <meshStandardMaterial
           color={floorTexture ? "#FFFFFF" : surfaces.floor}
           map={floorTexture || null}
-          roughness={0.58}
+          roughness={0.42}
           metalness={0.02}
         />
       </mesh>
       {surfaces.backWallVisible !== false && (
         <>
-          <mesh position={[0, height / 2, -depth / 2]} receiveShadow onClick={handleEmptyClick}>
-            <boxGeometry args={[width, height, 0.06]} />
-            <meshStandardMaterial color={surfaces.backWall} roughness={0.72} />
+          <mesh position={[0, height / 2, -depth / 2 - wallThickness / 2]} receiveShadow onClick={handleEmptyClick}>
+            <boxGeometry args={[width + wallThickness * 2, height, wallThickness]} />
+            <meshStandardMaterial color={surfaces.backWall} roughness={0.88} metalness={0} />
           </mesh>
-          <mesh position={[0, 0.025, -depth / 2 - 0.02]}>
-            <boxGeometry args={[width + 0.08, 0.05, 0.08]} />
-            <meshStandardMaterial color={surfaces.trim} />
+          <mesh position={[0, height - 0.025, -depth / 2 + 0.035]}>
+            <boxGeometry args={[width + 0.02, 0.035, 0.035]} />
+            <meshStandardMaterial color={trimColor} roughness={0.82} />
           </mesh>
         </>
       )}
       {surfaces.leftWallVisible !== false && (
-        <mesh position={[-width / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
-          <boxGeometry args={[0.06, height, depth]} />
-          <meshStandardMaterial color={surfaces.sideWall} roughness={0.76} />
-        </mesh>
+        <>
+          <mesh position={[-width / 2 - wallThickness / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
+            <boxGeometry args={[wallThickness, height, depth]} />
+            <meshStandardMaterial color={surfaces.sideWall} roughness={0.92} metalness={0} />
+          </mesh>
+        </>
       )}
       {surfaces.rightWallVisible !== false && (
-        <mesh position={[width / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
-          <boxGeometry args={[0.06, height, depth]} />
-          <meshStandardMaterial color={surfaces.sideWall} roughness={0.76} />
-        </mesh>
+        <>
+          <mesh position={[width / 2 + wallThickness / 2, height / 2, 0]} receiveShadow onClick={handleEmptyClick}>
+            <boxGeometry args={[wallThickness, height, depth]} />
+            <meshStandardMaterial color={surfaces.sideWall} roughness={0.92} metalness={0} />
+          </mesh>
+        </>
       )}
       {surfaces.ceilingVisible !== false && (
-        <mesh position={[0, height + 0.015, 0]} receiveShadow onClick={handleEmptyClick}>
-          <boxGeometry args={[width, 0.03, depth]} />
-          <meshStandardMaterial color={surfaces.ceiling} roughness={0.74} />
+        <mesh position={[0, height + wallThickness / 2, 0]} receiveShadow onClick={handleEmptyClick}>
+          <boxGeometry args={[width + wallThickness * 2, wallThickness, depth + wallThickness]} />
+          <meshStandardMaterial color={surfaces.ceiling} roughness={0.9} metalness={0} />
         </mesh>
       )}
-      {surfaces.leftWallVisible !== false && (
-        <mesh position={[-width / 2 - 0.02, height / 2, 0]}>
-          <boxGeometry args={[0.08, height + 0.08, depth + 0.08]} />
-          <meshStandardMaterial color={surfaces.trim} />
+      {surfaces.backWallVisible !== false && surfaces.leftWallVisible !== false && (
+        <mesh position={[-width / 2 + 0.018, height / 2, -depth / 2 + 0.018]}>
+          <boxGeometry args={[0.028, height, 0.028]} />
+          <meshStandardMaterial color={trimColor} roughness={0.88} />
         </mesh>
       )}
-      {surfaces.rightWallVisible !== false && (
-        <mesh position={[width / 2 + 0.02, height / 2, 0]}>
-          <boxGeometry args={[0.08, height + 0.08, depth + 0.08]} />
-          <meshStandardMaterial color={surfaces.trim} />
+      {surfaces.backWallVisible !== false && surfaces.rightWallVisible !== false && (
+        <mesh position={[width / 2 - 0.018, height / 2, -depth / 2 + 0.018]}>
+          <boxGeometry args={[0.028, height, 0.028]} />
+          <meshStandardMaterial color={trimColor} roughness={0.88} />
         </mesh>
       )}
     </group>
@@ -1283,6 +1295,96 @@ const Model3D = ({ product, size, rotation, palette }) => {
   );
 };
 
+const formatDimensionValue = (value) => {
+  const rounded = Math.round(Number(value || 0) * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+};
+
+const DimensionLabel = ({ position, children, distanceFactor = 7 }) => (
+  <Html position={position} center distanceFactor={distanceFactor} occlude>
+    <Box
+      data-kitchen-scene-controls="true"
+      sx={{
+        px: 0.65,
+        py: 0.28,
+        borderRadius: 0.8,
+        bgcolor: "#050505",
+        color: "#FFFFFF",
+        fontSize: 10.5,
+        fontWeight: 900,
+        lineHeight: 1,
+        whiteSpace: "nowrap",
+        boxShadow: "0 8px 18px rgba(15,23,42,0.24)",
+      }}
+    >
+      {children}
+    </Box>
+  </Html>
+);
+
+const DimensionLine = ({ position, size }) => (
+  <mesh position={position}>
+    <boxGeometry args={size} />
+    <meshBasicMaterial color="#686868" />
+  </mesh>
+);
+
+const DimensionEndCap = ({ position, vertical = false }) => (
+  <mesh position={position}>
+    <boxGeometry args={vertical ? [0.055, 0.01, 0.01] : [0.01, 0.055, 0.01]} />
+    <meshBasicMaterial color="#686868" />
+  </mesh>
+);
+
+const SceneItemDimensionGuides = ({ size, dimensions }) => {
+  const [width, height, depth] = size;
+  const frontZ = depth / 2 + 0.065;
+  const sideX = width / 2 + 0.11;
+  const leftX = -width / 2 - 0.11;
+  const topY = height / 2 + 0.11;
+  const bottomY = -height / 2 + 0.055;
+  const guideColorZ = depth / 2 + 0.02;
+
+  return (
+    <group>
+      <DimensionLine position={[0, topY, frontZ]} size={[width, 0.01, 0.01]} />
+      <DimensionEndCap position={[-width / 2, topY, frontZ]} />
+      <DimensionEndCap position={[width / 2, topY, frontZ]} />
+      <DimensionLabel position={[width / 2 + 0.08, topY + 0.08, frontZ]}>
+        {formatDimensionValue(dimensions.width)}
+      </DimensionLabel>
+
+      <DimensionLine position={[leftX, 0, guideColorZ]} size={[0.01, height, 0.01]} />
+      <DimensionEndCap position={[leftX, -height / 2, guideColorZ]} vertical />
+      <DimensionEndCap position={[leftX, height / 2, guideColorZ]} vertical />
+      <DimensionLabel position={[leftX - 0.06, 0, guideColorZ]}>
+        {formatDimensionValue(dimensions.height)}
+      </DimensionLabel>
+
+      <DimensionLine position={[sideX, bottomY, 0]} size={[0.01, 0.01, depth]} />
+      <DimensionEndCap position={[sideX, bottomY, -depth / 2]} />
+      <DimensionEndCap position={[sideX, bottomY, depth / 2]} />
+      <DimensionLabel position={[sideX + 0.06, bottomY + 0.03, 0]}>
+        {formatDimensionValue(dimensions.depth)}
+      </DimensionLabel>
+    </group>
+  );
+};
+
+const isCameraBehindVisibleRoomWall = ({ cameraPosition, roomDimensions, roomSurfaces }) => {
+  const roomWidth = cmToUnit(roomDimensions?.width || 360);
+  const roomHeight = cmToUnit(roomDimensions?.height || 260);
+  const roomDepth = cmToUnit(roomDimensions?.depth || 240);
+  const margin = 0.025;
+
+  return (
+    (roomSurfaces?.leftWallVisible !== false && cameraPosition.x < -roomWidth / 2 - margin) ||
+    (roomSurfaces?.rightWallVisible !== false && cameraPosition.x > roomWidth / 2 + margin) ||
+    (roomSurfaces?.backWallVisible !== false && cameraPosition.z < -roomDepth / 2 - margin) ||
+    (roomSurfaces?.ceilingVisible !== false && cameraPosition.y > roomHeight + margin)
+  );
+};
+
 const SceneItem3D = ({
   item,
   index,
@@ -1294,8 +1396,8 @@ const SceneItem3D = ({
   selectedGlass,
   selectedCounter,
   selected,
-  dragging,
   roomDimensions,
+  roomSurfaces,
   cmToPx,
   onSelectItem,
   onPrepareDrag,
@@ -1304,6 +1406,9 @@ const SceneItem3D = ({
   onCopyItem,
   onDeleteItem,
 }) => {
+  const camera = useThree((state) => state.camera);
+  const overlayHiddenRef = useRef(false);
+  const [overlayHidden, setOverlayHidden] = useState(false);
   const transform = getItem3DTransform({
     item,
     index,
@@ -1321,6 +1426,21 @@ const SceneItem3D = ({
     glass: itemGlass?.color_hex || "#BAE6FD",
     countertop: itemCounter?.color_hex || "#E5E7EB",
   };
+
+  useFrame(() => {
+    const nextOverlayHidden =
+      selected &&
+      isCameraBehindVisibleRoomWall({
+        cameraPosition: camera.position,
+        roomDimensions,
+        roomSurfaces,
+      });
+
+    if (overlayHiddenRef.current !== nextOverlayHidden) {
+      overlayHiddenRef.current = nextOverlayHidden;
+      setOverlayHidden(nextOverlayHidden);
+    }
+  });
 
   return (
     <group
@@ -1357,33 +1477,20 @@ const SceneItem3D = ({
           <FallbackCabinet3D product={product} size={transform.size} palette={palette} />
         )}
       </Suspense>
-      {selected && (
+      {selected && !overlayHidden && (
         <>
           <mesh>
             <boxGeometry args={transform.size.map((value) => value + 0.035)} />
             <meshBasicMaterial transparent opacity={0} />
             <Edges color="#1976D2" linewidth={2} />
           </mesh>
-          {dragging && (
-            <Html position={[0, 0.08, transform.size[2] / 2 + 0.16]} center distanceFactor={7}>
-              <Box
-                data-kitchen-scene-controls="true"
-                sx={{
-                  px: 0.8,
-                  py: 0.35,
-                  borderRadius: 1,
-                  bgcolor: "rgba(25,118,210,0.92)",
-                  color: "#FFFFFF",
-                  fontSize: 11,
-                  fontWeight: 900,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Snap 5 cm
-              </Box>
-            </Html>
-          )}
-          <Html position={[0, transform.size[1] / 2 + 0.12, 0]} center distanceFactor={6}>
+          <SceneItemDimensionGuides size={transform.size} dimensions={transform.dimensions} />
+          <Html
+            position={[0, transform.size[1] / 2 + 0.2, -transform.size[2] / 2 - 0.04]}
+            center
+            distanceFactor={6}
+            occlude
+          >
             <Stack
               data-kitchen-scene-controls="true"
               direction="row"
@@ -1419,23 +1526,6 @@ const SceneItem3D = ({
                 <DeleteOutlineIcon sx={{ fontSize: 16 }} />
               </IconButton>
             </Stack>
-          </Html>
-          <Html position={[transform.size[0] / 2 + 0.12, 0, transform.size[2] / 2]} center distanceFactor={8}>
-            <Box
-              data-kitchen-scene-controls="true"
-              sx={{
-                px: 0.8,
-                py: 0.35,
-                borderRadius: 1,
-                bgcolor: "#050505",
-                color: "#FFFFFF",
-                fontSize: 12,
-                fontWeight: 900,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {Math.round(Number(transform.dimensions.width || 0))} x {Math.round(Number(transform.dimensions.height || 0))}
-            </Box>
           </Html>
         </>
       )}

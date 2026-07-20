@@ -105,10 +105,10 @@ const PROJECT_CACHE_KEY = "decusinKitchenProjects";
 const defaultRoomSurfaces = {
   floor: "#DDBF86",
   floorPattern: "oakHerringbone",
-  backWall: "#F4F1E9",
-  sideWall: "#EFECE3",
-  ceiling: "#D8D8D2",
-  trim: "#D5D5D0",
+  backWall: "#E8E6DE",
+  sideWall: "#E1DED5",
+  ceiling: "#D4CDC0",
+  trim: "#D1D1CA",
   backWallVisible: true,
   leftWallVisible: true,
   rightWallVisible: true,
@@ -1653,7 +1653,6 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               }
             />
             {[
-              ["floor", "Zemin"],
               ["backWall", "Arka"],
               ["sideWall", "Yan"],
               ["ceiling", "Tavan"],
