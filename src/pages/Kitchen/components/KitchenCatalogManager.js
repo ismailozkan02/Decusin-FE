@@ -66,6 +66,9 @@ const KitchenCatalogManager = ({
     target: "product",
     title: "",
   });
+
+  console.log("testttt");
+
   const [newProduct, setNewProduct] = useState({
     name: "",
     category: "base_cabinet",
