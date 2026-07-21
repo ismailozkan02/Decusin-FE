@@ -17,9 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import CameraAltOutlinedIcon from "@mui/icons-material/CameraAltOutlined";
 import FlareOutlinedIcon from "@mui/icons-material/FlareOutlined";
-import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -33,7 +31,6 @@ import RedoOutlinedIcon from "@mui/icons-material/RedoOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import StraightenOutlinedIcon from "@mui/icons-material/StraightenOutlined";
 import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
-import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
 import Page from "components/Page";
@@ -427,47 +424,6 @@ const ToolbarColorControl = ({ label, value, onChange }) => (
       onChange={(event) => onChange(event.target.value)}
       sx={{ position: "absolute", opacity: 0, pointerEvents: "none" }}
     />
-  </Box>
-);
-
-const ToolbarVisibilityControl = ({ label, visible, onToggle }) => (
-  <Box
-    component="button"
-    type="button"
-    title={`${label} ${visible ? "gizle" : "goster"}`}
-    aria-label={`${label} ${visible ? "gizle" : "goster"}`}
-    onClick={onToggle}
-    sx={{
-      ...toolbarControlBoxSx,
-      width: 48,
-      cursor: "pointer",
-      outline: "none",
-      appearance: "none",
-      font: "inherit",
-      textAlign: "initial",
-    }}
-  >
-    <Typography component="span" sx={toolbarControlLabelSx}>
-      {label}
-    </Typography>
-    <Box
-      sx={{
-        width: "100%",
-        height: 23,
-        borderRadius: 0.8,
-        display: "grid",
-        placeItems: "center",
-        border: "1px solid rgba(148,163,184,0.42)",
-        color: visible ? "#1976D2" : "#94A3B8",
-        bgcolor: visible ? "#EFF6FF" : "#F8FAFC",
-      }}
-    >
-      {visible ? (
-        <VisibilityOutlinedIcon sx={{ fontSize: 17 }} />
-      ) : (
-        <VisibilityOffOutlinedIcon sx={{ fontSize: 17 }} />
-      )}
-    </Box>
   </Box>
 );
 
@@ -2317,36 +2273,6 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               }
             />
             <ToolbarSceneToggleControl
-              label="On"
-              active={!premiumTools.topView}
-              activeTitle="On gorunum"
-              inactiveTitle="On gorunume gec"
-              activeIcon={<CameraAltOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<CameraAltOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={() => {
-                setPremiumTools((current) => ({
-                  ...current,
-                  topView: false,
-                }));
-                setCameraPresetSignal({ preset: "on", tick: Date.now() });
-              }}
-            />
-            <ToolbarSceneToggleControl
-              label="Ust"
-              active={premiumTools.topView}
-              activeTitle="Ust gorunum"
-              inactiveTitle="Ust gorunume gec"
-              activeIcon={<CameraAltOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<CameraAltOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={() => {
-                setPremiumTools((current) => ({
-                  ...current,
-                  topView: true,
-                }));
-                setCameraPresetSignal({ preset: "ust", tick: Date.now() });
-              }}
-            />
-            <ToolbarSceneToggleControl
               label="Olcu"
               active={premiumTools.measurements}
               activeTitle="Olculer gorunur"
@@ -2463,38 +2389,6 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 }
               />
             ))}
-            <ToolbarSceneToggleControl
-              label="Duvar"
-              active={premiumTools.walls}
-              activeTitle="Duvarlar gorunur"
-              inactiveTitle="Duvarlar gizli"
-              activeIcon={<GridViewOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<GridViewOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={() =>
-                setPremiumTools((current) => ({
-                  ...current,
-                  walls: !current.walls,
-                }))
-              }
-            />
-            {[
-              ["backWallVisible", "Arka"],
-              ["leftWallVisible", "Sol"],
-              ["rightWallVisible", "Sag"],
-              ["ceilingVisible", "Tavan"],
-            ].map(([field, label]) => (
-              <ToolbarVisibilityControl
-                key={field}
-                label={label}
-                visible={roomSurfaces[field] !== false}
-                onToggle={() =>
-                  setRoomSurfaces((current) => ({
-                    ...current,
-                    [field]: current[field] === false,
-                  }))
-                }
-              />
-            ))}
             <Paper
               elevation={0}
               sx={{
@@ -2591,6 +2485,55 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             }
             onExportPdf={exportScenePdf}
             onToggleFullscreen={toggleSceneFullscreen}
+            onSelectCameraView={(preset) => {
+              setPremiumTools((current) => ({
+                ...current,
+                topView: preset === "ust",
+              }));
+              setCameraPresetSignal({ preset, tick: Date.now() });
+            }}
+            onToggleSceneWalls={() => {
+              const allVisible =
+                premiumTools.walls &&
+                roomSurfaces.backWallVisible !== false &&
+                roomSurfaces.leftWallVisible !== false &&
+                roomSurfaces.rightWallVisible !== false &&
+                roomSurfaces.ceilingVisible !== false;
+
+              setPremiumTools((current) => ({
+                ...current,
+                walls: !allVisible,
+              }));
+              setRoomSurfaces((current) => ({
+                ...current,
+                backWallVisible: !allVisible,
+                leftWallVisible: !allVisible,
+                rightWallVisible: !allVisible,
+                ceilingVisible: !allVisible,
+              }));
+            }}
+            onToggleRoomSurface={(field) => {
+              if (!premiumTools.walls) {
+                setPremiumTools((current) => ({
+                  ...current,
+                  walls: true,
+                }));
+                setRoomSurfaces((current) => ({
+                  ...current,
+                  backWallVisible: false,
+                  leftWallVisible: false,
+                  rightWallVisible: false,
+                  ceilingVisible: false,
+                  [field]: true,
+                }));
+                return;
+              }
+
+              setRoomSurfaces((current) => ({
+                ...current,
+                [field]: current[field] === false,
+              }));
+            }}
           />
         </Grid>
       </Grid>

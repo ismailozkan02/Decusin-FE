@@ -168,19 +168,23 @@ const Navigation = (props) => {
             px: navCollapsed && !navHover ? 0 : 1.4,
             py: 1.25,
             justifyContent: "center",
-            borderRadius: 1.8,
-            color: "#991B1B",
-            bgcolor: "rgba(255,255,255,0.94)",
+            borderRadius: 1.5,
+            color: "#123B72",
+            bgcolor: "rgba(255,255,255,0.96)",
             background:
-              "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(254,242,242,0.96) 54%, rgba(255,228,230,0.92) 100%)",
-            border: "1px solid rgba(248,113,113,0.26)",
-            boxShadow: "0 14px 30px rgba(153,27,27,0.12), inset 0 1px 0 rgba(255,255,255,0.92)",
+              "linear-gradient(135deg, #FFFFFF 0%, #F4F8FF 52%, #EAF2FF 100%)",
+            border: "1px solid rgba(37,99,235,0.22)",
+            boxShadow:
+              "0 16px 34px rgba(15,23,42,0.11), inset 0 1px 0 rgba(255,255,255,0.95)",
             textTransform: "none",
             fontWeight: 900,
+            letterSpacing: 0,
             "&:hover": {
               background:
-                "linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(254,226,226,0.98) 54%, rgba(254,205,211,0.94) 100%)",
-              boxShadow: "0 18px 38px rgba(153,27,27,0.16), inset 0 1px 0 rgba(255,255,255,0.96)",
+                "linear-gradient(135deg, #F8FBFF 0%, #EAF3FF 52%, #DDEBFF 100%)",
+              borderColor: "rgba(37,99,235,0.34)",
+              boxShadow:
+                "0 18px 40px rgba(37,99,235,0.14), inset 0 1px 0 rgba(255,255,255,0.98)",
             },
           }}
         >
@@ -192,9 +196,10 @@ const Navigation = (props) => {
               display: "grid",
               placeItems: "center",
               mr: navCollapsed && !navHover ? 0 : 1,
-              color: "#DC2626",
-              bgcolor: "rgba(254,226,226,0.85)",
-              border: "1px solid rgba(248,113,113,0.28)",
+              color: "#FFFFFF",
+              background: "linear-gradient(135deg, #1D4ED8 0%, #0F766E 100%)",
+              border: "1px solid rgba(255,255,255,0.6)",
+              boxShadow: "0 8px 18px rgba(37,99,235,0.22)",
             }}
           >
             <LogoutOutlinedIcon sx={{ fontSize: 19 }} />

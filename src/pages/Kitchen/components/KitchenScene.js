@@ -14,9 +14,11 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import CameraAltOutlinedIcon from "@mui/icons-material/CameraAltOutlined";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DeleteSweepOutlinedIcon from "@mui/icons-material/DeleteSweepOutlined";
+import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import OpenInFullOutlinedIcon from "@mui/icons-material/OpenInFullOutlined";
@@ -26,6 +28,8 @@ import RotateLeftIcon from "@mui/icons-material/RotateLeft";
 import RotateRightIcon from "@mui/icons-material/RotateRight";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   Edges,
@@ -39,6 +43,7 @@ import {
   CanvasTexture,
   Color,
   DoubleSide,
+  MOUSE,
   Plane,
   RepeatWrapping,
   Vector2,
@@ -227,6 +232,57 @@ const sceneIconButtonSx = (color) => ({
   },
 });
 
+const sceneSideControlButtonSx = (active, muted = false) => ({
+  width: 42,
+  height: 40,
+  borderRadius: 1,
+  p: 0.28,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 0.12,
+  cursor: "pointer",
+  outline: "none",
+  appearance: "none",
+  font: "inherit",
+  color: muted ? "#94A3B8" : active ? "#F59E0B" : "#1976D2",
+  bgcolor: muted ? "#F8FAFC" : active ? "#FFFBEB" : "#FFFFFF",
+  border: active
+    ? "1px solid rgba(245,158,11,0.5)"
+    : "1px solid rgba(147,197,253,0.78)",
+  opacity: muted ? 0.58 : 1,
+  boxShadow: active
+    ? "0 10px 22px rgba(245,158,11,0.14)"
+    : "0 8px 18px rgba(15,23,42,0.08)",
+  "&:hover": { bgcolor: muted ? "#EFF6FF" : active ? "#FEF3C7" : "#EFF6FF" },
+  "& .MuiSvgIcon-root": { fontSize: 18 },
+});
+
+const SceneSideControl = ({ label, active, muted, title, onClick, children }) => (
+  <Box
+    component="button"
+    type="button"
+    title={title}
+    aria-label={title}
+    onClick={onClick}
+    sx={sceneSideControlButtonSx(active, muted)}
+  >
+    <Typography
+      component="span"
+      sx={{
+        fontSize: 7.8,
+        fontWeight: 950,
+        lineHeight: "8px",
+        color: "inherit",
+      }}
+    >
+      {label}
+    </Typography>
+    {children}
+  </Box>
+);
+
 const KitchenScene = ({
   sceneRef,
   sceneItems,
@@ -261,6 +317,9 @@ const KitchenScene = ({
   onClearItems,
   onExportPdf,
   onToggleFullscreen,
+  onSelectCameraView,
+  onToggleSceneWalls,
+  onToggleRoomSurface,
   premiumTools,
   cameraPresetSignal,
 }) => {
@@ -297,9 +356,16 @@ const KitchenScene = ({
   const layoutReady = sceneBox.width > 0 && sceneBox.top > 0;
   const sceneLoading = !sceneReady;
   const placeholderHeight = Math.max(viewportHeight - 190, 420);
+  const allRoomSurfacesVisible =
+    scenePremiumTools.walls &&
+    roomSurfaces?.backWallVisible !== false &&
+    roomSurfaces?.leftWallVisible !== false &&
+    roomSurfaces?.rightWallVisible !== false &&
+    roomSurfaces?.ceilingVisible !== false;
   const lighting = useMemo(() => {
     const nightMode = roomSurfaces?.sceneMode === "night";
-    const lampVisible = roomSurfaces?.lampVisible === true;
+    const tourMode = scenePremiumTools?.cameraTour === true;
+    const lampVisible = !tourMode && roomSurfaces?.lampVisible === true;
     const lightsOn = lampVisible && roomSurfaces?.lightsOn === true;
 
     if (nightMode) {
@@ -307,15 +373,15 @@ const KitchenScene = ({
         nightMode,
         lampVisible,
         lightsOn,
-        background: lightsOn ? "#05050A" : "#000000",
-        ambient: lightsOn ? 0.3 : 0.18,
-        hemisphere: lightsOn ? 0.28 : 0.2,
-        sun: lightsOn ? 0.26 : 0.22,
-        fill: lightsOn ? 0.18 : 0.1,
-        sunColor: "#CFE5FF",
-        fillColor: lightsOn ? "#FFDCA3" : "#D7DDE6",
-        hemisphereSky: "#F2F4F7",
-        hemisphereGround: "#070707",
+        background: lightsOn ? "#130B18" : "#090712",
+        ambient: lightsOn ? 0.32 : 0.24,
+        hemisphere: lightsOn ? 0.3 : 0.26,
+        sun: lightsOn ? 0.3 : 0.28,
+        fill: lightsOn ? 0.2 : 0.16,
+        sunColor: "#FFC77A",
+        fillColor: lightsOn ? "#FFDCA3" : "#D7A4FF",
+        hemisphereSky: "#FFD1A6",
+        hemisphereGround: "#201018",
       };
     }
 
@@ -324,10 +390,10 @@ const KitchenScene = ({
       lampVisible,
       lightsOn,
       background: "#FAFAF8",
-      ambient: lightsOn ? 0.76 : 0.66,
-      hemisphere: lightsOn ? 0.48 : 0.42,
-      sun: lightsOn ? 1.42 : 1.35,
-      fill: lightsOn ? 0.28 : 0.22,
+      ambient: lightsOn ? 0.71 : 0.66,
+      hemisphere: lightsOn ? 0.45 : 0.42,
+      sun: lightsOn ? 1.36 : 1.35,
+      fill: lightsOn ? 0.25 : 0.22,
       sunColor: "#FFFFFF",
       fillColor: "#FFFFFF",
       hemisphereSky: "#FFFFFF",
@@ -337,6 +403,7 @@ const KitchenScene = ({
     roomSurfaces?.lampVisible,
     roomSurfaces?.lightsOn,
     roomSurfaces?.sceneMode,
+    scenePremiumTools?.cameraTour,
   ]);
   const defaultCameraView = useMemo(() => {
     const roomWidth = cmToUnit(roomWidthCm);
@@ -721,6 +788,70 @@ const KitchenScene = ({
           </IconButton>
         </Stack>
       )}
+      <Stack
+        data-kitchen-scene-controls="true"
+        direction="column"
+        spacing={0.35}
+        sx={{
+          position: "absolute",
+          right: { xs: 12, md: 18 },
+          top: { xs: 12, md: 18 },
+          zIndex: 1200,
+          p: 0.5,
+          borderRadius: 1.5,
+          bgcolor: "rgba(255,255,255,0.96)",
+          border: "1px solid rgba(226,232,240,0.95)",
+          boxShadow: "0 14px 30px rgba(15,23,42,0.14)",
+        }}
+      >
+        <SceneSideControl
+          label="On"
+          title="On gorunum"
+          onClick={() => onSelectCameraView?.("on")}
+          active={!scenePremiumTools.topView}
+        >
+          <CameraAltOutlinedIcon />
+        </SceneSideControl>
+        <SceneSideControl
+          label="Ust"
+          title="Ust gorunum"
+          onClick={() => onSelectCameraView?.("ust")}
+          active={scenePremiumTools.topView}
+        >
+          <CameraAltOutlinedIcon />
+        </SceneSideControl>
+        <SceneSideControl
+          label="Duvar"
+          title="Duvarlari goster/gizle"
+          onClick={onToggleSceneWalls}
+          active={allRoomSurfacesVisible}
+        >
+          <GridViewOutlinedIcon />
+        </SceneSideControl>
+        {[
+          ["backWallVisible", "Arka"],
+          ["leftWallVisible", "Sol"],
+          ["rightWallVisible", "Sag"],
+          ["ceilingVisible", "Tavan"],
+        ].map(([field, label]) => {
+          const visible = roomSurfaces?.[field] !== false;
+          const active = scenePremiumTools.walls && visible;
+          const muted = !scenePremiumTools.walls;
+
+          return (
+            <SceneSideControl
+              key={field}
+              label={label}
+              title={`${label} ${visible ? "gizle" : "goster"}`}
+              onClick={() => onToggleRoomSurface?.(field)}
+              active={active}
+              muted={muted}
+            >
+              {visible ? <VisibilityOutlinedIcon /> : <VisibilityOffOutlinedIcon />}
+            </SceneSideControl>
+          );
+        })}
+      </Stack>
       <Box
         ref={sceneRef}
         onDragOver={onDragOver}
@@ -908,6 +1039,11 @@ const KitchenScene = ({
                 dampingFactor={0.08}
                 enablePan
                 screenSpacePanning
+                mouseButtons={{
+                  LEFT: MOUSE.ROTATE,
+                  MIDDLE: MOUSE.PAN,
+                  RIGHT: MOUSE.PAN,
+                }}
                 minDistance={0.28}
                 maxDistance={8}
                 minPolarAngle={0.04}
@@ -1691,16 +1827,17 @@ const createTwilightSkyTexture = () => {
   if (!context) return null;
 
   const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, "#000000");
-  gradient.addColorStop(0.56, "#02030A");
-  gradient.addColorStop(1, "#070B16");
+  gradient.addColorStop(0, "#000105");
+  gradient.addColorStop(0.46, "#03030B");
+  gradient.addColorStop(0.76, "#090513");
+  gradient.addColorStop(1, "#120814");
   context.fillStyle = gradient;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   for (let index = 0; index < 170; index += 1) {
     const x = seededRandom(index + 4) * canvas.width;
     const y = 8 + seededRandom(index + 19) * canvas.height * 0.7;
-    const brightness = 0.34 + seededRandom(index + 41) * 0.6;
+    const brightness = 0.16 + seededRandom(index + 41) * 0.34;
     const radius =
       seededRandom(index + 77) > 0.92
         ? 1.45
@@ -1711,22 +1848,22 @@ const createTwilightSkyTexture = () => {
     context.fill();
   }
 
-  const moonX = canvas.width * 0.09;
-  const moonY = canvas.height * 0.1;
+  const moonX = canvas.width * 0.055;
+  const moonY = canvas.height * 0.075;
   const moonGlow = context.createRadialGradient(
     moonX,
     moonY,
     4,
     moonX,
     moonY,
-    44,
+    34,
   );
-  moonGlow.addColorStop(0, "rgba(238,246,255,0.18)");
-  moonGlow.addColorStop(0.42, "rgba(238,246,255,0.06)");
+  moonGlow.addColorStop(0, "rgba(238,246,255,0.14)");
+  moonGlow.addColorStop(0.42, "rgba(238,246,255,0.045)");
   moonGlow.addColorStop(1, "rgba(238,246,255,0)");
   context.fillStyle = moonGlow;
   context.beginPath();
-  context.arc(moonX, moonY, 44, 0, Math.PI * 2);
+  context.arc(moonX, moonY, 34, 0, Math.PI * 2);
   context.fill();
 
   const moonBody = context.createRadialGradient(
@@ -1791,7 +1928,7 @@ const CeilingLights = ({
           [-width * 0.24, y, depth * 0.12],
           [width * 0.24, y, depth * 0.12],
         ];
-  const lightIntensity = active ? (nightMode ? 1.55 : 0.72) : 0;
+  const lightIntensity = active ? (nightMode ? 1.22 : 0.58) : 0;
   const fixtureColor = active ? "#FFE4A3" : "#D8D3C8";
 
   if (!visible) return null;
@@ -1830,7 +1967,7 @@ const CeilingLights = ({
                     : "#F7F4EC"
               }
               emissive={active ? "#FFE2A6" : "#000000"}
-              emissiveIntensity={active ? (nightMode ? 0.46 : 0.34) : 0}
+              emissiveIntensity={active ? (nightMode ? 0.36 : 0.27) : 0}
               roughness={0.42}
               metalness={0.08}
             />
@@ -1911,8 +2048,8 @@ const RoomShell = ({
     }
     return texture;
   }, [depth, surfaces.floorPattern, width]);
-  const wallsVisible =
-    premiumTools?.walls !== false && premiumTools?.cameraTour !== true;
+  const cameraTourMode = premiumTools?.cameraTour === true;
+  const wallsVisible = premiumTools?.walls !== false || cameraTourMode;
   const ceilingVisible =
     wallsVisible &&
     premiumTools?.topView !== true &&
@@ -1950,7 +2087,7 @@ const RoomShell = ({
           metalness={0.02}
         />
       </mesh>
-      {wallsVisible && surfaces.backWallVisible !== false && (
+      {wallsVisible && (cameraTourMode || surfaces.backWallVisible !== false) && (
         <>
           <mesh
             position={[0, height / 2, -depth / 2 - wallThickness / 2]}
@@ -1976,7 +2113,9 @@ const RoomShell = ({
           </mesh>
         </>
       )}
-      {wallsVisible && surfaces.leftWallVisible !== false && (
+      {wallsVisible &&
+        !cameraTourMode &&
+        surfaces.leftWallVisible !== false && (
         <>
           <mesh
             position={[-width / 2 - wallThickness / 2, height / 2, 0]}
@@ -1993,7 +2132,9 @@ const RoomShell = ({
           </mesh>
         </>
       )}
-      {wallsVisible && surfaces.rightWallVisible !== false && (
+      {wallsVisible &&
+        !cameraTourMode &&
+        surfaces.rightWallVisible !== false && (
         <>
           <mesh
             position={[width / 2 + wallThickness / 2, height / 2, 0]}
@@ -2010,7 +2151,7 @@ const RoomShell = ({
           </mesh>
         </>
       )}
-      {ceilingVisible && (
+      {!cameraTourMode && ceilingVisible && (
         <mesh
           position={[0, height + wallThickness / 2, 0]}
           receiveShadow
@@ -2032,6 +2173,7 @@ const RoomShell = ({
         </mesh>
       )}
       {wallsVisible &&
+        !cameraTourMode &&
         surfaces.backWallVisible !== false &&
         surfaces.leftWallVisible !== false && (
           <mesh
@@ -2043,6 +2185,7 @@ const RoomShell = ({
           </mesh>
         )}
       {wallsVisible &&
+        !cameraTourMode &&
         surfaces.backWallVisible !== false &&
         surfaces.rightWallVisible !== false && (
           <mesh
