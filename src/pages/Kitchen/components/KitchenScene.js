@@ -45,6 +45,8 @@ import {
   Vector3,
 } from "three";
 
+let kitchenSceneHasBooted = false;
+
 const modelScaleByCategory = {
   base_cabinet: 1,
   wall_cabinet: 1,
@@ -268,7 +270,7 @@ const KitchenScene = ({
   const [sceneBox, setSceneBox] = useState({ width: 0, top: 0 });
   const [drag3DIndex, setDrag3DIndex] = useState(null);
   const [controlsLocked, setControlsLocked] = useState(false);
-  const [sceneReady, setSceneReady] = useState(false);
+  const [sceneReady, setSceneReady] = useState(kitchenSceneHasBooted);
   const [viewportHeight, setViewportHeight] = useState(
     typeof window === "undefined" ? 900 : window.innerHeight,
   );
@@ -282,7 +284,7 @@ const KitchenScene = ({
   const cmToPx = Math.max((fittedWidth / roomWidthCm) * zoom, 0.6);
   const roomDepthCm = Math.max(Number(roomDimensions?.depth || 240), 1);
   const layoutReady = sceneBox.width > 0 && sceneBox.top > 0;
-  const sceneLoading = !layoutReady || !sceneReady;
+  const sceneLoading = !sceneReady;
   const placeholderHeight = Math.max(viewportHeight - 190, 420);
   const lighting = useMemo(() => {
     const nightMode = roomSurfaces?.sceneMode === "night";
@@ -328,7 +330,10 @@ const KitchenScene = ({
       target: [0, roomHeight * 0.52, -roomDepth * 0.16],
     };
   }, [roomDepthCm, roomHeightCm, roomWidthCm]);
-  const handleSceneReady = useCallback(() => setSceneReady(true), []);
+  const handleSceneReady = useCallback(() => {
+    kitchenSceneHasBooted = true;
+    setSceneReady(true);
+  }, []);
   const applyDefaultCameraView = useCallback(
     (camera, controls) => {
       const target = new Vector3(...defaultCameraView.target);
@@ -558,14 +563,10 @@ const KitchenScene = ({
             borderRadius: 2.5,
           }}
         >
-          {layoutReady && (
-            <>
-              <CircularProgress size={30} thickness={4} />
-              <Typography sx={{ fontSize: 13, fontWeight: 900 }}>
-                Sahne hazirlaniyor
-              </Typography>
-            </>
-          )}
+          <CircularProgress size={30} thickness={4} />
+          <Typography sx={{ fontSize: 13, fontWeight: 900 }}>
+            Sahne hazirlaniyor
+          </Typography>
         </Stack>
       )}
       <Stack
@@ -816,6 +817,7 @@ const KitchenScene = ({
                     roomSurfaces={roomSurfaces}
                     cmToPx={cmToPx}
                     onSelectItem={onSelectItem}
+                    onOpenCustomizer={onOpenCustomizer}
                     onPrepareDrag={prepareItemDrag}
                     onMaybeStartDrag={maybeStartItemDrag}
                     onEndDrag={handle3DPointerUp}
@@ -841,9 +843,7 @@ const KitchenScene = ({
                 applyView={applyDefaultCameraView}
                 onReady={handleSceneReady}
               />
-              <Environment
-                preset={lighting.nightMode ? "night" : "apartment"}
-              />
+              <Environment preset="apartment" />
             </Canvas>
           )}
         </Box>
@@ -2109,6 +2109,7 @@ const SceneItem3D = ({
   roomSurfaces,
   cmToPx,
   onSelectItem,
+  onOpenCustomizer,
   onPrepareDrag,
   onMaybeStartDrag,
   onEndDrag,
@@ -2176,6 +2177,13 @@ const SceneItem3D = ({
       onClick={(event) => {
         event.stopPropagation();
         onSelectItem(index);
+      }}
+      onDoubleClick={(event) => {
+        event.stopPropagation();
+        event.sourceEvent?.preventDefault?.();
+        event.sourceEvent?.stopPropagation?.();
+        onSelectItem(index);
+        onOpenCustomizer?.(index);
       }}
     >
       <Suspense fallback={null}>

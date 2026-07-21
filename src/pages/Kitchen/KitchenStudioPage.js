@@ -2155,7 +2155,12 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             onResizeMouseDown={handleResizeMouseDown}
             onCopyItem={duplicateSceneItem}
             onDeleteItem={removeSceneItem}
-            onOpenCustomizer={() => setCustomizerOpen(true)}
+            onOpenCustomizer={(index) => {
+              if (typeof index === "number") {
+                setSelectedSceneIndex(index);
+              }
+              setCustomizerOpen(true);
+            }}
             onRotateItem={rotateSceneItem}
             onNewProject={startNewProject}
             onSaveProject={() => setProjectSaveOpen(true)}

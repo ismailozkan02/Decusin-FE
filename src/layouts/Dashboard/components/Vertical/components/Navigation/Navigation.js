@@ -1,18 +1,13 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { styled, useTheme } from "@mui/material/styles";
-import { Box, List, Typography } from "@mui/material";
-import { APP } from "config";
+import { Box, Button, List } from "@mui/material";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import useAuth from "hooks/useAuth";
 import useLocale from "hooks/useLocale";
 import useTheming from "hooks/useTheming";
 import nav from "routes/nav";
 import hexToRGBA from "utils/hexToRgba";
 import { Drawer, NavHeader, NavItems } from "./components";
-import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-
-import { Header } from "components/Page/components";
 
 const StyledBoxForShadow = styled(Box)({
   top: 55,
@@ -28,19 +23,10 @@ const StyledBoxForShadow = styled(Box)({
   },
 });
 
-const VersionText = styled(Typography)(({ theme }) => ({
-  fontSize: "0.75rem",
-  lineHeight: "normal",
-  letterSpacing: "0.21px",
-  color: theme.palette.text.disabled,
-  fontWeight: theme.typography.fontWeightMedium,
-  textAlign: "right",
-}));
-
 const Navigation = (props) => {
-  const { me } = useAuth();
+  const { me, logout } = useAuth();
 
-  const { hidden, navHover } = props;
+  const { navHover } = props;
   const theme = useTheme();
   const { skin, navCollapsed } = useTheming();
   const { formatMessage } = useLocale();
@@ -135,21 +121,61 @@ const Navigation = (props) => {
               setCurrentActiveGroup={setCurrentActiveGroup}
               {...props}
             />
-            <Box flex={1}></Box>
-
-            <Box
-              sx={{
-                borderTop: (theme) =>
-                  `thin solid rgba(${theme.palette.customColors.main}, .12)`,
-                py: 3,
-                mt: 5,
-                px: 5,
-              }}
-            >
-              <VersionText>v.{APP.VERSION}</VersionText>
-            </Box>
           </Box>
         </List>
+      </Box>
+      <Box
+        sx={{
+          flexShrink: 0,
+          borderTop: (theme) => `thin solid rgba(${theme.palette.customColors.main}, .12)`,
+          px: navCollapsed && !navHover ? 1.25 : 3,
+          pt: 2,
+          pb: 3,
+          background: "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(248,250,252,0.96) 100%)",
+        }}
+      >
+        <Button
+          fullWidth
+          type="button"
+          onClick={logout}
+          sx={{
+            minWidth: 0,
+            px: navCollapsed && !navHover ? 0 : 1.4,
+            py: 1.25,
+            justifyContent: "center",
+            borderRadius: 1.8,
+            color: "#991B1B",
+            bgcolor: "rgba(255,255,255,0.94)",
+            background:
+              "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(254,242,242,0.96) 54%, rgba(255,228,230,0.92) 100%)",
+            border: "1px solid rgba(248,113,113,0.26)",
+            boxShadow: "0 14px 30px rgba(153,27,27,0.12), inset 0 1px 0 rgba(255,255,255,0.92)",
+            textTransform: "none",
+            fontWeight: 900,
+            "&:hover": {
+              background:
+                "linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(254,226,226,0.98) 54%, rgba(254,205,211,0.94) 100%)",
+              boxShadow: "0 18px 38px rgba(153,27,27,0.16), inset 0 1px 0 rgba(255,255,255,0.96)",
+            },
+          }}
+        >
+          <Box
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: 1.2,
+              display: "grid",
+              placeItems: "center",
+              mr: navCollapsed && !navHover ? 0 : 1,
+              color: "#DC2626",
+              bgcolor: "rgba(254,226,226,0.85)",
+              border: "1px solid rgba(248,113,113,0.28)",
+            }}
+          >
+            <LogoutOutlinedIcon sx={{ fontSize: 19 }} />
+          </Box>
+          {navCollapsed && !navHover ? null : "Çıkış yap"}
+        </Button>
       </Box>
     </Drawer>
   );
