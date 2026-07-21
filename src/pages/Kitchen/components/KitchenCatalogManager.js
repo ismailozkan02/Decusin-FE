@@ -69,12 +69,8 @@ const defaultMaterialGroups = [
 ];
 
 const previewByCategory = {
-  base_cabinet: "/images/kitchen/base-cabinet-premium.svg",
-  wall_cabinet: "/images/kitchen/wall-cabinet-glass-premium.svg",
-  countertop: "/images/kitchen/countertop-long-slab-premium.svg",
-  appliance: "/images/kitchen/sink-steel-premium.svg",
-  shelf: "/images/kitchen/open-shelf-premium.svg",
-  room: "/images/kitchen/kitchen-layout-linear-premium.svg",
+  base_cabinet: "/images/kitchen/products/furnimesh/real-09-walnut-marble-rounded-cabinet.png",
+  wall_cabinet: "/images/kitchen/products/upper-wall/upper-01-wall-frame-21x40.jpg",
 };
 
 const slugify = (value) =>
@@ -297,7 +293,7 @@ const KitchenCatalogManager = ({
         max_height: maxHeight,
       },
       image_url:
-        previewByCategory[category] || "/images/kitchen/base-cabinet-premium.svg",
+        previewByCategory[category] || previewByCategory.base_cabinet,
       model_url: newProduct.model_url || "",
       original_file_name: newProduct.file_name,
       base_price: Math.max(Number(newProduct.base_price) || 0, 0),
@@ -779,7 +775,7 @@ const ProductCard = ({ product, catalogGroups, selected }) => (
     <Stack direction="row" spacing={1.1}>
       <Box
         component="img"
-        src={product.image_url || "/images/kitchen/base-cabinet.svg"}
+        src={product.image_url || previewByCategory[product.category] || previewByCategory.base_cabinet}
         alt={product.name}
         sx={{
           width: 112,
@@ -1014,7 +1010,7 @@ const SelectedProductDrawer = ({
       <ClickAwayListener mouseEvent="onMouseDown" touchEvent="onTouchStart" onClickAway={onCloseProduct}>
         <Stack spacing={2}>
           <DrawerHeader title="Ürün Yönetimi" subtitle={`${selectedProduct.sku} · ${getProductCategoryLabel(selectedProduct.category)}`} onClose={onCloseProduct} />
-          <Box component="img" src={selectedProduct.image_url || "/images/kitchen/base-cabinet.svg"} alt={selectedProduct.name} sx={{ width: "100%", height: 170, objectFit: "contain", borderRadius: 1, border: "1px solid rgba(148,163,184,0.28)", background: "linear-gradient(145deg, #F8FBFF, #EAF2FB)", p: 1 }} />
+          <Box component="img" src={selectedProduct.image_url || previewByCategory[selectedProduct.category] || previewByCategory.base_cabinet} alt={selectedProduct.name} sx={{ width: "100%", height: 170, objectFit: "contain", borderRadius: 1, border: "1px solid rgba(148,163,184,0.28)", background: "linear-gradient(145deg, #F8FBFF, #EAF2FB)", p: 1 }} />
           <TextField label="Ürün adı" size="small" value={selectedProduct.name} onChange={(event) => updateSelectedProductField("name", event.target.value)} />
           <TextField label="Ürün fiyatı" type="number" size="small" value={selectedProduct.base_price || 0} onChange={(event) => updateSelectedProductField("base_price", event.target.value)} />
           <TextField label="Ürün resmi" size="small" value={selectedProduct.image_url || ""} onChange={(event) => updateSelectedProductField("image_url", event.target.value)} />

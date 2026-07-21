@@ -143,7 +143,7 @@ const KitchenSceneItemsDrawer = ({
                     <Box
                       component="img"
                       src={
-                        product.image_url || "/images/kitchen/base-cabinet.svg"
+                        product.image_url || "/images/kitchen/products/furnimesh/real-09-walnut-marble-rounded-cabinet.png"
                       }
                       alt={product.name || "Ürün"}
                       sx={{

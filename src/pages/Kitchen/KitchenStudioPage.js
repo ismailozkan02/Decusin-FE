@@ -363,7 +363,7 @@ const toolbarPrimaryButtonSx = (active = false) => ({
     fontSize: 17,
   },
   "&::after": {
-    content: active ? '"Urun Ekle"' : '"Ekli Urunler"',
+    content: active ? '"Ürün Ekle"' : '"Ekli Ürünler"',
     fontSize: 11.5,
     fontWeight: 950,
     lineHeight: 1,
@@ -675,6 +675,15 @@ const mergeCatalogItemsById = (...catalogLists) => {
 
   return Array.from(catalogMap.values());
 };
+
+const isSeedCatalogProduct = (product) =>
+  /^product-\d{3}-/.test(String(product?.id || ""));
+
+const mergeRuntimeCatalogItems = (serverItems = []) =>
+  mergeCatalogItemsById(
+    serverItems.filter((product) => !isSeedCatalogProduct(product)),
+    fallbackCatalog,
+  );
 
 const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const navigate = useNavigate();
@@ -1050,7 +1059,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       const [catalogResult, materialResult, projectResult] = results;
       if (catalogResult.status === "fulfilled") {
         setCatalogItems(
-          mergeCatalogItemsById(fallbackCatalog, catalogResult.value?.data || []),
+          mergeRuntimeCatalogItems(catalogResult.value?.data || []),
         );
       }
       if (materialResult.status === "fulfilled") {
@@ -2305,10 +2314,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               }
             />
             <ToolbarSceneToggleControl
-              label="Olcu"
+              label="Ölçü"
               active={premiumTools.measurements}
-              activeTitle="Olculer gorunur"
-              inactiveTitle="Olculer gizli"
+              activeTitle="Ölçüler görünür"
+              inactiveTitle="Ölçüler gizli"
               activeIcon={<StraightenOutlinedIcon sx={{ fontSize: 17 }} />}
               inactiveIcon={<StraightenOutlinedIcon sx={{ fontSize: 17 }} />}
               onToggle={() =>
@@ -2321,8 +2330,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             <ToolbarSceneToggleControl
               label="Hizala"
               active={false}
-              activeTitle="Urunleri hizala"
-              inactiveTitle="Urunleri hizala"
+              activeTitle="Ürünleri hizala"
+              inactiveTitle="Ürünleri hizala"
               activeIcon={
                 <AlignHorizontalCenterOutlinedIcon sx={{ fontSize: 17 }} />
               }
@@ -2332,10 +2341,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               onToggle={autoAlignSceneItems}
             />
             <ToolbarSceneToggleControl
-              label="Ust Hiz"
+              label="Üst Hiz"
               active={false}
-              activeTitle="Ust dolaplari hizala"
-              inactiveTitle="Ust dolaplari hizala"
+              activeTitle="Üst dolapları hizala"
+              inactiveTitle="Üst dolapları hizala"
               activeIcon={
                 <AlignHorizontalCenterOutlinedIcon sx={{ fontSize: 17 }} />
               }

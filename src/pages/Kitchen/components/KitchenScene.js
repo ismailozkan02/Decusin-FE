@@ -58,7 +58,7 @@ const modelScaleByCategory = {
   countertop: 1,
   shelf: 1,
   appliance: 1,
-  room: 1,
+  accessory: 1,
 };
 
 const getModelMaterialColor = (materialName, category, palette) => {
@@ -154,7 +154,7 @@ const ModelInstance = ({ modelUrl, category, rotation, palette }) => {
 const ProductImageFallback = ({ product, compact = false }) => (
   <Box
     component="img"
-    src={product.image_url || "/images/kitchen/base-cabinet.svg"}
+    src={product.image_url || "/images/kitchen/products/furnimesh/real-09-walnut-marble-rounded-cabinet.png"}
     alt={product.name || "Ürün"}
     sx={{
       position: "absolute",
@@ -813,8 +813,8 @@ const KitchenScene = ({
           <CameraAltOutlinedIcon />
         </SceneSideControl>
         <SceneSideControl
-          label="Ust"
-          title="Ust gorunum"
+          label="Üst"
+          title="Üst görünüm"
           onClick={() => onSelectCameraView?.("ust")}
           active={scenePremiumTools.topView}
         >

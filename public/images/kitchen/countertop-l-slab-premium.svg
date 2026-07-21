@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420" role="img" aria-label="L tezgah">
-  <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#edf5fd"/></linearGradient>
-    <linearGradient id="face" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#e8e8e3"/><stop offset="1" stop-color="#d9d2c7"/></linearGradient>
-  </defs>
-  <rect width="640" height="420" rx="26" fill="url(#bg)"/>
-  <ellipse cx="320" cy="346" rx="230" ry="28" fill="#cbd5e1" opacity=".42"/>
-  <path d="M96 298h430l42 44H54z" fill="#cbd5e1"/><path d="M100 126h382v70H220v132h-92V196h-28z" fill="url(#face)" stroke="#aeb7c5" stroke-width="6" stroke-linejoin="round"/><path d="M142 154c45-16 72 15 122 0s92-6 135 7" fill="none" stroke="#94a3b8" stroke-width="5" opacity=".42"/><path d="M158 218c22 28-16 46 0 82" fill="none" stroke="#94a3b8" stroke-width="5" opacity=".42"/>
-</svg>

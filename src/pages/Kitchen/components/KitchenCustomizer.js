@@ -216,7 +216,7 @@ const KitchenCustomizer = ({
                 label="Yerden Yukseklik"
                 size="small"
                 defaultValue={toInputValue(selectedElevation)}
-                helperText="Urunu sahnede asagi-yukari alir"
+                helperText="Ürünü sahnede aşağı-yukarı alır"
                 name="elevation"
                 inputProps={{ inputMode: "numeric" }}
                 onChange={(event) =>

@@ -7,674 +7,1142 @@
 };
 
 export const fallbackTemplates = [
-  { id: "template-linear-300", name: "Duz mutfak 300 cm", type: "linear" },
+  { id: "template-linear-300", name: "Düz mutfak 300 cm", type: "linear" },
   { id: "template-l-360-240", name: "L mutfak 360 x 240 cm", type: "l_shape" },
   { id: "template-island-420", name: "Ada mutfak 420 cm", type: "island" },
 ];
 
 export const fallbackCatalog = [
   {
-    id: "cabinet-base-60",
-    sku: "ALT-060",
-    name: "Alt dolap 60 cm",
+    id: "product-001-door_base",
+    sku: "ALT-KPK-01",
+    name: "Alt dolap - Tek kapaklı 60 cm",
     category: "base_cabinet",
-    dimensions: { width: 60, height: 72, depth: 56, unit: "cm" },
-    constraints: {
-      min_width: 40,
-      max_width: 90,
-      min_height: 60,
-      max_height: 90,
+    subcategory: "door_base",
+    dimensions: {
+      width: 60,
+      height: 72,
+      depth: 56,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/base-cabinet-premium.svg",
-    model_url: "/models/kitchen/base-cabinet-premium.gltf",
-    base_price: 4800,
+    constraints: {
+      min_width: 39,
+      max_width: 108,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-09-walnut-marble-rounded-cabinet.png",
+    model_url: "/models/kitchen/products/furnimesh/real-09-walnut-marble-rounded-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 4720
   },
   {
-    id: "cabinet-base-60-classic",
-    sku: "ALT-060-CLS",
-    name: "Klasik alt dolap 60 cm",
+    id: "product-002-door_base",
+    sku: "ALT-KPK-02",
+    name: "Alt dolap - Çift kapaklı 80 cm",
     category: "base_cabinet",
-    subcategory: "classic_base",
-    dimensions: { width: 60, height: 72, depth: 56, unit: "cm" },
-    constraints: {
-      min_width: 40,
-      max_width: 90,
-      min_height: 60,
-      max_height: 90,
+    subcategory: "door_base",
+    dimensions: {
+      width: 80,
+      height: 72,
+      depth: 56,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/base-cabinet-premium.svg",
-    model_url: "/models/kitchen/base-cabinet-premium.gltf",
-    base_price: 5100,
+    constraints: {
+      min_width: 52,
+      max_width: 144,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-10-industrial-black-metal-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-10-industrial-black-metal-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 5240
   },
   {
-    id: "cabinet-base-80-drawer",
-    sku: "ALT-080-CKM",
-    name: "Cekmeceli alt dolap 80 cm",
+    id: "product-003-door_base",
+    sku: "ALT-KPK-03",
+    name: "Alt dolap - 2 kapaklı geniş modül",
     category: "base_cabinet",
-    dimensions: { width: 80, height: 72, depth: 56, unit: "cm" },
-    constraints: {
-      min_width: 60,
-      max_width: 120,
-      min_height: 60,
-      max_height: 90,
+    subcategory: "door_base",
+    dimensions: {
+      width: 100,
+      height: 72,
+      depth: 56,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/base-cabinet-drawer-premium.svg",
-    model_url: "/models/kitchen/base-cabinet-drawer-premium.gltf",
-    base_price: 6900,
+    constraints: {
+      min_width: 65,
+      max_width: 180,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-11-traditional-dark-wood-cabinet.avif",
+    model_url: "/models/kitchen/products/furnimesh/real-11-traditional-dark-wood-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 5760
   },
   {
-    id: "cabinet-base-80-drawer-classic",
-    sku: "ALT-080-CLS",
-    name: "Klasik çekmeceli alt dolap 80 cm",
+    id: "product-004-door_base",
+    sku: "ALT-KPK-04",
+    name: "Alt dolap - Kulplu lake modül",
+    category: "base_cabinet",
+    subcategory: "door_base",
+    dimensions: {
+      width: 90,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-12-modern-fluted-wood-cabinet.png",
+    model_url: "/models/kitchen/products/furnimesh/real-12-modern-fluted-wood-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 6280
+  },
+  {
+    id: "product-005-door_base",
+    sku: "ALT-KPK-05",
+    name: "Alt dolap - Kulpsuz düz modül",
+    category: "base_cabinet",
+    subcategory: "door_base",
+    dimensions: {
+      width: 90,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-13-natural-rattan-woven-cabinet.png",
+    model_url: "/models/kitchen/products/furnimesh/real-13-natural-rattan-woven-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 6800
+  },
+  {
+    id: "product-006-drawer_base",
+    sku: "ALT-CKM-01",
+    name: "Alt dolap - 2 çekmeceli modül",
     category: "base_cabinet",
     subcategory: "drawer_base",
-    dimensions: { width: 80, height: 72, depth: 56, unit: "cm" },
-    constraints: {
-      min_width: 60,
-      max_width: 120,
-      min_height: 60,
-      max_height: 90,
+    dimensions: {
+      width: 60,
+      height: 72,
+      depth: 56,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/base-cabinet-drawer-premium.svg",
-    model_url: "/models/kitchen/base-cabinet-drawer-premium.gltf",
-    base_price: 7200,
+    constraints: {
+      min_width: 39,
+      max_width: 108,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-14-modern-two-tone-cabinet.png",
+    model_url: "/models/kitchen/products/furnimesh/real-14-modern-two-tone-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 7320
   },
   {
-    id: "cabinet-base-corner",
-    sku: "ALT-KOSE",
-    name: "Kose alt dolap",
+    id: "product-007-drawer_base",
+    sku: "ALT-CKM-02",
+    name: "Alt dolap - 3 çekmeceli modül",
     category: "base_cabinet",
-    dimensions: { width: 90, height: 72, depth: 90, unit: "cm" },
-    constraints: {
-      min_width: 80,
-      max_width: 120,
-      min_height: 60,
-      max_height: 90,
+    subcategory: "drawer_base",
+    dimensions: {
+      width: 80,
+      height: 72,
+      depth: 56,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/island-cabinet-premium.svg",
-    model_url: "/models/kitchen/island-cabinet-premium.gltf",
-    base_price: 8200,
+    constraints: {
+      min_width: 52,
+      max_width: 144,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-15-distressed-wood-bronze-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-15-distressed-wood-bronze-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 7840
   },
   {
-    id: "cabinet-tall-60",
-    sku: "BOY-060",
-    name: "Boy dolabi 60 cm",
+    id: "product-008-drawer_base",
+    sku: "ALT-CKM-03",
+    name: "Alt dolap - Geniş çekmece modülü",
     category: "base_cabinet",
-    dimensions: { width: 60, height: 210, depth: 58, unit: "cm" },
-    constraints: {
-      min_width: 45,
-      max_width: 80,
-      min_height: 180,
-      max_height: 240,
+    subcategory: "drawer_base",
+    dimensions: {
+      width: 100,
+      height: 72,
+      depth: 56,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/tall-pantry-premium.svg",
-    model_url: "/models/kitchen/tall-pantry-premium.gltf",
-    base_price: 11200,
+    constraints: {
+      min_width: 65,
+      max_width: 180,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-16-rustic-sage-green-cabinet.png",
+    model_url: "/models/kitchen/products/furnimesh/real-16-rustic-sage-green-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 8360
   },
   {
-    id: "cabinet-wall-80",
-    sku: "UST-080",
-    name: "Ust dolap 80 cm",
+    id: "product-009-drawer_base",
+    sku: "ALT-CKM-04",
+    name: "Alt dolap - Derin tencere çekmecesi",
+    category: "base_cabinet",
+    subcategory: "drawer_base",
+    dimensions: {
+      width: 90,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-17-two-tone-laminate-cabinet.webp",
+    model_url: "/models/kitchen/products/furnimesh/real-17-two-tone-laminate-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 8880
+  },
+  {
+    id: "product-010-drawer_base",
+    sku: "ALT-CKM-05",
+    name: "Alt dolap - İç çekmeceli premium modül",
+    category: "base_cabinet",
+    subcategory: "drawer_base",
+    dimensions: {
+      width: 90,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-18-black-arched-wood-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-18-black-arched-wood-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 9400
+  },
+  {
+    id: "product-011-corner_base",
+    sku: "ALT-KOSE-01",
+    name: "Köşe alt dolap - L modül",
+    category: "base_cabinet",
+    subcategory: "corner_base",
+    dimensions: {
+      width: 90,
+      height: 72,
+      depth: 90,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-19-arched-black-wood-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-19-arched-black-wood-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 9920
+  },
+  {
+    id: "product-012-corner_base",
+    sku: "ALT-KOSE-02",
+    name: "Köşe alt dolap - Kör köşe modül",
+    category: "base_cabinet",
+    subcategory: "corner_base",
+    dimensions: {
+      width: 110,
+      height: 72,
+      depth: 65,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 72,
+      max_width: 198,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-20-light-oak-modern-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-20-light-oak-modern-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 10440
+  },
+  {
+    id: "product-013-corner_base",
+    sku: "ALT-KOSE-03",
+    name: "Köşe alt dolap - Karusel uyumlu",
+    category: "base_cabinet",
+    subcategory: "corner_base",
+    dimensions: {
+      width: 90,
+      height: 72,
+      depth: 90,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-21-rustic-dark-wood-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-21-rustic-dark-wood-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 10960
+  },
+  {
+    id: "product-014-corner_base",
+    sku: "ALT-KOSE-04",
+    name: "Köşe alt dolap - Çift kapaklı",
+    category: "base_cabinet",
+    subcategory: "corner_base",
+    dimensions: {
+      width: 100,
+      height: 72,
+      depth: 80,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 65,
+      max_width: 180,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-22-distressed-abstract-metallic-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-22-distressed-abstract-metallic-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 11480
+  },
+  {
+    id: "product-015-corner_base",
+    sku: "ALT-KOSE-05",
+    name: "Köşe alt dolap - Tezgah altı köşe",
+    category: "base_cabinet",
+    subcategory: "corner_base",
+    dimensions: {
+      width: 95,
+      height: 72,
+      depth: 95,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 62,
+      max_width: 171,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-23-modern-walnut-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-23-modern-walnut-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 12000
+  },
+  {
+    id: "product-016-glass_base",
+    sku: "ALT-CAM-01",
+    name: "Alt dolap - Cam vitrin kapaklı",
+    category: "base_cabinet",
+    subcategory: "glass_base",
+    dimensions: {
+      width: 80,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 52,
+      max_width: 144,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-24-washed-wood-cabinet.png",
+    model_url: "/models/kitchen/products/furnimesh/real-24-washed-wood-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 12520
+  },
+  {
+    id: "product-017-glass_base",
+    sku: "ALT-CAM-02",
+    name: "Alt dolap - Füme cam kapaklı",
+    category: "base_cabinet",
+    subcategory: "glass_base",
+    dimensions: {
+      width: 90,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-25-modern-white-spiral-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-25-modern-white-spiral-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 13040
+  },
+  {
+    id: "product-018-glass_base",
+    sku: "ALT-CAM-03",
+    name: "Alt dolap - Alüminyum cam çerçeveli",
+    category: "base_cabinet",
+    subcategory: "glass_base",
+    dimensions: {
+      width: 100,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 65,
+      max_width: 180,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-26-black-metal-office-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-26-black-metal-office-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 13560
+  },
+  {
+    id: "product-019-glass_base",
+    sku: "ALT-CAM-04",
+    name: "Alt dolap - Dar cam kapaklı",
+    category: "base_cabinet",
+    subcategory: "glass_base",
+    dimensions: {
+      width: 60,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 39,
+      max_width: 108,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-27-cream-gold-contemporary-cabinet.png",
+    model_url: "/models/kitchen/products/furnimesh/real-27-cream-gold-contemporary-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 14080
+  },
+  {
+    id: "product-020-glass_base",
+    sku: "ALT-CAM-05",
+    name: "Alt dolap - Çift cam kapaklı",
+    category: "base_cabinet",
+    subcategory: "glass_base",
+    dimensions: {
+      width: 120,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 78,
+      max_width: 216,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-28-wavy-dark-wood-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-28-wavy-dark-wood-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 14600
+  },
+  {
+    id: "product-021-handleless_base",
+    sku: "ALT-LIFT-01",
+    name: "Alt dolap - Bas-aç kulpsuz modül",
+    category: "base_cabinet",
+    subcategory: "handleless_base",
+    dimensions: {
+      width: 80,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 52,
+      max_width: 144,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-29-organic-sculptural-cabinet.png",
+    model_url: "/models/kitchen/products/furnimesh/real-29-organic-sculptural-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 15120
+  },
+  {
+    id: "product-022-handleless_base",
+    sku: "ALT-LIFT-02",
+    name: "Alt dolap - Mat lake kulpsuz",
+    category: "base_cabinet",
+    subcategory: "handleless_base",
+    dimensions: {
+      width: 90,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-30-dark-wood-woven-cabinet.png",
+    model_url: "/models/kitchen/products/furnimesh/real-30-dark-wood-woven-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 15640
+  },
+  {
+    id: "product-023-handleless_base",
+    sku: "ALT-LIFT-03",
+    name: "Alt dolap - Profil kulplu modern",
+    category: "base_cabinet",
+    subcategory: "handleless_base",
+    dimensions: {
+      width: 100,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 65,
+      max_width: 180,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-31-antique-wood-amp-glass-cabinet.png",
+    model_url: "/models/kitchen/products/furnimesh/real-31-antique-wood-amp-glass-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 16160
+  },
+  {
+    id: "product-024-handleless_base",
+    sku: "ALT-LIFT-04",
+    name: "Alt dolap - Yatay kapak çizgili",
+    category: "base_cabinet",
+    subcategory: "handleless_base",
+    dimensions: {
+      width: 120,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 78,
+      max_width: 216,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-32-modern-fluted-black-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-32-modern-fluted-black-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 16680
+  },
+  {
+    id: "product-025-handleless_base",
+    sku: "ALT-LIFT-05",
+    name: "Alt dolap - Minimal düz panel",
+    category: "base_cabinet",
+    subcategory: "handleless_base",
+    dimensions: {
+      width: 80,
+      height: 72,
+      depth: 56,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 52,
+      max_width: 144,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-33-patterned-fabric-wood-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-33-patterned-fabric-wood-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 17200
+  },
+  {
+    id: "product-026-tall_base",
+    sku: "ALT-BOY-01",
+    name: "Alt dolap - Boy kiler modülü",
+    category: "base_cabinet",
+    subcategory: "tall_base",
+    dimensions: {
+      width: 60,
+      height: 210,
+      depth: 58,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 39,
+      max_width: 108,
+      min_height: 137,
+      max_height: 357
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-34-utilitarian-silver-metal-cabinet.png",
+    model_url: "/models/kitchen/products/furnimesh/real-34-utilitarian-silver-metal-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 17720
+  },
+  {
+    id: "product-027-tall_base",
+    sku: "ALT-BOY-02",
+    name: "Alt dolap - Fırın boy modülü",
+    category: "base_cabinet",
+    subcategory: "tall_base",
+    dimensions: {
+      width: 60,
+      height: 210,
+      depth: 58,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 39,
+      max_width: 108,
+      min_height: 137,
+      max_height: 357
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-35-shagreen-brass-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-35-shagreen-brass-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 18240
+  },
+  {
+    id: "product-028-tall_base",
+    sku: "ALT-BOY-03",
+    name: "Alt dolap - Buzdolabı yanı kolon",
+    category: "base_cabinet",
+    subcategory: "tall_base",
+    dimensions: {
+      width: 45,
+      height: 210,
+      depth: 58,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 30,
+      max_width: 81,
+      min_height: 137,
+      max_height: 357
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-36-traditional-dark-wood-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-36-traditional-dark-wood-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 18760
+  },
+  {
+    id: "product-029-tall_base",
+    sku: "ALT-BOY-04",
+    name: "Alt dolap - Camlı boy kolon",
+    category: "base_cabinet",
+    subcategory: "tall_base",
+    dimensions: {
+      width: 60,
+      height: 210,
+      depth: 45,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 39,
+      max_width: 108,
+      min_height: 137,
+      max_height: 357
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-37-organic-wavy-wood-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-37-organic-wavy-wood-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 19280
+  },
+  {
+    id: "product-030-tall_base",
+    sku: "ALT-BOY-05",
+    name: "Alt dolap - Kulpsuz boy kolon",
+    category: "base_cabinet",
+    subcategory: "tall_base",
+    dimensions: {
+      width: 60,
+      height: 220,
+      depth: 58,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 39,
+      max_width: 108,
+      min_height: 143,
+      max_height: 374
+    },
+    image_url: "/images/kitchen/products/furnimesh/real-38-industrial-distressed-wood-cabinet.jpg",
+    model_url: "/models/kitchen/products/furnimesh/real-38-industrial-distressed-wood-cabinet.glb",
+    source: "FurniMesh tekil alt dolap modeli",
+    base_price: 19800
+  },
+  {
+    id: "product-031-solid_wall",
+    sku: "UST-KPK-01",
+    name: "Üst dolap - Tek kapaklı 60 cm",
     category: "wall_cabinet",
-    dimensions: { width: 80, height: 72, depth: 34, unit: "cm" },
-    constraints: {
-      min_width: 50,
-      max_width: 120,
-      min_height: 45,
-      max_height: 100,
+    subcategory: "solid_wall",
+    dimensions: {
+      width: 60,
+      height: 72,
+      depth: 34,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/wall-cabinet-left-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-left-premium.gltf",
-    base_price: 3900,
+    constraints: {
+      min_width: 39,
+      max_width: 108,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-11-wall-frame-36x15.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 20320
   },
   {
-    id: "cabinet-wall-80-classic",
-    sku: "UST-080-CLS",
-    name: "Klasik üst dolap 80 cm",
+    id: "product-032-solid_wall",
+    sku: "UST-KPK-02",
+    name: "Üst dolap - Çift kapaklı 80 cm",
     category: "wall_cabinet",
-    subcategory: "classic_wall",
-    dimensions: { width: 80, height: 72, depth: 34, unit: "cm" },
-    constraints: {
-      min_width: 50,
-      max_width: 120,
-      min_height: 45,
-      max_height: 100,
+    subcategory: "solid_wall",
+    dimensions: {
+      width: 80,
+      height: 72,
+      depth: 34,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/wall-cabinet-left-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-left-premium.gltf",
-    base_price: 4100,
+    constraints: {
+      min_width: 52,
+      max_width: 144,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-12-corner-ringhult-26x20.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 20840
   },
   {
-    id: "cabinet-wall-60-glass",
-    sku: "UST-060-CAM",
-    name: "Camli ust dolap 60 cm",
+    id: "product-033-solid_wall",
+    sku: "UST-KPK-03",
+    name: "Üst dolap - Geniş kapaklı 100 cm",
     category: "wall_cabinet",
-    dimensions: { width: 60, height: 72, depth: 34, unit: "cm" },
-    constraints: {
-      min_width: 45,
-      max_width: 90,
-      min_height: 45,
-      max_height: 100,
+    subcategory: "solid_wall",
+    dimensions: {
+      width: 100,
+      height: 72,
+      depth: 34,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/wall-cabinet-glass-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-glass-premium.gltf",
-    base_price: 4600,
+    constraints: {
+      min_width: 65,
+      max_width: 180,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-13-corner-enkoeping-26x20.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 21360
   },
   {
-    id: "cabinet-wall-60-glass-classic",
-    sku: "UST-060-CAM-CLS",
-    name: "Klasik camlı üst dolap 60 cm",
+    id: "product-034-solid_wall",
+    sku: "UST-KPK-04",
+    name: "Üst dolap - Dar kapaklı 45 cm",
+    category: "wall_cabinet",
+    subcategory: "solid_wall",
+    dimensions: {
+      width: 45,
+      height: 72,
+      depth: 34,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 30,
+      max_width: 81,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-14-corner-bodbyn-26x20.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 21880
+  },
+  {
+    id: "product-035-solid_wall",
+    sku: "UST-KPK-05",
+    name: "Üst dolap - Yüksek kapaklı 90 cm",
+    category: "wall_cabinet",
+    subcategory: "solid_wall",
+    dimensions: {
+      width: 90,
+      height: 90,
+      depth: 34,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 59,
+      max_height: 153
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-15-corner-shelves-ringhult-26x30.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 22400
+  },
+  {
+    id: "product-036-glass_wall",
+    sku: "UST-CAM-01",
+    name: "Camlı üst dolap - Şeffaf cam",
     category: "wall_cabinet",
     subcategory: "glass_wall",
-    dimensions: { width: 60, height: 72, depth: 34, unit: "cm" },
-    constraints: {
-      min_width: 45,
-      max_width: 90,
-      min_height: 45,
-      max_height: 100,
+    dimensions: {
+      width: 60,
+      height: 72,
+      depth: 34,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/wall-cabinet-glass-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-glass-premium.gltf",
-    base_price: 4800,
+    constraints: {
+      min_width: 39,
+      max_width: 108,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-16-corner-axstad-white-36x20.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 22920
   },
   {
-    id: "cabinet-wall-100",
-    sku: "UST-100",
-    name: "Ust dolap 100 cm",
+    id: "product-037-glass_wall",
+    sku: "UST-CAM-02",
+    name: "Camlı üst dolap - Füme cam",
     category: "wall_cabinet",
-    dimensions: { width: 100, height: 72, depth: 34, unit: "cm" },
-    constraints: {
-      min_width: 70,
-      max_width: 140,
-      min_height: 45,
-      max_height: 100,
+    subcategory: "glass_wall",
+    dimensions: {
+      width: 80,
+      height: 72,
+      depth: 34,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/wall-cabinet-long-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-long-premium.gltf",
-    base_price: 5200,
+    constraints: {
+      min_width: 52,
+      max_width: 144,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-17-corner-glass-lerhyttan.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 23440
   },
   {
-    id: "cabinet-wall-corner",
-    sku: "UST-KOSE",
-    name: "Kose ust dolap",
+    id: "product-038-glass_wall",
+    sku: "UST-CAM-03",
+    name: "Camlı üst dolap - Çift cam kapak",
     category: "wall_cabinet",
-    dimensions: { width: 68, height: 72, depth: 68, unit: "cm" },
-    constraints: {
-      min_width: 60,
-      max_width: 100,
-      min_height: 45,
-      max_height: 100,
+    subcategory: "glass_wall",
+    dimensions: {
+      width: 100,
+      height: 72,
+      depth: 34,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/wall-cabinet-corner-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-corner-premium.gltf",
-    base_price: 5700,
-  },
-  {
-    id: "countertop-meter",
-    sku: "TEZ-MT",
-    name: "Tezgah metre",
-    category: "countertop",
-    dimensions: { width: 100, height: 4, depth: 60, unit: "cm" },
     constraints: {
-      min_width: 60,
-      max_width: 420,
-      min_height: 3,
-      max_height: 12,
-    },
-    image_url: "/images/kitchen/countertop-stone-premium.svg",
-    model_url: "/models/kitchen/countertop-stone-premium.gltf",
-    base_price: 2200,
-  },
-  {
-    id: "countertop-long-240",
-    sku: "TEZ-DUZ-240",
-    name: "Uzun duz tezgah 240 cm",
-    category: "countertop",
-    dimensions: { width: 240, height: 10, depth: 64, unit: "cm" },
-    constraints: {
-      min_width: 120,
-      max_width: 420,
-      min_height: 6,
-      max_height: 16,
-    },
-    image_url: "/images/kitchen/countertop-long-slab-premium.svg",
-    model_url: "/models/kitchen/countertop-long-slab-premium.gltf",
-    base_price: 5200,
-  },
-  {
-    id: "countertop-l-corner",
-    sku: "TEZ-L-KOSE",
-    name: "L kose tezgah",
-    category: "countertop",
-    dimensions: { width: 220, height: 12, depth: 140, unit: "cm" },
-    constraints: {
-      min_width: 140,
-      max_width: 360,
-      min_height: 6,
-      max_height: 18,
-    },
-    image_url: "/images/kitchen/countertop-l-slab-premium.svg",
-    model_url: "/models/kitchen/countertop-l-slab-premium.gltf",
-    base_price: 7600,
-  },
-  {
-    id: "countertop-sink-integrated",
-    sku: "TEZ-EVYELI",
-    name: "Evyeli tezgah modulu",
-    category: "countertop",
-    dimensions: { width: 160, height: 14, depth: 64, unit: "cm" },
-    constraints: {
-      min_width: 120,
-      max_width: 260,
-      min_height: 8,
-      max_height: 20,
-    },
-    image_url: "/images/kitchen/countertop-sink-cut-premium.svg",
-    model_url: "/models/kitchen/countertop-sink-cut-premium.gltf",
-    base_price: 8400,
-  },
-  {
-    id: "sink-standard",
-    sku: "EVY-STD",
-    name: "Standart evye",
-    category: "appliance",
-    dimensions: { width: 50, height: 20, depth: 45, unit: "cm" },
-    constraints: {
-      min_width: 45,
-      max_width: 70,
-      min_height: 15,
-      max_height: 35,
-    },
-    image_url: "/images/kitchen/sink-steel-premium.svg",
-    model_url: "/models/kitchen/sink-steel-premium.gltf",
-    base_price: 3200,
-  },
-  {
-    id: "cooktop-built-in",
-    sku: "OCAK-ANK",
-    name: "Ankastre siyah ocak",
-    category: "appliance",
-    dimensions: { width: 60, height: 8, depth: 50, unit: "cm" },
-    constraints: {
-      min_width: 50,
-      max_width: 80,
-      min_height: 5,
-      max_height: 14,
-    },
-    image_url: "/images/kitchen/cooktop-black-premium.svg",
-    model_url: "/models/kitchen/cooktop-black-premium.gltf",
-    base_price: 6100,
-  },
-  {
-    id: "faucet-chrome",
-    sku: "BAT-KROM",
-    name: "Krom mutfak bataryasi",
-    category: "appliance",
-    dimensions: { width: 24, height: 42, depth: 22, unit: "cm" },
-    constraints: {
-      min_width: 16,
-      max_width: 40,
-      min_height: 28,
-      max_height: 60,
-    },
-    image_url: "/images/kitchen/faucet-chrome-premium.svg",
-    model_url: "/models/kitchen/faucet-chrome-premium.gltf",
-    base_price: 2400,
-  },
-  {
-    id: "shelf-inner-60",
-    sku: "RAF-060",
-    name: "Ic raf 60 cm",
-    category: "shelf",
-    dimensions: { width: 56, height: 3, depth: 50, unit: "cm" },
-    constraints: { min_width: 30, max_width: 90, min_height: 2, max_height: 8 },
-    image_url: "/images/kitchen/open-shelf-premium.svg",
-    model_url: "/models/kitchen/open-shelf-premium.gltf",
-    base_price: 650,
-  },
-  {
-    id: "kitchen-room-demo",
-    sku: "MUTFAK-DUZ-360",
-    name: "Duz hazir mutfak modeli",
-    category: "room",
-    dimensions: { width: 360, height: 240, depth: 220, unit: "cm" },
-    constraints: {
-      min_width: 280,
-      max_width: 520,
-      min_height: 220,
-      max_height: 320,
-    },
-    image_url: "/images/kitchen/kitchen-layout-linear-premium.svg",
-    model_url: "/models/kitchen/kitchen-layout-linear-premium.gltf",
-    source: "OpenGameArt Tiny Treats CC0 + Decusin demo composition",
-    base_price: 0,
-  },
-  {
-    id: "kitchen-room-l-premium",
-    sku: "MUTFAK-L-360",
-    name: "L hazir mutfak modeli",
-    category: "room",
-    dimensions: { width: 360, height: 240, depth: 240, unit: "cm" },
-    constraints: {
-      min_width: 300,
-      max_width: 560,
-      min_height: 220,
-      max_height: 320,
-    },
-    image_url: "/images/kitchen/kitchen-layout-l-premium.svg",
-    model_url: "/models/kitchen/kitchen-layout-l-premium.gltf",
-    source: "OpenGameArt Tiny Treats CC0 + Decusin demo composition",
-    base_price: 0,
-  },
-  {
-    id: "kitchen-room-island-premium",
-    sku: "MUTFAK-ADA-420",
-    name: "Ada hazir mutfak modeli",
-    category: "room",
-    dimensions: { width: 420, height: 240, depth: 260, unit: "cm" },
-    constraints: {
-      min_width: 340,
-      max_width: 620,
-      min_height: 220,
-      max_height: 320,
-    },
-    image_url: "/images/kitchen/kitchen-layout-island-premium.svg",
-    model_url: "/models/kitchen/kitchen-layout-island-premium.gltf",
-    source: "OpenGameArt Tiny Treats CC0 + Decusin demo composition",
-    base_price: 0,
-  },
-  {
-    id: "shelf-spice-30",
-    sku: "RAF-BAH-030",
-    name: "Baharat rafı 30 cm",
-    category: "shelf",
-    dimensions: { width: 30, height: 60, depth: 18, unit: "cm" },
-    constraints: {
-      min_width: 20,
-      max_width: 50,
-      min_height: 40,
-      max_height: 90,
-    },
-    image_url: "/images/kitchen/open-shelf-premium.svg",
-    model_url: "/models/kitchen/open-shelf-premium.gltf",
-    base_price: 1250,
-  },
-  {
-    id: "cabinet-base-100-premium",
-    sku: "ALT-100-PRM",
-    name: "Premium alt dolap 100 cm",
-    category: "base_cabinet",
-    dimensions: { width: 100, height: 72, depth: 56, unit: "cm" },
-    constraints: {
-      min_width: 70,
-      max_width: 140,
-      min_height: 60,
-      max_height: 90,
-    },
-    image_url: "/images/kitchen/base-cabinet-premium.svg",
-    model_url: "/models/kitchen/base-cabinet-premium.gltf",
-    base_price: 7800,
-  },
-  {
-    id: "cabinet-base-120-drawer",
-    sku: "ALT-120-CKM",
-    name: "Genis cekmeceli alt dolap",
-    category: "base_cabinet",
-    dimensions: { width: 120, height: 72, depth: 56, unit: "cm" },
-    constraints: {
-      min_width: 80,
-      max_width: 160,
-      min_height: 60,
-      max_height: 90,
-    },
-    image_url: "/images/kitchen/base-cabinet-drawer-premium.svg",
-    model_url: "/models/kitchen/base-cabinet-drawer-premium.gltf",
-    base_price: 9600,
-  },
-  {
-    id: "cabinet-base-dark-80",
-    sku: "ALT-080-DARK",
-    name: "Antrasit alt dolap 80 cm",
-    category: "base_cabinet",
-    dimensions: { width: 80, height: 72, depth: 56, unit: "cm" },
-    constraints: {
-      min_width: 60,
-      max_width: 120,
-      min_height: 60,
-      max_height: 90,
-    },
-    image_url: "/images/kitchen/base-cabinet-premium.svg",
-    model_url: "/models/kitchen/base-cabinet-premium.gltf",
-    base_price: 7400,
-  },
-  {
-    id: "cabinet-island-180",
-    sku: "ADA-180",
-    name: "Ada modul 180 cm",
-    category: "base_cabinet",
-    subcategory: "drawer_base",
-    dimensions: { width: 180, height: 88, depth: 90, unit: "cm" },
-    constraints: {
-      min_width: 140,
-      max_width: 260,
-      min_height: 80,
-      max_height: 95,
-    },
-    image_url: "/images/kitchen/island-cabinet-premium.svg",
-    model_url: "/models/kitchen/island-cabinet-premium.gltf",
-    base_price: 18500,
-  },
-  {
-    id: "cabinet-base-45-bottle",
-    sku: "ALT-045-SISE",
-    name: "Premium sise alt dolap",
-    category: "base_cabinet",
-    subcategory: "door_base",
-    dimensions: { width: 45, height: 72, depth: 56, unit: "cm" },
-    constraints: {
-      min_width: 35,
-      max_width: 65,
-      min_height: 60,
-      max_height: 90,
-    },
-    image_url: "/images/kitchen/base-cabinet-premium.svg",
-    model_url: "/models/kitchen/base-cabinet-premium.gltf",
-    base_price: 5400,
-  },
-  {
-    id: "cabinet-base-90-sink",
-    sku: "ALT-090-EVYE",
-    name: "Evye uyumlu alt dolap",
-    category: "base_cabinet",
-    subcategory: "door_base",
-    dimensions: { width: 90, height: 72, depth: 56, unit: "cm" },
-    constraints: {
-      min_width: 70,
-      max_width: 120,
-      min_height: 60,
-      max_height: 90,
-    },
-    image_url: "/images/kitchen/base-cabinet-premium.svg",
-    model_url: "/models/kitchen/base-cabinet-premium.gltf",
-    base_price: 7200,
-  },
-  {
-    id: "cabinet-base-100-deep-drawer",
-    sku: "ALT-100-DERIN",
-    name: "Derin cekmeceli alt dolap",
-    category: "base_cabinet",
-    subcategory: "drawer_base",
-    dimensions: { width: 100, height: 72, depth: 58, unit: "cm" },
-    constraints: {
-      min_width: 80,
-      max_width: 140,
-      min_height: 60,
-      max_height: 90,
-    },
-    image_url: "/images/kitchen/base-cabinet-drawer-premium.svg",
-    model_url: "/models/kitchen/base-cabinet-drawer-premium.gltf",
-    base_price: 8800,
-  },
-  {
-    id: "cabinet-wall-120-glass",
-    sku: "UST-120-CAM",
-    name: "Genis camli ust dolap",
-    category: "wall_cabinet",
-    dimensions: { width: 120, height: 72, depth: 34, unit: "cm" },
-    constraints: {
-      min_width: 80,
-      max_width: 160,
-      min_height: 45,
-      max_height: 100,
-    },
-    image_url: "/images/kitchen/wall-cabinet-glass-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-glass-premium.gltf",
-    base_price: 6800,
-  },
-  {
-    id: "cabinet-wall-lift-90",
-    sku: "UST-090-LIFT",
-    name: "Lift kapak ust dolap",
-    category: "wall_cabinet",
-    dimensions: { width: 90, height: 48, depth: 34, unit: "cm" },
-    constraints: {
-      min_width: 70,
-      max_width: 140,
-      min_height: 36,
-      max_height: 72,
-    },
-    image_url: "/images/kitchen/wall-cabinet-long-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-long-premium.gltf",
-    base_price: 6100,
-  },
-  {
-    id: "cabinet-wall-single-left-45",
-    sku: "UST-045-SOL",
-    name: "Sol tek kapak ust dolap",
-    category: "wall_cabinet",
-    dimensions: { width: 45, height: 72, depth: 34, unit: "cm" },
-    constraints: {
-      min_width: 35,
-      max_width: 70,
-      min_height: 45,
-      max_height: 100,
-    },
-    image_url: "/images/kitchen/wall-cabinet-left-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-left-premium.gltf",
-    base_price: 3600,
-  },
-  {
-    id: "cabinet-wall-single-right-45",
-    sku: "UST-045-SAG",
-    name: "Sag tek kapak ust dolap",
-    category: "wall_cabinet",
-    dimensions: { width: 45, height: 72, depth: 34, unit: "cm" },
-    constraints: {
-      min_width: 35,
-      max_width: 70,
-      min_height: 45,
-      max_height: 100,
-    },
-    image_url: "/images/kitchen/wall-cabinet-glass-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-glass-premium.gltf",
-    base_price: 3600,
-  },
-  {
-    id: "cabinet-wall-straight-140",
-    sku: "UST-140-DUZ",
-    name: "Uzun ust dolap modulu",
-    category: "wall_cabinet",
-    dimensions: { width: 140, height: 72, depth: 34, unit: "cm" },
-    constraints: {
-      min_width: 100,
+      min_width: 65,
       max_width: 180,
-      min_height: 45,
-      max_height: 100,
+      min_height: 47,
+      max_height: 122
     },
-    image_url: "/images/kitchen/wall-cabinet-long-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-long-premium.gltf",
-    base_price: 7400,
+    image_url: "/images/kitchen/products/upper-wall/upper-18-wall-voxtorp-18x15.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 23960
   },
   {
-    id: "cabinet-wall-corner-tiny",
-    sku: "UST-KOSE-TINY",
-    name: "Moduler kose ust dolap",
+    id: "product-039-glass_wall",
+    sku: "UST-CAM-04",
+    name: "Camlı üst dolap - Vitrin modülü",
     category: "wall_cabinet",
-    dimensions: { width: 72, height: 72, depth: 72, unit: "cm" },
-    constraints: {
-      min_width: 55,
-      max_width: 110,
-      min_height: 45,
-      max_height: 100,
+    subcategory: "glass_wall",
+    dimensions: {
+      width: 60,
+      height: 90,
+      depth: 34,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/wall-cabinet-corner-premium.svg",
-    model_url: "/models/kitchen/wall-cabinet-corner-premium.gltf",
-    base_price: 6200,
+    constraints: {
+      min_width: 39,
+      max_width: 108,
+      min_height: 59,
+      max_height: 153
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-19-wall-vallstena-18x30.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 24480
   },
   {
-    id: "wall-open-shelf-hooks",
-    sku: "UST-RAF-KANCALI",
-    name: "Kancali acik ust raf",
-    category: "shelf",
-    dimensions: { width: 90, height: 40, depth: 24, unit: "cm" },
-    constraints: {
-      min_width: 60,
-      max_width: 140,
-      min_height: 25,
-      max_height: 70,
+    id: "product-040-glass_wall",
+    sku: "UST-CAM-05",
+    name: "Camlı üst dolap - Alüminyum çerçeve",
+    category: "wall_cabinet",
+    subcategory: "glass_wall",
+    dimensions: {
+      width: 90,
+      height: 72,
+      depth: 34,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/wall-shelf-hooks-premium.svg",
-    model_url: "/models/kitchen/wall-shelf-hooks-premium.gltf",
-    base_price: 2800,
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-20-corner-havstorp-26x30.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 25000
   },
   {
-    id: "wall-open-shelf-corner",
-    sku: "UST-RAF-KOSE",
-    name: "Kose acik ust raf",
-    category: "shelf",
-    dimensions: { width: 70, height: 42, depth: 42, unit: "cm" },
-    constraints: {
-      min_width: 50,
-      max_width: 110,
-      min_height: 25,
-      max_height: 75,
+    id: "product-041-lift_wall",
+    sku: "UST-LIFT-01",
+    name: "Lift üst dolap - Yatay kapak",
+    category: "wall_cabinet",
+    subcategory: "lift_wall",
+    dimensions: {
+      width: 90,
+      height: 45,
+      depth: 34,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/wall-shelf-corner-premium.svg",
-    model_url: "/models/kitchen/wall-shelf-corner-premium.gltf",
-    base_price: 3100,
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 30,
+      max_height: 77
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-01-wall-frame-21x40.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 25520
   },
   {
-    id: "sink-steel-large",
-    sku: "EVY-XL-CELIK",
-    name: "Buyuk celik evye",
-    category: "appliance",
-    dimensions: { width: 72, height: 22, depth: 50, unit: "cm" },
-    constraints: {
-      min_width: 55,
-      max_width: 90,
-      min_height: 15,
-      max_height: 35,
+    id: "product-042-lift_wall",
+    sku: "UST-LIFT-02",
+    name: "Lift üst dolap - Aventos kapak",
+    category: "wall_cabinet",
+    subcategory: "lift_wall",
+    dimensions: {
+      width: 100,
+      height: 45,
+      depth: 34,
+      unit: "cm"
     },
-    image_url: "/images/kitchen/sink-steel-premium.svg",
-    model_url: "/models/kitchen/sink-steel-premium.gltf",
-    base_price: 5200,
-  },
-  {
-    id: "shelf-open-120",
-    sku: "RAF-ACIK-120",
-    name: "Genis acik raf",
-    category: "shelf",
-    dimensions: { width: 120, height: 18, depth: 28, unit: "cm" },
     constraints: {
-      min_width: 80,
+      min_width: 65,
       max_width: 180,
-      min_height: 10,
-      max_height: 35,
+      min_height: 30,
+      max_height: 77
     },
-    image_url: "/images/kitchen/open-shelf-premium.svg",
-    model_url: "/models/kitchen/open-shelf-premium.gltf",
-    base_price: 1950,
+    image_url: "/images/kitchen/products/upper-wall/upper-02-wall-frame-36x40.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 26040
   },
+  {
+    id: "product-043-lift_wall",
+    sku: "UST-LIFT-03",
+    name: "Kulpsuz üst dolap - Düz kapak",
+    category: "wall_cabinet",
+    subcategory: "lift_wall",
+    dimensions: {
+      width: 80,
+      height: 72,
+      depth: 34,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 52,
+      max_width: 144,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-03-wall-veddinge-15x20.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 26560
+  },
+  {
+    id: "product-044-lift_wall",
+    sku: "UST-LIFT-04",
+    name: "Kulpsuz üst dolap - Mat lake",
+    category: "wall_cabinet",
+    subcategory: "lift_wall",
+    dimensions: {
+      width: 90,
+      height: 72,
+      depth: 34,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 59,
+      max_width: 162,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-04-wall-ringhult-15x20.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 27080
+  },
+  {
+    id: "product-045-lift_wall",
+    sku: "UST-LIFT-05",
+    name: "Üst dolap - Bas-aç mekanizmalı",
+    category: "wall_cabinet",
+    subcategory: "lift_wall",
+    dimensions: {
+      width: 70,
+      height: 72,
+      depth: 34,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 46,
+      max_width: 126,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-05-wall-ringhult-21x30.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 27600
+  },
+  {
+    id: "product-046-corner_wall",
+    sku: "UST-KOSE-01",
+    name: "Köşe üst dolap - Tek kapaklı",
+    category: "wall_cabinet",
+    subcategory: "corner_wall",
+    dimensions: {
+      width: 65,
+      height: 72,
+      depth: 65,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 42,
+      max_width: 117,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-06-wall-ringhult-15x30.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 28120
+  },
+  {
+    id: "product-047-corner_wall",
+    sku: "UST-KOSE-02",
+    name: "Köşe üst dolap - Cam kapaklı",
+    category: "wall_cabinet",
+    subcategory: "corner_wall",
+    dimensions: {
+      width: 65,
+      height: 72,
+      depth: 65,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 42,
+      max_width: 117,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-07-wall-veddinge-18x40.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 28640
+  },
+  {
+    id: "product-048-corner_wall",
+    sku: "UST-KOSE-03",
+    name: "Köşe üst dolap - Raflı modül",
+    category: "wall_cabinet",
+    subcategory: "corner_wall",
+    dimensions: {
+      width: 80,
+      height: 72,
+      depth: 65,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 52,
+      max_width: 144,
+      min_height: 47,
+      max_height: 122
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-08-wall-frame-30x20.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 29160
+  },
+  {
+    id: "product-049-corner_wall",
+    sku: "UST-KOSE-04",
+    name: "Köşe üst dolap - Lift kapaklı",
+    category: "wall_cabinet",
+    subcategory: "corner_wall",
+    dimensions: {
+      width: 80,
+      height: 60,
+      depth: 65,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 52,
+      max_width: 144,
+      min_height: 39,
+      max_height: 102
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-09-corner-frame-26x40.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 29680
+  },
+  {
+    id: "product-050-corner_wall",
+    sku: "UST-KOSE-05",
+    name: "Köşe üst dolap - Yüksek modül",
+    category: "wall_cabinet",
+    subcategory: "corner_wall",
+    dimensions: {
+      width: 80,
+      height: 90,
+      depth: 65,
+      unit: "cm"
+    },
+    constraints: {
+      min_width: 52,
+      max_width: 144,
+      min_height: 59,
+      max_height: 153
+    },
+    image_url: "/images/kitchen/products/upper-wall/upper-10-wall-nickebo-anthracite.jpg",
+    source: "IKEA SEKTION upper wall cabinet image",
+    base_price: 30200
+  }
 ];
 
 export const fallbackMaterials = [
@@ -684,14 +1152,14 @@ export const fallbackMaterials = [
     name: "Beyaz lake kapak",
     type: "door",
     color_hex: "#F8FAFC",
-    preview_model_url: "/models/kitchen/base-cabinet-premium.gltf",
+    preview_model_url: "/models/kitchen/products/furnimesh/real-09-walnut-marble-rounded-cabinet.glb",
     price_modifier: 0.18,
     modifier_type: "percent",
   },
   {
     id: "mat-door-wood-oak",
     code: "WOOD-OAK",
-    name: "Mese kapak",
+    name: "Meşe kapak",
     type: "door",
     color_hex: "#B6814A",
     price_modifier: 0.12,
@@ -709,7 +1177,7 @@ export const fallbackMaterials = [
   {
     id: "mat-door-sage",
     code: "SAGE-GREEN",
-    name: "Ada cayi yesili kapak",
+    name: "Ada çayı yeşili kapak",
     type: "door",
     color_hex: "#8FAF9B",
     price_modifier: 0.14,
@@ -727,10 +1195,10 @@ export const fallbackMaterials = [
   {
     id: "mat-glass-smoked",
     code: "GLASS-SMOKE",
-    name: "Fume cam",
+    name: "Füme cam",
     type: "glass",
     color_hex: "#6B7280",
-    preview_model_url: "/models/kitchen/wall-cabinet-glass-premium.gltf",
+    preview_model_url: "/models/kitchen/products/furnimesh/real-23-modern-walnut-cabinet.glb",
     price_modifier: 900,
     modifier_type: "fixed",
   },
@@ -758,7 +1226,7 @@ export const fallbackMaterials = [
     name: "Kuvars tezgah",
     type: "countertop",
     color_hex: "#E5E7EB",
-    preview_model_url: "/models/kitchen/countertop-stone-premium.gltf",
+    preview_model_url: "/models/kitchen/products/furnimesh/real-09-walnut-marble-rounded-cabinet.glb",
     price_modifier: 0.32,
     modifier_type: "percent",
   },
@@ -785,7 +1253,7 @@ export const fallbackMaterials = [
 export const templateScenes = {
   "template-linear-300": [
     {
-      catalog_item_id: "cabinet-base-60",
+      catalog_item_id: "product-001-door_base",
       position: { x: 130, y: 320, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       dimensions: { width: 60, height: 72, depth: 56, unit: "cm" },
@@ -793,7 +1261,7 @@ export const templateScenes = {
       quantity: 1,
     },
     {
-      catalog_item_id: "cabinet-base-60",
+      catalog_item_id: "product-001-door_base",
       position: { x: 200, y: 320, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       dimensions: { width: 60, height: 72, depth: 56, unit: "cm" },
@@ -801,7 +1269,7 @@ export const templateScenes = {
       quantity: 1,
     },
     {
-      catalog_item_id: "cabinet-wall-80",
+      catalog_item_id: "product-021-glass_wall",
       position: { x: 145, y: 140, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       dimensions: { width: 80, height: 72, depth: 34, unit: "cm" },
@@ -814,7 +1282,7 @@ export const templateScenes = {
   ],
   "template-l-360-240": [
     {
-      catalog_item_id: "cabinet-base-60",
+      catalog_item_id: "product-001-door_base",
       position: { x: 120, y: 320, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       dimensions: { width: 60, height: 72, depth: 56, unit: "cm" },
@@ -822,7 +1290,7 @@ export const templateScenes = {
       quantity: 1,
     },
     {
-      catalog_item_id: "cabinet-base-60",
+      catalog_item_id: "product-001-door_base",
       position: { x: 188, y: 320, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       dimensions: { width: 60, height: 72, depth: 56, unit: "cm" },
@@ -830,7 +1298,7 @@ export const templateScenes = {
       quantity: 1,
     },
     {
-      catalog_item_id: "cabinet-wall-80",
+      catalog_item_id: "product-021-glass_wall",
       position: { x: 130, y: 140, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       dimensions: { width: 80, height: 72, depth: 34, unit: "cm" },
@@ -841,7 +1309,7 @@ export const templateScenes = {
       quantity: 1,
     },
     {
-      catalog_item_id: "cabinet-wall-80",
+      catalog_item_id: "product-021-glass_wall",
       position: { x: 300, y: 220, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       dimensions: { width: 80, height: 72, depth: 34, unit: "cm" },
@@ -854,7 +1322,7 @@ export const templateScenes = {
   ],
   "template-island-420": [
     {
-      catalog_item_id: "cabinet-base-60",
+      catalog_item_id: "product-001-door_base",
       position: { x: 150, y: 305, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       dimensions: { width: 80, height: 72, depth: 56, unit: "cm" },
@@ -862,7 +1330,7 @@ export const templateScenes = {
       quantity: 1,
     },
     {
-      catalog_item_id: "cabinet-base-60",
+      catalog_item_id: "product-001-door_base",
       position: { x: 245, y: 305, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       dimensions: { width: 80, height: 72, depth: 56, unit: "cm" },
@@ -870,7 +1338,7 @@ export const templateScenes = {
       quantity: 1,
     },
     {
-      catalog_item_id: "countertop-meter",
+      catalog_item_id: "product-031-stone_counter",
       position: { x: 135, y: 280, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       dimensions: { width: 210, height: 16, depth: 80, unit: "cm" },
@@ -878,7 +1346,7 @@ export const templateScenes = {
       quantity: 1,
     },
     {
-      catalog_item_id: "sink-standard",
+      catalog_item_id: "product-041-sink_appliance",
       position: { x: 390, y: 265, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       dimensions: { width: 60, height: 45, depth: 45, unit: "cm" },
@@ -893,30 +1361,52 @@ export const catalogGroups = [
     key: "base_cabinet",
     title: "Alt Dolaplar",
     subcategories: [
-      { key: "door_base", title: "Kapakli Alt Dolaplar" },
-      { key: "drawer_base", title: "Çekmeceli Alt Dolaplar" },
-      { key: "corner_base", title: "Köşe Alt Dolaplar" },
-      { key: "tall_base", title: "Boy Dolaplar" },
-      { key: "classic_base", title: "Klasik Alt Dolaplar" },
-      { key: "island_base", title: "Ada Modülleri" },
-    ],
+      {
+        key: "door_base",
+        title: "Kapaklı Alt Dolaplar"
+      },
+      {
+        key: "drawer_base",
+        title: "Çekmeceli Alt Dolaplar"
+      },
+      {
+        key: "corner_base",
+        title: "Köşe Alt Dolaplar"
+      },
+      {
+        key: "glass_base",
+        title: "Camlı Alt Dolaplar"
+      },
+      {
+        key: "handleless_base",
+        title: "Kulpsuz Alt Dolaplar"
+      },
+      {
+        key: "tall_base",
+        title: "Boy Alt Dolaplar"
+      }
+    ]
   },
   {
     key: "wall_cabinet",
-    title: "Ust Dolaplar",
+    title: "Üst Dolaplar",
     subcategories: [
-      { key: "door_wall", title: "Kapakli Ust Dolaplar" },
-      { key: "glass_wall", title: "Camlı Üst Dolaplar" },
-      { key: "lift_wall", title: "Lift Kapak Üst Dolaplar" },
-      { key: "corner_wall", title: "Köşe Üst Dolaplar" },
-      { key: "classic_wall", title: "Klasik Üst Dolaplar" },
-      { key: "modular_wall", title: "Modüler Üst Dolaplar" },
-    ],
-  },
-  { key: "countertop", title: "Tezgahlar" },
-  { key: "shelf", title: "Raflar" },
-  { key: "appliance", title: "Evye / Cihazlar" },
-  { key: "room", title: "Mutfak Modelleri" },
+      {
+        key: "solid_wall",
+        title: "Kapaklı Üst Dolaplar"
+      },
+      {
+        key: "glass_wall",
+        title: "Camlı Üst Dolaplar"
+      },
+      {
+        key: "lift_wall",
+        title: "Lift / Kulpsuz Üst Dolaplar"
+      },
+      {
+        key: "corner_wall",
+        title: "Köşe Üst Dolaplar"
+      }
+    ]
+  }
 ];
-
-

@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420" role="img" aria-label="Kose ust dolap">
-  <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#edf5fd"/></linearGradient>
-    <linearGradient id="face" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ede7dc"/><stop offset="1" stop-color="#d9d2c7"/></linearGradient>
-  </defs>
-  <rect width="640" height="420" rx="26" fill="url(#bg)"/>
-  <ellipse cx="320" cy="346" rx="230" ry="28" fill="#cbd5e1" opacity=".42"/>
-  <path d="M172 330h316l34 30H138z" fill="#cbd5e1"/><path d="M176 98h240l54 54v170H176z" fill="url(#face)" stroke="#a8b5c5" stroke-width="6"/><rect x="210" y="132" width="124" height="156" rx="7" fill="#f8fafc" opacity=".68"/><path d="M350 132h74l24 24v132h-98z" fill="#e7dfd2" stroke="#c0ab91" stroke-width="4"/>
-</svg>
