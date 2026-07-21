@@ -6,13 +6,13 @@ on:
 
   workflow_dispatch:
   # push:
-  #   branches: [ "staging" ]
+  #   branches: [ main" ]
   #   paths:
   #   - 'src/**'
   #   - '.github/**'
  
   pull_request:
-    branches: ["staging"]
+    branches: ["main"]
     paths:
       - "src/**"
       - ".github/**"
@@ -208,7 +208,7 @@ jobs:
               cd /var/www/decusin/portal-frontend/
               sudo unzip -o /var/www/decusin/portal-frontend/frontend-artifact.zip -d /var/www/decusin/portal-frontend/
               sudo rm -rf ./assets/*
-              sudo cp -r /var/www/portal/public/build/* /var/www/decusin/portal-frontend/
+              sudo cp -r /var/www/decusin/portal-frontend/* /var/www/decusin/portal-frontend/
               sudo rm -rf frontend-artifact.zip build
               # cd /var/www/decusin/portal-frontend/
               # sudo npm install
