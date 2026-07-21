@@ -1,0 +1,93 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Decusin demo model generator"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Shelf Demo",
+      "mesh": 0
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Shelf Demo",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "Shelf Demo material",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.66,
+          0.39,
+          0.14,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 0.72
+      }
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "data:application/octet-stream;base64,mpkZvwAAAAApXA8+mpkZPwAAAAApXA8+mpkZPwrXoz0pXA8+mpkZvwrXoz0pXA8+mpkZPwAAAAApXA++mpkZvwAAAAApXA++mpkZvwrXoz0pXA++mpkZPwrXoz0pXA++mpkZvwrXoz0pXA8+mpkZPwrXoz0pXA8+mpkZPwrXoz0pXA++mpkZvwrXoz0pXA++mpkZvwAAAAApXA++mpkZPwAAAAApXA++mpkZPwAAAAApXA8+mpkZvwAAAAApXA8+mpkZPwAAAAApXA8+mpkZPwAAAAApXA++mpkZPwrXoz0pXA++mpkZPwrXoz0pXA8+mpkZvwAAAAApXA++mpkZvwAAAAApXA8+mpkZvwrXoz0pXA8+mpkZvwrXoz0pXA++j8IVvwAAAAAAAAA+w/UIvwAAAAAAAAA+w/UIv3sULj8AAAA+j8IVv3sULj8AAAA+w/UIvwAAAAAAAAC+j8IVvwAAAAAAAAC+j8IVv3sULj8AAAC+w/UIv3sULj8AAAC+j8IVv3sULj8AAAA+w/UIv3sULj8AAAA+w/UIv3sULj8AAAC+j8IVv3sULj8AAAC+j8IVvwAAAAAAAAC+w/UIvwAAAAAAAAC+w/UIvwAAAAAAAAA+j8IVvwAAAAAAAAA+w/UIvwAAAAAAAAA+w/UIvwAAAAAAAAC+w/UIv3sULj8AAAC+w/UIv3sULj8AAAA+j8IVvwAAAAAAAAC+j8IVvwAAAAAAAAA+j8IVv3sULj8AAAA+j8IVv3sULj8AAAC+w/UIPwAAAAAAAAA+j8IVPwAAAAAAAAA+j8IVP3sULj8AAAA+w/UIP3sULj8AAAA+j8IVPwAAAAAAAAC+w/UIPwAAAAAAAAC+w/UIP3sULj8AAAC+j8IVP3sULj8AAAC+w/UIP3sULj8AAAA+j8IVP3sULj8AAAA+j8IVP3sULj8AAAC+w/UIP3sULj8AAAC+w/UIPwAAAAAAAAC+j8IVPwAAAAAAAAC+j8IVPwAAAAAAAAA+w/UIPwAAAAAAAAA+j8IVPwAAAAAAAAA+j8IVPwAAAAAAAAC+j8IVP3sULj8AAAC+j8IVP3sULj8AAAA+w/UIPwAAAAAAAAC+w/UIPwAAAAAAAAA+w/UIP3sULj8AAAA+w/UIP3sULj8AAAC+mpkZv/YoHD8pXA8+mpkZP/YoHD8pXA8+mpkZPx+FKz8pXA8+mpkZvx+FKz8pXA8+mpkZP/YoHD8pXA++mpkZv/YoHD8pXA++mpkZvx+FKz8pXA++mpkZPx+FKz8pXA++mpkZvx+FKz8pXA8+mpkZPx+FKz8pXA8+mpkZPx+FKz8pXA++mpkZvx+FKz8pXA++mpkZv/YoHD8pXA++mpkZP/YoHD8pXA++mpkZP/YoHD8pXA8+mpkZv/YoHD8pXA8+mpkZP/YoHD8pXA8+mpkZP/YoHD8pXA++mpkZPx+FKz8pXA++mpkZPx+FKz8pXA8+mpkZv/YoHD8pXA++mpkZv/YoHD8pXA8+mpkZvx+FKz8pXA8+mpkZvx+FKz8pXA++AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGAAaABsAHAAdAB4AHAAeAB8AIAAhACIAIAAiACMAJAAlACYAJAAmACcAKAApACoAKAAqACsALAAtAC4ALAAuAC8AMAAxADIAMAAyADMANAA1ADYANAA2ADcAOAA5ADoAOAA6ADsAPAA9AD4APAA+AD8AQABBAEIAQABCAEMARABFAEYARABGAEcASABJAEoASABKAEsATABNAE4ATABOAE8AUABRAFIAUABSAFMAVABVAFYAVABWAFcAWABZAFoAWABaAFsAXABdAF4AXABeAF8A",
+      "byteLength": 1440
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 1152,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1152,
+      "byteLength": 288,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 96,
+      "type": "VEC3",
+      "min": [
+        -0.6,
+        0,
+        -0.14
+      ],
+      "max": [
+        0.6,
+        0.68,
+        0.14
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 144,
+      "type": "SCALAR"
+    }
+  ]
+}
