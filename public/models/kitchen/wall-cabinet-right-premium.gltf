@@ -1,0 +1,260 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Decusin procedural kitchen asset generator"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "wall-cabinet-right-premium",
+      "mesh": 0
+    }
+  ],
+  "meshes": [
+    {
+      "name": "wall-cabinet-right-premium",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "material": 0
+        },
+        {
+          "attributes": {
+            "POSITION": 2
+          },
+          "indices": 3,
+          "material": 1
+        },
+        {
+          "attributes": {
+            "POSITION": 4
+          },
+          "indices": 5,
+          "material": 5
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "shell",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.84,
+          0.8,
+          0.72,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 0.58
+      },
+      "alphaMode": "OPAQUE"
+    },
+    {
+      "name": "light",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.96,
+          0.95,
+          0.91,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 0.58
+      },
+      "alphaMode": "OPAQUE"
+    },
+    {
+      "name": "dark",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.12,
+          0.16,
+          0.22,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 0.58
+      },
+      "alphaMode": "OPAQUE"
+    },
+    {
+      "name": "oak",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.62,
+          0.4,
+          0.2,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 0.58
+      },
+      "alphaMode": "OPAQUE"
+    },
+    {
+      "name": "glass",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.58,
+          0.72,
+          0.82,
+          0.45
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 0.18
+      },
+      "alphaMode": "BLEND"
+    },
+    {
+      "name": "metal",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.7,
+          0.73,
+          0.76,
+          1
+        ],
+        "metallicFactor": 0.65,
+        "roughnessFactor": 0.58
+      },
+      "alphaMode": "OPAQUE"
+    },
+    {
+      "name": "stone",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.82,
+          0.82,
+          0.78,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 0.58
+      },
+      "alphaMode": "OPAQUE"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "data:application/octet-stream;base64,7FG4vgAAAAB7FC4+7FG4PgAAAAB7FC4+7FG4PuxROD97FC4+7FG4vuxROD97FC4+7FG4PgAAAAB7FC6+7FG4vgAAAAB7FC6+7FG4vuxROD97FC6+7FG4PuxROD97FC6+7FG4vuxROD97FC4+7FG4PuxROD97FC4+7FG4PuxROD97FC6+7FG4vuxROD97FC6+7FG4vgAAAAB7FC6+7FG4PgAAAAB7FC6+7FG4PgAAAAB7FC4+7FG4vgAAAAB7FC4+7FG4PgAAAAB7FC4+7FG4PgAAAAB7FC6+7FG4PuxROD97FC6+7FG4PuxROD97FC4+7FG4vgAAAAB7FC6+7FG4vgAAAAB7FC4+7FG4vuxROD97FC4+7FG4vuxROD97FC6+AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAcT2Kvo/CdT1xPUo+UriePo/CdT1xPUo+UriePsP1KD9xPUo+cT2KvsP1KD9xPUo+UriePo/CdT3XozA+cT2Kvo/CdT3XozA+cT2KvsP1KD/XozA+UriePsP1KD/XozA+cT2KvsP1KD9xPUo+UriePsP1KD9xPUo+UriePsP1KD/XozA+cT2KvsP1KD/XozA+cT2Kvo/CdT3XozA+UriePo/CdT3XozA+UriePo/CdT1xPUo+cT2Kvo/CdT1xPUo+UriePo/CdT1xPUo+UriePo/CdT3XozA+UriePsP1KD/XozA+UriePsP1KD9xPUo+cT2Kvo/CdT3XozA+cT2Kvo/CdT1xPUo+cT2KvsP1KD9xPUo+cT2KvsP1KD/XozA+AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAUrhevnE9ij72KFw+SOE6vnE9ij72KFw+SOE6vkjh+j72KFw+Urhevkjh+j72KFw+SOE6vnE9ij4Urkc+UrhevnE9ij4Urkc+Urhevkjh+j4Urkc+SOE6vkjh+j4Urkc+Urhevkjh+j72KFw+SOE6vkjh+j72KFw+SOE6vkjh+j4Urkc+Urhevkjh+j4Urkc+UrhevnE9ij4Urkc+SOE6vnE9ij4Urkc+SOE6vnE9ij72KFw+UrhevnE9ij72KFw+SOE6vnE9ij72KFw+SOE6vnE9ij4Urkc+SOE6vkjh+j4Urkc+SOE6vkjh+j72KFw+UrhevnE9ij4Urkc+UrhevnE9ij72KFw+Urhevkjh+j72KFw+Urhevkjh+j4Urkc+AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcA",
+      "byteLength": 1080
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 288,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 360,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 648,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 720,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1008,
+      "byteLength": 72,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "min": [
+        -0.36,
+        0,
+        -0.17
+      ],
+      "max": [
+        0.36,
+        0.72,
+        0.17
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "min": [
+        -0.26999999999999996,
+        0.06,
+        0.1725
+      ],
+      "max": [
+        0.31,
+        0.6599999999999999,
+        0.1975
+      ]
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "min": [
+        -0.21750000000000003,
+        0.27,
+        0.19499999999999998
+      ],
+      "max": [
+        -0.1825,
+        0.49,
+        0.215
+      ]
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    }
+  ]
+}

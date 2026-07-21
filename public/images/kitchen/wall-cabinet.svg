@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420" role="img" aria-label="Ust dolap">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#f8fbff"/>
+      <stop offset="1" stop-color="#e7edf5"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#eff6ff"/>
+      <stop offset="1" stop-color="#b6c4d6"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="420" rx="26" fill="url(#bg)"/>
+  <rect x="178" y="64" width="284" height="270" rx="10" fill="#ffffff" stroke="#aebccc" stroke-width="8"/>
+  <rect x="205" y="96" width="105" height="208" rx="5" fill="#f8fafc" stroke="#c4ceda" stroke-width="4"/>
+  <rect x="330" y="96" width="105" height="208" rx="5" fill="url(#glass)" stroke="#9aa8bb" stroke-width="4"/>
+  <path d="M350 116h66v168h-66z" fill="#334155" opacity=".12"/>
+  <rect x="300" y="176" width="8" height="58" rx="4" fill="#64748b"/>
+  <rect x="333" y="176" width="8" height="58" rx="4" fill="#64748b"/>
+</svg>

@@ -17,8 +17,12 @@ import {
   Typography,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import FlareOutlinedIcon from "@mui/icons-material/FlareOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
+import NightsStayOutlinedIcon from "@mui/icons-material/NightsStayOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
@@ -40,7 +44,13 @@ import {
 } from "./kitchenData";
 import { money } from "./kitchenUtils";
 
-const buildLocalQuote = (items, catalogMap, materialMap, installationFee, shippingFee) => {
+const buildLocalQuote = (
+  items,
+  catalogMap,
+  materialMap,
+  installationFee,
+  shippingFee,
+) => {
   const lines = items.map((item) => {
     const product = catalogMap[item.catalog_item_id] || {};
     const quantity = Number(item.quantity || 1);
@@ -115,6 +125,9 @@ const defaultRoomSurfaces = {
   leftWallVisible: true,
   rightWallVisible: true,
   ceilingVisible: true,
+  sceneMode: "day",
+  lampVisible: false,
+  lightsOn: false,
 };
 
 const floorPatternOptions = [
@@ -193,17 +206,28 @@ const floorPatternOptions = [
 ];
 
 const isCountertopMountedProduct = (product) => {
-  const name = `${product?.name || ""} ${product?.category || ""}`.toLowerCase();
-  return ["evye", "ocak", "ankastre", "sink", "hob", "cooktop", "built-in"].some((keyword) =>
-    name.includes(keyword),
-  );
+  const name =
+    `${product?.name || ""} ${product?.category || ""}`.toLowerCase();
+  return [
+    "evye",
+    "ocak",
+    "ankastre",
+    "sink",
+    "hob",
+    "cooktop",
+    "built-in",
+  ].some((keyword) => name.includes(keyword));
 };
 
-const isWallMountedProduct = (product, dimensions = product?.dimensions || {}) => {
-  const text = `${product?.name || ""} ${product?.sku || ""} ${product?.category || ""}`
-    .toLocaleLowerCase("tr-TR")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+const isWallMountedProduct = (
+  product,
+  dimensions = product?.dimensions || {},
+) => {
+  const text =
+    `${product?.name || ""} ${product?.sku || ""} ${product?.category || ""}`
+      .toLocaleLowerCase("tr-TR")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
   const depth = Number(dimensions?.depth || product?.dimensions?.depth || 0);
   const height = Number(dimensions?.height || product?.dimensions?.height || 0);
 
@@ -216,12 +240,17 @@ const isWallMountedProduct = (product, dimensions = product?.dimensions || {}) =
     text.includes("ãœst dolap") ||
     text.includes("ust-") ||
     text.includes("ust_") ||
-    (depth > 0 && depth <= 40 && height >= 40 && product?.category !== "countertop")
+    (depth > 0 &&
+      depth <= 40 &&
+      height >= 40 &&
+      product?.category !== "countertop")
   );
 };
 
-const getProductPlacement = (product, dimensions = product?.dimensions || {}) =>
-  isWallMountedProduct(product, dimensions) ? "wall" : "floor";
+const getProductPlacement = (
+  product,
+  dimensions = product?.dimensions || {},
+) => (isWallMountedProduct(product, dimensions) ? "wall" : "floor");
 
 const normalizeProductDimensions = (product, dimensions = {}) => {
   const mounted = isCountertopMountedProduct(product);
@@ -241,7 +270,10 @@ const normalizeProductDimensions = (product, dimensions = {}) => {
   if (mounted && Number(nextDimensions.height || 0) > 20) {
     nextDimensions.height = 6;
   }
-  if (product?.category === "countertop" && Number(nextDimensions.height || 0) > 12) {
+  if (
+    product?.category === "countertop" &&
+    Number(nextDimensions.height || 0) > 12
+  ) {
     nextDimensions.height = 4;
   }
 
@@ -300,7 +332,11 @@ const ToolbarNumberControl = ({ label, value, onChange }) => (
 );
 
 const ToolbarColorControl = ({ label, value, onChange }) => (
-  <Box component="label" title={label} sx={{ ...toolbarControlBoxSx, cursor: "pointer" }}>
+  <Box
+    component="label"
+    title={label}
+    sx={{ ...toolbarControlBoxSx, cursor: "pointer" }}
+  >
     <Typography component="span" sx={toolbarControlLabelSx}>
       {label}
     </Typography>
@@ -366,10 +402,61 @@ const ToolbarVisibilityControl = ({ label, visible, onToggle }) => (
   </Box>
 );
 
+const ToolbarSceneToggleControl = ({
+  label,
+  active,
+  activeTitle,
+  inactiveTitle,
+  activeIcon,
+  inactiveIcon,
+  disabled = false,
+  onToggle,
+}) => (
+  <Box
+    component="button"
+    type="button"
+    title={active ? activeTitle : inactiveTitle}
+    aria-label={active ? activeTitle : inactiveTitle}
+    disabled={disabled}
+    onClick={onToggle}
+    sx={{
+      ...toolbarControlBoxSx,
+      width: 56,
+      cursor: disabled ? "not-allowed" : "pointer",
+      outline: "none",
+      appearance: "none",
+      font: "inherit",
+      textAlign: "initial",
+      opacity: disabled ? 0.48 : 1,
+    }}
+  >
+    <Typography component="span" sx={toolbarControlLabelSx}>
+      {label}
+    </Typography>
+    <Box
+      sx={{
+        width: "100%",
+        height: 23,
+        borderRadius: 0.8,
+        display: "grid",
+        placeItems: "center",
+        border: active
+          ? "1px solid rgba(37,99,235,0.34)"
+          : "1px solid rgba(148,163,184,0.42)",
+        color: active ? "#F59E0B" : "#334155",
+        bgcolor: active ? "#FFFBEB" : "#F8FAFC",
+      }}
+    >
+      {active ? activeIcon : inactiveIcon}
+    </Box>
+  </Box>
+);
+
 const ToolbarFloorPatternControl = ({ value, onChange }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const selectedOption =
-    floorPatternOptions.find((option) => option.value === value) || floorPatternOptions[0];
+    floorPatternOptions.find((option) => option.value === value) ||
+    floorPatternOptions[0];
   const open = Boolean(anchorEl);
 
   return (
@@ -420,7 +507,9 @@ const ToolbarFloorPatternControl = ({ value, onChange }) => {
           },
         }}
       >
-        <Typography sx={{ mb: 0.8, fontSize: 12, fontWeight: 900, color: "#334155" }}>
+        <Typography
+          sx={{ mb: 0.8, fontSize: 12, fontWeight: 900, color: "#334155" }}
+        >
           Parke Seç
         </Typography>
         <Box
@@ -445,7 +534,10 @@ const ToolbarFloorPatternControl = ({ value, onChange }) => {
                 p: 0.45,
                 borderRadius: 1,
                 cursor: "pointer",
-                border: value === option.value ? "2px solid #1976D2" : "1px solid rgba(148,163,184,0.38)",
+                border:
+                  value === option.value
+                    ? "2px solid #1976D2"
+                    : "1px solid rgba(148,163,184,0.38)",
                 bgcolor: "#FFFFFF",
                 outline: "none",
                 textAlign: "left",
@@ -512,8 +604,12 @@ const readProjectCache = () => {
   if (typeof window === "undefined") return [];
 
   try {
-    const cachedProjects = JSON.parse(window.localStorage.getItem(PROJECT_CACHE_KEY) || "[]");
-    return Array.isArray(cachedProjects) ? cachedProjects.map(normalizeProjectSnapshot) : [];
+    const cachedProjects = JSON.parse(
+      window.localStorage.getItem(PROJECT_CACHE_KEY) || "[]",
+    );
+    return Array.isArray(cachedProjects)
+      ? cachedProjects.map(normalizeProjectSnapshot)
+      : [];
   } catch {
     return [];
   }
@@ -585,11 +681,11 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const [selectedSceneIndex, setSelectedSceneIndex] = useState(null);
   const [customizerOpen, setCustomizerOpen] = useState(false);
   const [zoom] = useState(1);
-  const [installationFee, setInstallationFee] = useState(
-    () => Number(pendingProject?.installation_fee || 0),
+  const [installationFee, setInstallationFee] = useState(() =>
+    Number(pendingProject?.installation_fee || 0),
   );
-  const [shippingFee, setShippingFee] = useState(
-    () => Number(pendingProject?.shipping_fee || 0),
+  const [shippingFee, setShippingFee] = useState(() =>
+    Number(pendingProject?.shipping_fee || 0),
   );
   const [roomDimensions, setRoomDimensions] = useState({
     width: 450,
@@ -634,7 +730,11 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     ...normalizeProductDimensions(selectedProduct, selectedProduct?.dimensions),
     ...(selectedSceneItem?.dimensions || {}),
   };
-  if (selectedProduct && isCountertopMountedProduct(selectedProduct) && Number(selectedDimensions.height || 0) > 20) {
+  if (
+    selectedProduct &&
+    isCountertopMountedProduct(selectedProduct) &&
+    Number(selectedDimensions.height || 0) > 20
+  ) {
     selectedDimensions.height = 6;
   }
   const selectedOptions = selectedSceneItem?.options || {};
@@ -643,7 +743,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     if (Number.isFinite(Number(selectedSceneItem.position?.elevation))) {
       return Number(selectedSceneItem.position.elevation);
     }
-    if (selectedProduct.category === "wall_cabinet" || selectedProduct.category === "shelf") {
+    if (
+      selectedProduct.category === "wall_cabinet" ||
+      selectedProduct.category === "shelf"
+    ) {
       return 140;
     }
     return 0;
@@ -655,7 +758,14 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     ? materials.find((item) => item.id === selectedMaterialId) || null
     : null;
   const localQuote = useMemo(
-    () => buildLocalQuote(sceneItems, catalogMap, materialMap, installationFee, shippingFee),
+    () =>
+      buildLocalQuote(
+        sceneItems,
+        catalogMap,
+        materialMap,
+        installationFee,
+        shippingFee,
+      ),
     [catalogMap, installationFee, materialMap, sceneItems, shippingFee],
   );
   const quote = localQuote;
@@ -674,7 +784,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     );
   }, [projectSearch, projects]);
   const projectPageCount = Math.max(Math.ceil(filteredProjects.length / 10), 1);
-  const pagedProjects = filteredProjects.slice((projectPage - 1) * 10, projectPage * 10);
+  const pagedProjects = filteredProjects.slice(
+    (projectPage - 1) * 10,
+    projectPage * 10,
+  );
 
   const getSceneMetrics = useCallback(
     (dimensions = roomDimensions) => {
@@ -723,14 +836,21 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
 
   const resolveInitialSceneItemPosition = useCallback(
     (items, nextItem, product, position) => {
-      if (product.category === "countertop" || isCountertopMountedProduct(product)) {
+      if (
+        product.category === "countertop" ||
+        isCountertopMountedProduct(product)
+      ) {
         return position;
       }
 
       const metrics = getSceneMetrics();
       const cmToPx = metrics.cmToPx || 1;
-      const dimensions = normalizeProductDimensions(product, nextItem.dimensions);
-      const placement = nextItem.placement || getProductPlacement(product, dimensions);
+      const dimensions = normalizeProductDimensions(
+        product,
+        nextItem.dimensions,
+      );
+      const placement =
+        nextItem.placement || getProductPlacement(product, dimensions);
       const roomWidthCm = Math.max(Number(roomDimensions.width || 450), 1);
       const roomDepthCm = Math.max(Number(roomDimensions.depth || 240), 1);
       const roomHeightCm = Math.max(Number(roomDimensions.height || 250), 1);
@@ -740,25 +860,58 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       const candidates =
         placement === "wall"
           ? [
-              { x: Number(position.x || 0) / cmToPx, y: Number(position.y || 0) / cmToPx },
-              { x: Number(position.x || 0) / cmToPx + width, y: Number(position.y || 0) / cmToPx },
-              { x: Number(position.x || 0) / cmToPx - width, y: Number(position.y || 0) / cmToPx },
-              { x: Number(position.x || 0) / cmToPx, y: Number(position.y || 0) / cmToPx + height },
+              {
+                x: Number(position.x || 0) / cmToPx,
+                y: Number(position.y || 0) / cmToPx,
+              },
+              {
+                x: Number(position.x || 0) / cmToPx + width,
+                y: Number(position.y || 0) / cmToPx,
+              },
+              {
+                x: Number(position.x || 0) / cmToPx - width,
+                y: Number(position.y || 0) / cmToPx,
+              },
+              {
+                x: Number(position.x || 0) / cmToPx,
+                y: Number(position.y || 0) / cmToPx + height,
+              },
             ]
           : [
-              { x: Number(position.x || 0) / cmToPx, z: Number(position.z || 0) },
-              { x: Number(position.x || 0) / cmToPx + width, z: Number(position.z || 0) },
-              { x: Number(position.x || 0) / cmToPx - width, z: Number(position.z || 0) },
-              { x: Number(position.x || 0) / cmToPx, z: Number(position.z || 0) + depth },
+              {
+                x: Number(position.x || 0) / cmToPx,
+                z: Number(position.z || 0),
+              },
+              {
+                x: Number(position.x || 0) / cmToPx + width,
+                z: Number(position.z || 0),
+              },
+              {
+                x: Number(position.x || 0) / cmToPx - width,
+                z: Number(position.z || 0),
+              },
+              {
+                x: Number(position.x || 0) / cmToPx,
+                z: Number(position.z || 0) + depth,
+              },
             ];
 
       const overlapsExisting = (candidate) =>
         items.some((item) => {
           const otherProduct = catalogMap[item.catalog_item_id] || {};
-          if (otherProduct.category === "countertop" || isCountertopMountedProduct(otherProduct)) return false;
+          if (
+            otherProduct.category === "countertop" ||
+            isCountertopMountedProduct(otherProduct)
+          )
+            return false;
 
-          const otherDimensions = normalizeProductDimensions(otherProduct, item.dimensions);
-          const otherPlacement = item.placement || getProductPlacement(otherProduct, otherDimensions);
+          const otherDimensions = normalizeProductDimensions(
+            otherProduct,
+            item.dimensions,
+          );
+          const otherPlacement =
+            item.placement ||
+            getProductPlacement(otherProduct, otherDimensions);
           if (otherPlacement !== placement) return false;
 
           const otherX = Number(item.position?.x || 0) / cmToPx;
@@ -766,18 +919,29 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
 
           if (placement === "wall") {
             const otherY = Number(item.position?.y || 0) / cmToPx;
-            const otherHeight = Math.max(Number(otherDimensions.height || 72), 1);
+            const otherHeight = Math.max(
+              Number(otherDimensions.height || 72),
+              1,
+            );
             return (
-              Math.min(candidate.x + width, otherX + otherWidth) - Math.max(candidate.x, otherX) > 1 &&
-              Math.min(candidate.y + height, otherY + otherHeight) - Math.max(candidate.y, otherY) > 1
+              Math.min(candidate.x + width, otherX + otherWidth) -
+                Math.max(candidate.x, otherX) >
+                1 &&
+              Math.min(candidate.y + height, otherY + otherHeight) -
+                Math.max(candidate.y, otherY) >
+                1
             );
           }
 
           const otherZ = Number(item.position?.z || 0);
           const otherDepth = Math.max(Number(otherDimensions.depth || 56), 1);
           return (
-            Math.min(candidate.x + width, otherX + otherWidth) - Math.max(candidate.x, otherX) > 1 &&
-            Math.min(candidate.z + depth, otherZ + otherDepth) - Math.max(candidate.z, otherZ) > 1
+            Math.min(candidate.x + width, otherX + otherWidth) -
+              Math.max(candidate.x, otherX) >
+              1 &&
+            Math.min(candidate.z + depth, otherZ + otherDepth) -
+              Math.max(candidate.z, otherZ) >
+              1
           );
         });
 
@@ -792,7 +956,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             candidate.z >= 0 &&
             candidate.z + depth <= roomDepthCm;
 
-      const freeCandidate = candidates.find((candidate) => inRoom(candidate) && !overlapsExisting(candidate));
+      const freeCandidate = candidates.find(
+        (candidate) => inRoom(candidate) && !overlapsExisting(candidate),
+      );
       if (!freeCandidate) return position;
 
       return {
@@ -803,7 +969,13 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           : { z: freeCandidate.z }),
       };
     },
-    [catalogMap, getSceneMetrics, roomDimensions.depth, roomDimensions.height, roomDimensions.width],
+    [
+      catalogMap,
+      getSceneMetrics,
+      roomDimensions.depth,
+      roomDimensions.height,
+      roomDimensions.width,
+    ],
   );
 
   useEffect(() => {
@@ -855,7 +1027,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   useEffect(() => {
     const updateQuoteFees = (event) => {
       if (event.detail?.installation_fee !== undefined) {
-        setInstallationFee(Math.max(Number(event.detail.installation_fee) || 0, 0));
+        setInstallationFee(
+          Math.max(Number(event.detail.installation_fee) || 0, 0),
+        );
       }
       if (event.detail?.shipping_fee !== undefined) {
         setShippingFee(Math.max(Number(event.detail.shipping_fee) || 0, 0));
@@ -863,7 +1037,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     };
 
     window.addEventListener("decusin:update-quote-fees", updateQuoteFees);
-    return () => window.removeEventListener("decusin:update-quote-fees", updateQuoteFees);
+    return () =>
+      window.removeEventListener("decusin:update-quote-fees", updateQuoteFees);
   }, []);
 
   useEffect(() => {
@@ -910,7 +1085,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     return {
       ...dimensions,
       width: clampProductSize(product, "width", dimensions.width),
-      height: mounted ? dimensions.height : clampProductSize(product, "height", dimensions.height),
+      height: mounted
+        ? dimensions.height
+        : clampProductSize(product, "height", dimensions.height),
       unit: "cm",
     };
   };
@@ -931,13 +1108,21 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         quantity: 1,
       };
       const position = clampScenePosition(nextItem, product, x, nextY);
-      const resolvedPosition = resolveInitialSceneItemPosition(current, nextItem, product, {
-        ...nextItem.position,
-        ...position,
-      });
+      const resolvedPosition = resolveInitialSceneItemPosition(
+        current,
+        nextItem,
+        product,
+        {
+          ...nextItem.position,
+          ...position,
+        },
+      );
       return [
         ...current,
-        { ...nextItem, position: { ...nextItem.position, ...position, ...resolvedPosition } },
+        {
+          ...nextItem,
+          position: { ...nextItem.position, ...position, ...resolvedPosition },
+        },
       ];
     });
     setSelectedSceneIndex(null);
@@ -983,10 +1168,14 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           ...(item.dimensions || {}),
         };
         const maxElevation = Math.max(
-          Number(roomDimensions.height || 250) - Number(dimensions.height || 72),
+          Number(roomDimensions.height || 250) -
+            Number(dimensions.height || 72),
           0,
         );
-        const elevation = Math.min(Math.max(Number(value) || 0, 0), maxElevation);
+        const elevation = Math.min(
+          Math.max(Number(value) || 0, 0),
+          maxElevation,
+        );
 
         return {
           ...item,
@@ -1471,7 +1660,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           ...payload,
           ...project,
           room_dimensions: project.room_dimensions || payload.room_dimensions,
-          items: Array.isArray(project.items) && project.items.length ? project.items : payload.items,
+          items:
+            Array.isArray(project.items) && project.items.length
+              ? project.items
+              : payload.items,
           quote: project.quote || payload.quote,
         });
         setProjects((current) => {
@@ -1613,7 +1805,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setResizeState(null);
 
     if (initialTab !== "designer") {
-      window.localStorage.setItem("decusinOpenProject", JSON.stringify(snapshot));
+      window.localStorage.setItem(
+        "decusinOpenProject",
+        JSON.stringify(snapshot),
+      );
       navigate("/kitchen-designer");
     }
   };
@@ -1778,6 +1973,60 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             >
               Ekli Ürünler
             </Button>
+            <ToolbarSceneToggleControl
+              label="Mod"
+              active={roomSurfaces.sceneMode === "night"}
+              activeTitle="Gece modunda"
+              inactiveTitle="Gunduz modunda"
+              activeIcon={<NightsStayOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<LightModeOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={() =>
+                setRoomSurfaces((current) => ({
+                  ...current,
+                  sceneMode: current.sceneMode === "night" ? "day" : "night",
+                }))
+              }
+            />
+            <ToolbarSceneToggleControl
+              label="Lamba"
+              active={roomSurfaces.lampVisible === true}
+              activeTitle="Lamba gorunur"
+              inactiveTitle="Lamba gizli"
+              activeIcon={<LightbulbOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<LightbulbOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={() =>
+                setRoomSurfaces((current) => {
+                  const nextVisible = current.lampVisible !== true;
+
+                  return {
+                    ...current,
+                    lampVisible: nextVisible,
+                    lightsOn: nextVisible ? current.lightsOn === true : false,
+                  };
+                })
+              }
+            />
+            <ToolbarSceneToggleControl
+              label="Isik"
+              active={
+                roomSurfaces.lampVisible === true &&
+                roomSurfaces.lightsOn === true
+              }
+              activeTitle="Aydinlatma acik"
+              inactiveTitle="Aydinlatma kapali"
+              activeIcon={<FlareOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<FlareOutlinedIcon sx={{ fontSize: 17 }} />}
+              disabled={roomSurfaces.lampVisible !== true}
+              onToggle={() =>
+                setRoomSurfaces((current) => ({
+                  ...current,
+                  lightsOn:
+                    current.lampVisible === true
+                      ? current.lightsOn !== true
+                      : false,
+                }))
+              }
+            />
             <Box sx={{ flexGrow: 1, minWidth: { xs: "100%", md: 24 } }} />
             <ToolbarNumberControl
               label="Genislik"
@@ -2142,10 +2391,16 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                     {project.name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {project.customer_name || "Musteri yok"} - {project.items?.length || 0} kalem
+                    {project.customer_name || "Musteri yok"} -{" "}
+                    {project.items?.length || 0} kalem
                   </Typography>
                 </Box>
-                <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={1}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="flex-end"
+                  spacing={1}
+                >
                   <Chip label={money(project.quote?.total || 0)} />
                   <Button
                     variant="outlined"
@@ -2239,7 +2494,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               variant="contained"
               startIcon={<PersonAddAltOutlinedIcon />}
               onClick={addCustomer}
-              disabled={!customerForm.first_name.trim() && !customerForm.last_name.trim()}
+              disabled={
+                !customerForm.first_name.trim() &&
+                !customerForm.last_name.trim()
+              }
               sx={{ textTransform: "none", fontWeight: 900 }}
             >
               Musteriyi Kaydet

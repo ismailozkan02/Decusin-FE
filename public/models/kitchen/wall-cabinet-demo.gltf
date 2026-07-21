@@ -1,0 +1,93 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Decusin demo model generator"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Wall Cabinet Demo",
+      "mesh": 0
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Wall Cabinet Demo",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "Wall Cabinet Demo material",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.86,
+          0.88,
+          0.9,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 0.72
+      }
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "data:application/octet-stream;base64,AAAAvwAAAAB7FC4+AAAAPwAAAAB7FC4+AAAAP+xROD97FC4+AAAAv+xROD97FC4+AAAAPwAAAAB7FC6+AAAAvwAAAAB7FC6+AAAAv+xROD97FC6+AAAAP+xROD97FC6+AAAAv+xROD97FC4+AAAAP+xROD97FC4+AAAAP+xROD97FC6+AAAAv+xROD97FC6+AAAAvwAAAAB7FC6+AAAAPwAAAAB7FC6+AAAAPwAAAAB7FC4+AAAAvwAAAAB7FC4+AAAAPwAAAAB7FC4+AAAAPwAAAAB7FC6+AAAAP+xROD97FC6+AAAAP+xROD97FC4+AAAAvwAAAAB7FC6+AAAAvwAAAAB7FC4+AAAAv+xROD97FC4+AAAAv+xROD97FC6+rkfhvo/CdT24HkU+rkfhPo/CdT24HkU+rkfhPsP1KD+4HkU+rkfhvsP1KD+4HkU+rkfhPo/CdT0fhSs+rkfhvo/CdT0fhSs+rkfhvsP1KD8fhSs+rkfhPsP1KD8fhSs+rkfhvsP1KD+4HkU+rkfhPsP1KD+4HkU+rkfhPsP1KD8fhSs+rkfhvsP1KD8fhSs+rkfhvo/CdT0fhSs+rkfhPo/CdT0fhSs+rkfhPo/CdT24HkU+rkfhvo/CdT24HkU+rkfhPo/CdT24HkU+rkfhPo/CdT0fhSs+rkfhPsP1KD8fhSs+rkfhPsP1KD+4HkU+rkfhvo/CdT0fhSs+rkfhvo/CdT24HkU+rkfhvsP1KD+4HkU+rkfhvsP1KD8fhSs+AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGAAaABsAHAAdAB4AHAAeAB8AIAAhACIAIAAiACMAJAAlACYAJAAmACcAKAApACoAKAAqACsALAAtAC4ALAAuAC8A",
+      "byteLength": 720
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 576,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 576,
+      "byteLength": 144,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 48,
+      "type": "VEC3",
+      "min": [
+        -0.5,
+        0,
+        -0.17
+      ],
+      "max": [
+        0.5,
+        0.72,
+        0.1925
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 72,
+      "type": "SCALAR"
+    }
+  ]
+}

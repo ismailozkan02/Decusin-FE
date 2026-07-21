@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420" role="img" aria-label="Camli ust dolap">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#edf5fd"/></linearGradient>
+    <linearGradient id="face" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#eef4f8"/><stop offset="1" stop-color="#d9d2c7"/></linearGradient>
+  </defs>
+  <rect width="640" height="420" rx="26" fill="url(#bg)"/>
+  <ellipse cx="320" cy="346" rx="230" ry="28" fill="#cbd5e1" opacity=".42"/>
+  <path d="M156 330h328l30 30H126z" fill="#cbd5e1"/><rect x="160" y="82" width="320" height="250" rx="12" fill="url(#face)" stroke="#a8b5c5" stroke-width="6"/><rect x="190" y="116" width="112" height="176" rx="7" fill="#bfe3f7" opacity=".62" stroke="#7ba5bd" stroke-width="4"/><rect x="338" y="116" width="112" height="176" rx="7" fill="#bfe3f7" opacity=".62" stroke="#7ba5bd" stroke-width="4"/><rect x="224" y="304" width="190" height="9" rx="4" fill="#64748b"/>
+</svg>

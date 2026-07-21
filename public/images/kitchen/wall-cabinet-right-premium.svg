@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420" role="img" aria-label="Sag tek kapak ust dolap">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#edf5fd"/></linearGradient>
+    <linearGradient id="face" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#f3f0ea"/><stop offset="1" stop-color="#d9d2c7"/></linearGradient>
+  </defs>
+  <rect width="640" height="420" rx="26" fill="url(#bg)"/>
+  <ellipse cx="320" cy="346" rx="230" ry="28" fill="#cbd5e1" opacity=".42"/>
+  <path d="M208 330h224l28 28H180z" fill="#cbd5e1"/><rect x="218" y="84" width="204" height="244" rx="12" fill="url(#face)" stroke="#a8b5c5" stroke-width="6"/><rect x="250" y="118" width="136" height="174" rx="7" fill="#f8fafc" opacity=".72"/><rect x="278" y="164" width="10" height="72" rx="5" fill="#64748b"/>
+</svg>

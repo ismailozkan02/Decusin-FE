@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420" role="img" aria-label="Ada modulu">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#edf5fd"/></linearGradient>
+    <linearGradient id="face" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#c79a63"/><stop offset="1" stop-color="#d9d2c7"/></linearGradient>
+  </defs>
+  <rect width="640" height="420" rx="26" fill="url(#bg)"/>
+  <ellipse cx="320" cy="346" rx="230" ry="28" fill="#cbd5e1" opacity=".42"/>
+  <path d="M100 318h436l40 38H58z" fill="#b7c2d1"/><rect x="116" y="138" width="408" height="174" rx="16" fill="url(#face)" stroke="#9b6b38" stroke-width="6"/><rect x="88" y="104" width="464" height="44" rx="16" fill="#e5e7eb" stroke="#cbd5e1" stroke-width="5"/><rect x="150" y="174" width="94" height="96" rx="7" fill="#f8fafc" opacity=".42"/><rect x="273" y="174" width="94" height="96" rx="7" fill="#f8fafc" opacity=".42"/><rect x="396" y="174" width="94" height="96" rx="7" fill="#f8fafc" opacity=".42"/>
+</svg>
