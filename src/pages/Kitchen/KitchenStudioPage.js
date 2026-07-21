@@ -17,8 +17,12 @@ import {
   Typography,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import FlareOutlinedIcon from "@mui/icons-material/FlareOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
+import NightsStayOutlinedIcon from "@mui/icons-material/NightsStayOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
@@ -115,6 +119,9 @@ const defaultRoomSurfaces = {
   leftWallVisible: true,
   rightWallVisible: true,
   ceilingVisible: true,
+  sceneMode: "day",
+  lampVisible: false,
+  lightsOn: false,
 };
 
 const floorPatternOptions = [
@@ -362,6 +369,54 @@ const ToolbarVisibilityControl = ({ label, visible, onToggle }) => (
       ) : (
         <VisibilityOffOutlinedIcon sx={{ fontSize: 17 }} />
       )}
+    </Box>
+  </Box>
+);
+
+const ToolbarSceneToggleControl = ({
+  label,
+  active,
+  activeTitle,
+  inactiveTitle,
+  activeIcon,
+  inactiveIcon,
+  disabled = false,
+  onToggle,
+}) => (
+  <Box
+    component="button"
+    type="button"
+    title={active ? activeTitle : inactiveTitle}
+    aria-label={active ? activeTitle : inactiveTitle}
+    disabled={disabled}
+    onClick={onToggle}
+    sx={{
+      ...toolbarControlBoxSx,
+      width: 56,
+      cursor: disabled ? "not-allowed" : "pointer",
+      outline: "none",
+      appearance: "none",
+      font: "inherit",
+      textAlign: "initial",
+      opacity: disabled ? 0.48 : 1,
+    }}
+  >
+    <Typography component="span" sx={toolbarControlLabelSx}>
+      {label}
+    </Typography>
+    <Box
+      sx={{
+        width: "100%",
+        height: 23,
+        borderRadius: 0.8,
+        display: "grid",
+        placeItems: "center",
+        border: active ? "1px solid rgba(37,99,235,0.34)" : "1px solid rgba(148,163,184,0.42)",
+        color: active ? "#F59E0B" : "#334155",
+        bgcolor: active ? "#FFFBEB" : "#F8FAFC",
+      }}
+    >
+      {active ? activeIcon : inactiveIcon}
     </Box>
   </Box>
 );
@@ -1778,6 +1833,54 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             >
               Ekli Ürünler
             </Button>
+            <ToolbarSceneToggleControl
+              label="Mod"
+              active={roomSurfaces.sceneMode === "night"}
+              activeTitle="Gece modunda"
+              inactiveTitle="Gunduz modunda"
+              activeIcon={<NightsStayOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<LightModeOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={() =>
+                setRoomSurfaces((current) => ({
+                  ...current,
+                  sceneMode: current.sceneMode === "night" ? "day" : "night",
+                }))
+              }
+            />
+            <ToolbarSceneToggleControl
+              label="Lamba"
+              active={roomSurfaces.lampVisible === true}
+              activeTitle="Lamba gorunur"
+              inactiveTitle="Lamba gizli"
+              activeIcon={<LightbulbOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<LightbulbOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={() =>
+                setRoomSurfaces((current) => {
+                  const nextVisible = current.lampVisible !== true;
+
+                  return {
+                    ...current,
+                    lampVisible: nextVisible,
+                    lightsOn: nextVisible ? current.lightsOn === true : false,
+                  };
+                })
+              }
+            />
+            <ToolbarSceneToggleControl
+              label="Isik"
+              active={roomSurfaces.lampVisible === true && roomSurfaces.lightsOn === true}
+              activeTitle="Aydinlatma acik"
+              inactiveTitle="Aydinlatma kapali"
+              activeIcon={<FlareOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<FlareOutlinedIcon sx={{ fontSize: 17 }} />}
+              disabled={roomSurfaces.lampVisible !== true}
+              onToggle={() =>
+                setRoomSurfaces((current) => ({
+                  ...current,
+                  lightsOn: current.lampVisible === true ? current.lightsOn !== true : false,
+                }))
+              }
+            />
             <Box sx={{ flexGrow: 1, minWidth: { xs: "100%", md: 24 } }} />
             <ToolbarNumberControl
               label="Genislik"

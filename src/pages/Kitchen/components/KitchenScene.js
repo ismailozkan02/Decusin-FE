@@ -249,6 +249,35 @@ const KitchenScene = ({
   const layoutReady = sceneBox.width > 0 && sceneBox.top > 0;
   const sceneLoading = !layoutReady || !sceneReady;
   const placeholderHeight = Math.max(viewportHeight - 190, 420);
+  const lighting = useMemo(() => {
+    const nightMode = roomSurfaces?.sceneMode === "night";
+    const lampVisible = roomSurfaces?.lampVisible === true;
+    const lightsOn = lampVisible && roomSurfaces?.lightsOn === true;
+
+    if (nightMode) {
+      return {
+        nightMode,
+        lampVisible,
+        lightsOn,
+        background: lightsOn ? "#171B22" : "#080D16",
+        ambient: lightsOn ? 0.2 : 0.045,
+        hemisphere: lightsOn ? 0.18 : 0.055,
+        sun: lightsOn ? 0.16 : 0.035,
+        fill: lightsOn ? 0.06 : 0.015,
+      };
+    }
+
+    return {
+      nightMode,
+      lampVisible,
+      lightsOn,
+      background: "#FAFAF8",
+      ambient: lightsOn ? 0.76 : 0.66,
+      hemisphere: lightsOn ? 0.48 : 0.42,
+      sun: lightsOn ? 1.42 : 1.35,
+      fill: lightsOn ? 0.28 : 0.22,
+    };
+  }, [roomSurfaces?.lampVisible, roomSurfaces?.lightsOn, roomSurfaces?.sceneMode]);
   const defaultCameraView = useMemo(() => {
     const roomWidth = cmToUnit(roomWidthCm);
     const roomHeight = cmToUnit(roomHeightCm);
@@ -635,22 +664,28 @@ const KitchenScene = ({
                 }
               }}
             >
-            <color attach="background" args={["#FAFAF8"]} />
-            <ambientLight intensity={0.66} />
-            <hemisphereLight args={["#FFFFFF", "#D8D0C2", 0.42]} />
+            <color attach="background" args={[lighting.background]} />
+            <ambientLight intensity={lighting.ambient} />
+            <hemisphereLight args={["#FFFFFF", "#D8D0C2", lighting.hemisphere]} />
             <directionalLight
               castShadow
               position={[0.8, 4.8, 3.2]}
-              intensity={1.35}
+              intensity={lighting.sun}
               shadow-mapSize={[2048, 2048]}
               shadow-bias={-0.0003}
             />
-            <directionalLight position={[-2.4, 2.8, 2.4]} intensity={0.22} />
+            <directionalLight position={[-2.4, 2.8, 2.4]} intensity={lighting.fill} />
             <RoomShell
               roomDimensions={roomDimensions}
               roomSurfaces={roomSurfaces}
               onEmptyPointerDown={clearSelectionForOrbit}
               onEmptyClick={clearSelectionForOrbit}
+            />
+            <CeilingLights
+              roomDimensions={roomDimensions}
+              visible={lighting.lampVisible}
+              active={lighting.lightsOn}
+              nightMode={lighting.nightMode}
             />
             {!floorPatternPalettes[roomSurfaces?.floorPattern] && (
               <gridHelper
@@ -721,7 +756,7 @@ const KitchenScene = ({
               applyView={applyDefaultCameraView}
               onReady={handleSceneReady}
             />
-            <Environment preset="apartment" />
+            <Environment preset={lighting.nightMode ? "night" : "apartment"} />
             </Canvas>
           )}
         </Box>
@@ -1280,6 +1315,57 @@ const createParquetTexture = (pattern = "oakHerringbone") => {
   texture.wrapT = RepeatWrapping;
   texture.needsUpdate = true;
   return texture;
+};
+
+const CeilingLights = ({ roomDimensions, visible, active, nightMode }) => {
+  const width = cmToUnit(roomDimensions?.width || 450);
+  const height = cmToUnit(roomDimensions?.height || 250);
+  const depth = cmToUnit(roomDimensions?.depth || 240);
+  const y = Math.max(height - 0.06, 0.2);
+  const lightPositions = [
+    [-width * 0.24, y, -depth * 0.28],
+    [width * 0.24, y, -depth * 0.28],
+    [-width * 0.24, y, depth * 0.12],
+    [width * 0.24, y, depth * 0.12],
+  ];
+  const lightIntensity = active ? (nightMode ? 1.7 : 0.72) : 0;
+  const fixtureColor = active ? "#FFE4A3" : "#D8D3C8";
+
+  if (!visible) return null;
+
+  return (
+    <group>
+      {lightPositions.map((position, index) => (
+        <group key={`${position.join("-")}-${index}`} position={position}>
+          <mesh rotation={[Math.PI / 2, 0, 0]} raycast={() => null}>
+            <cylinderGeometry args={[0.075, 0.075, 0.018, 32]} />
+            <meshStandardMaterial
+              color="#F7F4EC"
+              emissive={active ? "#FFE2A6" : "#000000"}
+              emissiveIntensity={active ? 0.55 : 0}
+              roughness={0.42}
+            />
+          </mesh>
+          <mesh position={[0, -0.012, 0]} rotation={[Math.PI / 2, 0, 0]} raycast={() => null}>
+            <circleGeometry args={[0.052, 32]} />
+            <meshBasicMaterial color={fixtureColor} transparent opacity={active ? 0.96 : 0.5} />
+          </mesh>
+          {active && (
+            <pointLight
+              color="#FFE7B8"
+              intensity={lightIntensity}
+              distance={Math.max(width, depth) * 1.12}
+              decay={1.65}
+              position={[0, -0.08, 0]}
+              castShadow={nightMode}
+              shadow-mapSize={[1024, 1024]}
+              shadow-bias={-0.00025}
+            />
+          )}
+        </group>
+      ))}
+    </group>
+  );
 };
 
 const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick, onEmptyPointerDown }) => {
