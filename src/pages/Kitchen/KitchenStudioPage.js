@@ -662,6 +662,20 @@ const mergeProjectsById = (...projectLists) => {
   );
 };
 
+const mergeCatalogItemsById = (...catalogLists) => {
+  const catalogMap = new Map();
+
+  catalogLists.flat().forEach((product) => {
+    if (!product?.id) return;
+    catalogMap.set(product.id, {
+      ...(catalogMap.get(product.id) || {}),
+      ...product,
+    });
+  });
+
+  return Array.from(catalogMap.values());
+};
+
 const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const navigate = useNavigate();
   const sceneRef = useRef(null);
@@ -1035,7 +1049,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
 
       const [catalogResult, materialResult, projectResult] = results;
       if (catalogResult.status === "fulfilled") {
-        setCatalogItems(catalogResult.value?.data || fallbackCatalog);
+        setCatalogItems(
+          mergeCatalogItemsById(fallbackCatalog, catalogResult.value?.data || []),
+        );
       }
       if (materialResult.status === "fulfilled") {
         setMaterials(materialResult.value?.data || fallbackMaterials);
@@ -2073,8 +2089,24 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
 
   const addCatalogGroup = (group) => {
     setCatalogGroups((current) => {
+      if (group.parentKey) {
+        return current.map((item) => {
+          if (item.key !== group.parentKey) return item;
+          if (item.subcategories?.some((sub) => sub.key === group.key))
+            return item;
+
+          return {
+            ...item,
+            subcategories: [
+              ...(item.subcategories || []),
+              { key: group.key, title: group.title },
+            ],
+          };
+        });
+      }
+
       if (current.some((item) => item.key === group.key)) return current;
-      return [...current, group];
+      return [...current, { ...group, subcategories: group.subcategories || [] }];
     });
   };
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -7,27 +7,75 @@ import {
   Button,
   Chip,
   ClickAwayListener,
+  Dialog,
+  DialogContent,
   Drawer,
   Grid,
   IconButton,
   MenuItem,
+  Pagination,
   Paper,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
+import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import TuneIcon from "@mui/icons-material/Tune";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import { categoryLabel, materialModifierLabel, money } from "../kitchenUtils";
+import {
+  categoryLabel,
+  getProductSubcategory,
+  getSubcategoryLabel,
+  materialModifierLabel,
+  money,
+} from "../kitchenUtils";
 
-const materialGroups = [
-  { key: "door", title: "Kapak Malzemeleri" },
-  { key: "glass", title: "Cam Cesitleri" },
-  { key: "countertop", title: "Tezgah Malzemeleri" },
+const productPageSize = 8;
+const materialPageSize = 10;
+
+const defaultMaterialGroups = [
+  {
+    key: "door",
+    title: "Kapak Malzemeleri",
+    subcategories: [
+      { key: "door_lacquer", title: "Lake Kapaklar" },
+      { key: "door_wood", title: "Ahşap Kapaklar" },
+      { key: "door_matte", title: "Mat / Saten Kapaklar" },
+    ],
+  },
+  {
+    key: "glass",
+    title: "Cam Çeşitleri",
+    subcategories: [
+      { key: "glass_clear", title: "Şeffaf Cam" },
+      { key: "glass_smoked", title: "Füme Cam" },
+      { key: "glass_patterned", title: "Fitilli / Desenli Cam" },
+    ],
+  },
+  {
+    key: "countertop",
+    title: "Tezgah Malzemeleri",
+    subcategories: [
+      { key: "counter_quartz", title: "Kuvars" },
+      { key: "counter_wood", title: "Ahşap" },
+      { key: "counter_stone", title: "Taş / Granit" },
+    ],
+  },
 ];
+
+const previewByCategory = {
+  base_cabinet: "/images/kitchen/base-cabinet-premium.svg",
+  wall_cabinet: "/images/kitchen/wall-cabinet-glass-premium.svg",
+  countertop: "/images/kitchen/countertop-long-slab-premium.svg",
+  appliance: "/images/kitchen/sink-steel-premium.svg",
+  shelf: "/images/kitchen/open-shelf-premium.svg",
+  room: "/images/kitchen/kitchen-layout-linear-premium.svg",
+};
 
 const slugify = (value) =>
   value
@@ -40,6 +88,44 @@ const slugify = (value) =>
     .replace(/ç/g, "c")
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
+
+const getMaterialSubcategory = (material) => {
+  if (material?.subcategory) return material.subcategory;
+  const text = `${material?.name || ""} ${material?.code || ""}`.toLocaleLowerCase(
+    "tr-TR",
+  );
+
+  if (material?.type === "door") {
+    if (text.includes("ahsap") || text.includes("meşe") || text.includes("wood"))
+      return "door_wood";
+    if (text.includes("antrasit") || text.includes("lacivert") || text.includes("saten"))
+      return "door_matte";
+    return "door_lacquer";
+  }
+
+  if (material?.type === "glass") {
+    if (text.includes("füme") || text.includes("fume") || text.includes("smoke"))
+      return "glass_smoked";
+    if (text.includes("fitil") || text.includes("desen")) return "glass_patterned";
+    return "glass_clear";
+  }
+
+  if (material?.type === "countertop") {
+    if (text.includes("ahsap") || text.includes("wood")) return "counter_wood";
+    if (text.includes("granit") || text.includes("stone") || text.includes("siyah"))
+      return "counter_stone";
+    return "counter_quartz";
+  }
+
+  return "standard";
+};
+
+const cardSx = {
+  border: "1px solid rgba(148,163,184,0.26)",
+  borderRadius: 1,
+  background: "#FFFFFF",
+  boxShadow: "0 16px 34px rgba(15,23,42,0.06)",
+};
 
 const KitchenCatalogManager = ({
   catalogItems,
@@ -56,22 +142,29 @@ const KitchenCatalogManager = ({
   onCloseMaterial,
   onUpdateMaterial,
 }) => {
-  const [expanded, setExpanded] = useState(false);
-  const [expandedMaterial, setExpandedMaterial] = useState(false);
+  const firstProductCategory = catalogGroups[0]?.key || "base_cabinet";
+  const firstMaterialCategory = defaultMaterialGroups[0]?.key || "door";
+  const [activeTab, setActiveTab] = useState("products");
+  const [activeProductCategory, setActiveProductCategory] =
+    useState(firstProductCategory);
+  const [activeProductSubcategories, setActiveProductSubcategories] = useState({});
+  const [activeMaterialCategory, setActiveMaterialCategory] =
+    useState(firstMaterialCategory);
+  const [activeMaterialSubcategories, setActiveMaterialSubcategories] = useState({});
+  const [productPage, setProductPage] = useState(1);
+  const [materialPage, setMaterialPage] = useState(1);
   const [productDrawerOpen, setProductDrawerOpen] = useState(false);
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
-  const [materialCategoryGroups, setMaterialCategoryGroups] =
-    useState(materialGroups);
+  const [materialGroups, setMaterialGroups] = useState(defaultMaterialGroups);
   const [categoryForm, setCategoryForm] = useState({
-    target: "product",
+    target: "product_category",
+    parentKey: firstProductCategory,
     title: "",
   });
-
-  console.log("testttt");
-
   const [newProduct, setNewProduct] = useState({
     name: "",
-    category: "base_cabinet",
+    category: firstProductCategory,
+    subcategory: "",
     base_price: 0,
     min_width: 40,
     max_width: 120,
@@ -80,16 +173,62 @@ const KitchenCatalogManager = ({
     model_url: "",
     file_name: "",
   });
-  const toggle = (panel) => (_, nextExpanded) => {
-    setExpanded(nextExpanded ? panel : false);
-  };
-  const toggleMaterial = (panel) => (_, nextExpanded) => {
-    setExpandedMaterial(nextExpanded ? panel : false);
-  };
+
+  const productGroup =
+    catalogGroups.find((group) => group.key === activeProductCategory) ||
+    catalogGroups[0];
+  const productSubcategories = productGroup?.subcategories?.length
+    ? productGroup.subcategories
+    : [{ key: "standard", title: "Tüm Ürünler" }];
+  const activeProductSubcategory =
+    activeProductSubcategories[productGroup?.key] || productSubcategories[0]?.key;
+  const productGroupItems = catalogItems.filter(
+    (product) => product.category === productGroup?.key,
+  );
+  const filteredProducts =
+    productGroup?.subcategories?.length && activeProductSubcategory !== "standard"
+      ? productGroupItems.filter(
+          (product) => getProductSubcategory(product) === activeProductSubcategory,
+        )
+      : productGroupItems;
+  const pagedProducts = filteredProducts.slice(
+    (productPage - 1) * productPageSize,
+    productPage * productPageSize,
+  );
+
+  const materialGroup =
+    materialGroups.find((group) => group.key === activeMaterialCategory) ||
+    materialGroups[0];
+  const materialSubcategories = materialGroup?.subcategories?.length
+    ? materialGroup.subcategories
+    : [{ key: "standard", title: "Tüm Malzemeler" }];
+  const activeMaterialSubcategory =
+    activeMaterialSubcategories[materialGroup?.key] || materialSubcategories[0]?.key;
+  const materialGroupItems = materials.filter(
+    (material) => material.type === materialGroup?.key,
+  );
+  const filteredMaterials =
+    materialGroup?.subcategories?.length && activeMaterialSubcategory !== "standard"
+      ? materialGroupItems.filter(
+          (material) =>
+            getMaterialSubcategory(material) === activeMaterialSubcategory,
+        )
+      : materialGroupItems;
+  const pagedMaterials = filteredMaterials.slice(
+    (materialPage - 1) * materialPageSize,
+    materialPage * materialPageSize,
+  );
+
+  const getDefaultProductSubcategory = (category) =>
+    catalogGroups.find((group) => group.key === category)?.subcategories?.[0]?.key ||
+    "";
+
+  const getProductCategoryLabel = (value) =>
+    catalogGroups.find((group) => group.key === value)?.title ||
+    categoryLabel(value);
 
   const updateSelectedProduct = (field, value) => {
     if (!selectedProduct) return;
-
     onUpdateProduct(selectedProduct.id, (product) => ({
       ...product,
       constraints: {
@@ -101,7 +240,6 @@ const KitchenCatalogManager = ({
 
   const updateSelectedProductField = (field, value) => {
     if (!selectedProduct) return;
-
     onUpdateProduct(selectedProduct.id, (product) => ({
       ...product,
       [field]: field === "base_price" ? Math.max(Number(value) || 0, 0) : value,
@@ -110,30 +248,15 @@ const KitchenCatalogManager = ({
 
   const updateSelectedMaterial = (field, value) => {
     if (!selectedMaterial) return;
-
     onUpdateMaterial(selectedMaterial.id, (material) => ({
       ...material,
       [field]: field === "price_modifier" ? Number(value) || 0 : value,
     }));
   };
 
-  const getProductCategoryLabel = (value) =>
-    catalogGroups.find((group) => group.key === value)?.title ||
-    categoryLabel(value);
-
-  const previewByCategory = {
-    base_cabinet: "/images/kitchen/base-cabinet-premium.svg",
-    wall_cabinet: "/images/kitchen/wall-cabinet-glass-premium.svg",
-    countertop: "/images/kitchen/countertop-long-slab-premium.svg",
-    appliance: "/images/kitchen/sink-steel-premium.svg",
-    shelf: "/images/kitchen/open-shelf-premium.svg",
-    room: "/images/kitchen/kitchen-layout-linear-premium.svg",
-  };
-
   const handleNewModelFile = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     const extension = file.name.split(".").pop()?.toLowerCase();
     if (!["gltf", "glb"].includes(extension)) return;
 
@@ -146,27 +269,25 @@ const KitchenCatalogManager = ({
   };
 
   const addManualProduct = () => {
-    if (!newProduct.name || !newProduct.model_url) return;
-
+    if (!newProduct.name.trim()) return;
+    const category = newProduct.category || firstProductCategory;
+    const subcategory =
+      newProduct.subcategory || getDefaultProductSubcategory(category);
     const minWidth = Math.max(Number(newProduct.min_width) || 1, 1);
-    const maxWidth = Math.max(
-      Number(newProduct.max_width) || minWidth,
-      minWidth,
-    );
+    const maxWidth = Math.max(Number(newProduct.max_width) || minWidth, minWidth);
     const minHeight = Math.max(Number(newProduct.min_height) || 1, 1);
-    const maxHeight = Math.max(
-      Number(newProduct.max_height) || minHeight,
-      minHeight,
-    );
+    const maxHeight = Math.max(Number(newProduct.max_height) || minHeight, minHeight);
+
     const product = {
       id: `manual-${Date.now()}`,
       sku: `MAN-${Date.now().toString().slice(-6)}`,
-      name: newProduct.name,
-      category: newProduct.category,
+      name: newProduct.name.trim(),
+      category,
+      subcategory,
       dimensions: {
         width: Math.round((minWidth + maxWidth) / 2),
         height: Math.round((minHeight + maxHeight) / 2),
-        depth: 56,
+        depth: category === "wall_cabinet" ? 34 : 56,
         unit: "cm",
       },
       constraints: {
@@ -176,858 +297,788 @@ const KitchenCatalogManager = ({
         max_height: maxHeight,
       },
       image_url:
-        previewByCategory[newProduct.category] ||
-        "/images/kitchen/base-cabinet-premium.svg",
-      model_url: newProduct.model_url,
+        previewByCategory[category] || "/images/kitchen/base-cabinet-premium.svg",
+      model_url: newProduct.model_url || "",
       original_file_name: newProduct.file_name,
       base_price: Math.max(Number(newProduct.base_price) || 0, 0),
       is_manual: true,
     };
 
     onAddProduct(product);
-    setExpanded(product.category);
+    setActiveProductCategory(category);
+    setActiveProductSubcategories((current) => ({ ...current, [category]: subcategory }));
+    setProductPage(1);
     setProductDrawerOpen(false);
-    setNewProduct({
-      name: "",
-      category: product.category,
-      base_price: 0,
-      min_width: 40,
-      max_width: 120,
-      min_height: 40,
-      max_height: 120,
-      model_url: "",
-      file_name: "",
-    });
   };
 
   const addCategory = () => {
     const title = categoryForm.title.trim();
     if (!title) return;
-
     const baseKey = slugify(title) || `kategori_${Date.now()}`;
-    if (categoryForm.target === "product") {
+
+    if (categoryForm.target === "product_category") {
       const key = catalogGroups.some((group) => group.key === baseKey)
         ? `${baseKey}_${Date.now().toString().slice(-4)}`
         : baseKey;
-      const nextGroup = { key, title };
-      onAddCatalogGroup(nextGroup);
-      setExpanded(key);
-      setNewProduct((current) => ({ ...current, category: key }));
-    } else {
-      const key = materialCategoryGroups.some((group) => group.key === baseKey)
-        ? `${baseKey}_${Date.now().toString().slice(-4)}`
-        : baseKey;
-      const nextGroup = { key, title };
-      setMaterialCategoryGroups((current) => [...current, nextGroup]);
-      setExpandedMaterial(key);
+      onAddCatalogGroup({ key, title, subcategories: [] });
+      setActiveProductCategory(key);
+      setActiveTab("products");
     }
 
-    setCategoryForm({ target: "product", title: "" });
+    if (categoryForm.target === "product_subcategory") {
+      const parentKey = categoryForm.parentKey || firstProductCategory;
+      const parent = catalogGroups.find((group) => group.key === parentKey);
+      const key = parent?.subcategories?.some((item) => item.key === baseKey)
+        ? `${baseKey}_${Date.now().toString().slice(-4)}`
+        : baseKey;
+      onAddCatalogGroup({ key, title, parentKey });
+      setActiveProductCategory(parentKey);
+      setActiveProductSubcategories((current) => ({ ...current, [parentKey]: key }));
+      setActiveTab("products");
+    }
+
+    if (categoryForm.target === "material_category") {
+      const key = materialGroups.some((group) => group.key === baseKey)
+        ? `${baseKey}_${Date.now().toString().slice(-4)}`
+        : baseKey;
+      setMaterialGroups((current) => [...current, { key, title, subcategories: [] }]);
+      setActiveMaterialCategory(key);
+      setActiveTab("materials");
+    }
+
+    if (categoryForm.target === "material_subcategory") {
+      const parentKey = categoryForm.parentKey || firstMaterialCategory;
+      const parent = materialGroups.find((group) => group.key === parentKey);
+      const key = parent?.subcategories?.some((item) => item.key === baseKey)
+        ? `${baseKey}_${Date.now().toString().slice(-4)}`
+        : baseKey;
+      setMaterialGroups((current) =>
+        current.map((group) =>
+          group.key === parentKey
+            ? {
+                ...group,
+                subcategories: [...(group.subcategories || []), { key, title }],
+              }
+            : group,
+        ),
+      );
+      setActiveMaterialCategory(parentKey);
+      setActiveMaterialSubcategories((current) => ({ ...current, [parentKey]: key }));
+      setActiveTab("materials");
+    }
+
+    setCategoryForm({
+      target: "product_category",
+      parentKey: firstProductCategory,
+      title: "",
+    });
+    setProductPage(1);
+    setMaterialPage(1);
     setCategoryDrawerOpen(false);
   };
 
+  const stats = useMemo(
+    () => ({
+      products: catalogItems.length,
+      materials: materials.length,
+      categories: catalogGroups.length + materialGroups.length,
+      models: catalogItems.filter((item) => item.model_url).length,
+    }),
+    [catalogGroups.length, catalogItems, materialGroups.length, materials.length],
+  );
+
   return (
     <>
-      <Grid container spacing={1} sx={{ m: 0, width: "100%" }}>
-        <Grid item xs={12} md={8} sx={{ pl: "0 !important" }}>
-          <Stack spacing={1.4}>
-            <Paper
-              elevation={0}
-              sx={{
-                border: "1px solid #D7E3F1",
-                borderRadius: 1.5,
-                p: 1.5,
-                bgcolor: "#FFFFFF",
-                boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
-              }}
-            >
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                spacing={2}
-              >
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                    Ürünler
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Kategorilere gore ürün ve 3D model yonetimi.
-                  </Typography>
-                </Box>
-                <Stack direction="row" spacing={1}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<CategoryOutlinedIcon />}
-                    onClick={() => setCategoryDrawerOpen(true)}
-                    sx={{
-                      textTransform: "none",
-                      fontWeight: 900,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Kategori Ekle
-                  </Button>
-                  <Button
-                    variant="contained"
-                    startIcon={<UploadFileIcon />}
-                    onClick={() => setProductDrawerOpen(true)}
-                    sx={{
-                      textTransform: "none",
-                      fontWeight: 900,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Ürün Ekle
-                  </Button>
-                </Stack>
-              </Stack>
-            </Paper>
-            {catalogGroups.map((group) => {
-              const groupItems = catalogItems.filter(
-                (item) => item.category === group.key,
-              );
-              if (!groupItems.length) return null;
-
-              return (
-                <Accordion
-                  key={group.key}
-                  expanded={expanded === group.key}
-                  onChange={toggle(group.key)}
-                  disableGutters
-                  elevation={0}
-                  sx={{ border: "1px solid #E2E8F0", borderRadius: 1 }}
-                >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <Typography sx={{ fontWeight: 900 }}>
-                        {group.title}
-                      </Typography>
-                      <Chip size="small" label={`${groupItems.length} ürün`} />
-                    </Stack>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Grid container spacing={1}>
-                      {groupItems.map((product) => (
-                        <Grid
-                          item
-                          xs={6}
-                          sm={4}
-                          md={3}
-                          lg={2.4}
-                          key={product.id}
-                        >
-                          <Paper
-                            elevation={0}
-                            onClick={() => onSelectProduct(product)}
-                            sx={{
-                              border:
-                                selectedProduct?.id === product.id
-                                  ? "2px solid #1976D2"
-                                  : "1px solid #E5E7EB",
-                              borderRadius: 1,
-                              p: 0.8,
-                              cursor: "pointer",
-                              bgcolor:
-                                selectedProduct?.id === product.id
-                                  ? "#EEF6FF"
-                                  : "#FFFFFF",
-                            }}
-                          >
-                            <Stack spacing={0.7}>
-                              <Box
-                                component="img"
-                                src={
-                                  product.image_url ||
-                                  "/images/kitchen/base-cabinet.svg"
-                                }
-                                alt={product.name}
-                                sx={{
-                                  width: "100%",
-                                  height: 86,
-                                  objectFit: "contain",
-                                  borderRadius: 1,
-                                  border: "1px solid #E2E8F0",
-                                  bgcolor: "#F1F7FE",
-                                  p: 0.6,
-                                }}
-                              />
-                              <Stack
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={0.7}
-                              >
-                                <Box>
-                                  <Typography
-                                    sx={{ fontWeight: 900, fontSize: 12 }}
-                                    noWrap
-                                  >
-                                    {product.name}
-                                  </Typography>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
-                                    {product.sku} -{" "}
-                                    {getProductCategoryLabel(product.category)}
-                                  </Typography>
-                                </Box>
-                                <TuneIcon color="primary" fontSize="small" />
-                              </Stack>
-                              <Stack
-                                direction="row"
-                                justifyContent="space-between"
-                              >
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  Genislik
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  sx={{ fontWeight: 800 }}
-                                >
-                                  {product.constraints?.min_width || 0} -{" "}
-                                  {product.constraints?.max_width ||
-                                    product.dimensions?.width}{" "}
-                                  cm
-                                </Typography>
-                              </Stack>
-                              <Stack
-                                direction="row"
-                                justifyContent="space-between"
-                              >
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  Yukseklik
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  sx={{ fontWeight: 800 }}
-                                >
-                                  {product.constraints?.min_height || 0} -{" "}
-                                  {product.constraints?.max_height ||
-                                    product.dimensions?.height}{" "}
-                                  cm
-                                </Typography>
-                              </Stack>
-                              <Chip
-                                label={money(product.base_price)}
-                                size="small"
-                                sx={{ alignSelf: "center" }}
-                              />
-                            </Stack>
-                          </Paper>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </AccordionDetails>
-                </Accordion>
-              );
-            })}
-          </Stack>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Stack spacing={1.5}>
-            <Paper
-              elevation={0}
-              sx={{
-                border: "1px solid #E2E8F0",
-                borderRadius: 1.5,
-                p: 2,
-                boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
-              }}
-            >
-              <Typography variant="h6" sx={{ fontWeight: 900, mb: 2 }}>
-                Malzemeler
-              </Typography>
-              <Stack spacing={1.2}>
-                {materialCategoryGroups.map((group) => {
-                  const groupItems = materials.filter(
-                    (material) => material.type === group.key,
-                  );
-                  if (!groupItems.length) return null;
-
-                  return (
-                    <Accordion
-                      key={group.key}
-                      expanded={expandedMaterial === group.key}
-                      onChange={toggleMaterial(group.key)}
-                      disableGutters
-                      elevation={0}
-                      sx={{ border: "1px solid #E2E8F0", borderRadius: 1 }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <Typography sx={{ fontWeight: 900 }}>
-                            {group.title}
-                          </Typography>
-                          <Chip
-                            size="small"
-                            label={`${groupItems.length} malzeme`}
-                          />
-                        </Stack>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Stack spacing={1}>
-                          {groupItems.map((material) => (
-                            <Stack
-                              key={material.id}
-                              direction="row"
-                              alignItems="center"
-                              justifyContent="space-between"
-                              onClick={() => onSelectMaterial(material)}
-                              sx={{
-                                border:
-                                  selectedMaterial?.id === material.id
-                                    ? "2px solid #1976D2"
-                                    : "1px solid #E5E7EB",
-                                borderRadius: 1,
-                                p: 1.2,
-                                cursor: "pointer",
-                                bgcolor:
-                                  selectedMaterial?.id === material.id
-                                    ? "#EEF6FF"
-                                    : "#FFFFFF",
-                              }}
-                            >
-                              <Stack
-                                direction="row"
-                                spacing={1.2}
-                                alignItems="center"
-                              >
-                                <Box
-                                  sx={{
-                                    width: 26,
-                                    height: 26,
-                                    borderRadius: 0.75,
-                                    bgcolor: material.color_hex || "#CBD5E1",
-                                    border: "1px solid #CBD5E1",
-                                  }}
-                                />
-                                <Box>
-                                  <Typography
-                                    sx={{ fontWeight: 800, fontSize: 13 }}
-                                  >
-                                    {material.name}
-                                  </Typography>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
-                                    {material.code}
-                                  </Typography>
-                                </Box>
-                              </Stack>
-                              <Chip
-                                label={materialModifierLabel(material)}
-                                size="small"
-                              />
-                            </Stack>
-                          ))}
-                        </Stack>
-                      </AccordionDetails>
-                    </Accordion>
-                  );
-                })}
-              </Stack>
-            </Paper>
-          </Stack>
-        </Grid>
-      </Grid>
-
-      <Drawer
-        anchor="right"
-        open={Boolean(selectedMaterial)}
-        onClose={onCloseMaterial}
-        variant="persistent"
-        PaperProps={{
-          sx: {
-            width: { xs: 320, sm: 390 },
-            p: 2,
-            top: 0,
-            height: "100%",
-            borderLeft: "1px solid #E2E8F0",
-            boxShadow: "-12px 0 30px rgba(15,23,42,0.12)",
-            zIndex: 1300,
-          },
-        }}
-      >
-        {selectedMaterial && (
-          <ClickAwayListener
-            mouseEvent="onMouseDown"
-            touchEvent="onTouchStart"
-            onClickAway={onCloseMaterial}
+      <Stack spacing={1.5}>
+        <Paper
+          elevation={0}
+          sx={{
+            ...cardSx,
+            p: 1.5,
+            background:
+              "linear-gradient(135deg, #FFFFFF 0%, #F3F8FF 52%, #EEF6FF 100%)",
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            justifyContent="space-between"
+            spacing={1.5}
           >
-            <Stack spacing={2}>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
+            <Box>
+              <Typography variant="overline" sx={{ color: "#2563EB", fontWeight: 950 }}>
+                Yönetim Merkezi
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 950 }}>
+                Ürün ve Malzeme Yönetimi
+              </Typography>
+              <Typography color="text.secondary">
+                Kategori, alt kategori, ürün ve malzeme varyantlarını profesyonel
+                katalog düzeninde yönetin.
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Button
+                variant="outlined"
+                startIcon={<CategoryOutlinedIcon />}
+                onClick={() => setCategoryDrawerOpen(true)}
+                sx={{ borderRadius: 1, textTransform: "none", fontWeight: 900 }}
               >
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                    Malzeme Yonetimi
+                Kategori / Alt Kategori
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AddRoundedIcon />}
+                onClick={() => setProductDrawerOpen(true)}
+                sx={{
+                  borderRadius: 1,
+                  textTransform: "none",
+                  fontWeight: 900,
+                  boxShadow: "0 12px 26px rgba(37,99,235,0.22)",
+                }}
+              >
+                Ürün Ekle
+              </Button>
+            </Stack>
+          </Stack>
+          <Grid container spacing={1} sx={{ mt: 1 }}>
+            {[
+              ["Ürün", stats.products],
+              ["Malzeme", stats.materials],
+              ["Kategori", stats.categories],
+              ["3D Model", stats.models],
+            ].map(([label, value]) => (
+              <Grid item xs={6} md={3} key={label}>
+                <Box
+                  sx={{
+                    border: "1px solid rgba(148,163,184,0.22)",
+                    borderRadius: 1,
+                    p: 1,
+                    bgcolor: "rgba(255,255,255,0.72)",
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 900 }}>
+                    {label}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {selectedMaterial.code}
+                  <Typography sx={{ fontSize: 22, fontWeight: 950 }}>
+                    {value}
                   </Typography>
                 </Box>
-                <IconButton onClick={onCloseMaterial}>
-                  <CloseIcon />
-                </IconButton>
-              </Stack>
-              <TextField
-                label="Malzeme adi"
-                size="small"
-                value={selectedMaterial.name}
-                onChange={(event) =>
-                  updateSelectedMaterial("name", event.target.value)
-                }
-              />
-              <TextField
-                select
-                label="Kategori"
-                size="small"
-                value={selectedMaterial.type}
-                onChange={(event) =>
-                  updateSelectedMaterial("type", event.target.value)
-                }
-              >
-                {materialCategoryGroups.map((group) => (
-                  <MenuItem key={group.key} value={group.key}>
-                    {group.title}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                label="Renk kodu"
-                size="small"
-                value={selectedMaterial.color_hex || ""}
-                onChange={(event) =>
-                  updateSelectedMaterial("color_hex", event.target.value)
-                }
-              />
-              <TextField
-                label="Onizleme model dosyasi"
-                size="small"
-                value={selectedMaterial.preview_model_url || ""}
-                onChange={(event) =>
-                  updateSelectedMaterial(
-                    "preview_model_url",
-                    event.target.value,
-                  )
-                }
-                helperText="Malzemeyi denemek icin kullanilacak demo GLTF yolu."
-              />
-              <TextField
-                label="Fiyat etkisi"
-                type="number"
-                size="small"
-                value={selectedMaterial.price_modifier || 0}
-                onChange={(event) =>
-                  updateSelectedMaterial("price_modifier", event.target.value)
-                }
-              />
-              <TextField
-                select
-                label="Fiyat tipi"
-                size="small"
-                value={selectedMaterial.modifier_type}
-                onChange={(event) =>
-                  updateSelectedMaterial("modifier_type", event.target.value)
-                }
-              >
-                <MenuItem value="percent">Yuzde</MenuItem>
-                <MenuItem value="fixed">Sabit</MenuItem>
-              </TextField>
-            </Stack>
-          </ClickAwayListener>
-        )}
-      </Drawer>
+              </Grid>
+            ))}
+          </Grid>
+        </Paper>
 
-      <Drawer
-        anchor="right"
-        open={categoryDrawerOpen}
-        onClose={() => setCategoryDrawerOpen(false)}
-        variant="persistent"
-        PaperProps={{
-          sx: {
-            width: { xs: 320, sm: 390 },
-            p: 2,
-            top: 0,
-            height: "100%",
-            borderLeft: "1px solid #E2E8F0",
-            boxShadow: "-12px 0 30px rgba(15,23,42,0.12)",
-            zIndex: 1300,
-          },
-        }}
-      >
-        <ClickAwayListener
-          mouseEvent="onMouseDown"
-          touchEvent="onTouchStart"
-          onClickAway={() => setCategoryDrawerOpen(false)}
-        >
-          <Stack spacing={2}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                  Kategori Ekle
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Ürün veya malzeme kategorisi oluştur.
-                </Typography>
-              </Box>
-              <IconButton onClick={() => setCategoryDrawerOpen(false)}>
-                <CloseIcon />
-              </IconButton>
-            </Stack>
-            <TextField
-              select
-              label="Kategori tipi"
-              size="small"
-              value={categoryForm.target}
-              onChange={(event) =>
-                setCategoryForm((current) => ({
-                  ...current,
-                  target: event.target.value,
-                }))
-              }
-            >
-              <MenuItem value="product">Ürün kategorisi</MenuItem>
-              <MenuItem value="material">Malzeme kategorisi</MenuItem>
-            </TextField>
-            <TextField
-              label="Kategori adi"
-              size="small"
-              value={categoryForm.title}
-              onChange={(event) =>
-                setCategoryForm((current) => ({
-                  ...current,
-                  title: event.target.value,
-                }))
-              }
-              placeholder="Orn: Ozel ust dolaplar"
-            />
-            <Button
-              variant="contained"
-              startIcon={<CategoryOutlinedIcon />}
-              onClick={addCategory}
-              disabled={!categoryForm.title.trim()}
-              sx={{ textTransform: "none", fontWeight: 900 }}
-            >
-              Kategoriyi Ekle
-            </Button>
-          </Stack>
-        </ClickAwayListener>
-      </Drawer>
+        <Paper elevation={0} sx={{ ...cardSx, p: 0.8 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, value) => setActiveTab(value)}
+            variant="standard"
+            sx={{
+              minHeight: 44,
+              p: 0.45,
+              bgcolor: "#EEF3FA",
+              borderRadius: 1,
+              "& .MuiTab-root": {
+                minHeight: 44,
+                flex: 1,
+                borderRadius: 1,
+                fontWeight: 950,
+                textTransform: "none",
+                color: "#64748B",
+              },
+              "& .Mui-selected": {
+                bgcolor: "#FFFFFF",
+                color: "#0F172A !important",
+                boxShadow: "0 10px 22px rgba(15,23,42,0.1)",
+              },
+              "& .MuiTabs-indicator": { display: "none" },
+            }}
+          >
+            <Tab value="products" label="Ürünler" />
+            <Tab value="materials" label="Malzemeler" />
+          </Tabs>
+        </Paper>
 
-      <Drawer
-        anchor="right"
-        open={productDrawerOpen}
-        onClose={() => setProductDrawerOpen(false)}
-        variant="persistent"
-        PaperProps={{
-          sx: {
-            width: { xs: 330, sm: 430 },
-            p: 2,
-            top: 0,
-            height: "100%",
-            borderLeft: "1px solid #E2E8F0",
-            boxShadow: "-12px 0 30px rgba(15,23,42,0.12)",
-            zIndex: 1300,
-          },
-        }}
-      >
-        <ClickAwayListener
-          mouseEvent="onMouseDown"
-          touchEvent="onTouchStart"
-          onClickAway={() => setProductDrawerOpen(false)}
-        >
-          <Stack spacing={2}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                  Ürün Ekle
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  GLTF/GLB dosyası ve ölçü sınırları.
-                </Typography>
-              </Box>
-              <IconButton onClick={() => setProductDrawerOpen(false)}>
-                <CloseIcon />
-              </IconButton>
-            </Stack>
-
-            <Button
-              component="label"
-              variant="outlined"
-              startIcon={<UploadFileIcon />}
-              sx={{ textTransform: "none", fontWeight: 900 }}
-            >
-              GLTF / GLB Sec
-              <input
-                hidden
-                type="file"
-                accept=".gltf,.glb,model/gltf+json,model/gltf-binary"
-                onChange={handleNewModelFile}
-              />
-            </Button>
-            {newProduct.file_name && (
-              <Chip
-                label={newProduct.file_name}
-                color="primary"
-                variant="outlined"
-                sx={{ alignSelf: "flex-start" }}
+        {activeTab === "products" ? (
+          <CatalogWorkbench
+            mode="products"
+            groups={catalogGroups}
+            items={catalogItems}
+            activeCategory={activeProductCategory}
+            activeSubcategory={activeProductSubcategory}
+            page={productPage}
+            pageSize={productPageSize}
+            pagedItems={pagedProducts}
+            filteredCount={filteredProducts.length}
+            onCategoryChange={(key) => {
+              setActiveProductCategory(key);
+              setProductPage(1);
+            }}
+            onSubcategoryChange={(categoryKey, subcategoryKey) => {
+              setActiveProductSubcategories((current) => ({
+                ...current,
+                [categoryKey]: subcategoryKey,
+              }));
+              setProductPage(1);
+            }}
+            onPageChange={(_, value) => setProductPage(value)}
+            onSelectItem={onSelectProduct}
+            renderCard={(product) => (
+              <ProductCard
+                product={product}
+                catalogGroups={catalogGroups}
+                selected={selectedProduct?.id === product.id}
               />
             )}
-            <TextField
-              label="Ürün adı"
-              size="small"
-              value={newProduct.name}
-              onChange={(event) =>
-                setNewProduct((current) => ({
-                  ...current,
-                  name: event.target.value,
-                }))
-              }
-            />
-            <TextField
-              select
-              label="Kategori"
-              size="small"
-              value={newProduct.category}
-              onChange={(event) =>
-                setNewProduct((current) => ({
-                  ...current,
-                  category: event.target.value,
-                }))
-              }
-            >
-              {catalogGroups.map((group) => (
+          />
+        ) : (
+          <CatalogWorkbench
+            mode="materials"
+            groups={materialGroups}
+            items={materials}
+            activeCategory={activeMaterialCategory}
+            activeSubcategory={activeMaterialSubcategory}
+            page={materialPage}
+            pageSize={materialPageSize}
+            pagedItems={pagedMaterials}
+            filteredCount={filteredMaterials.length}
+            getItemCategory={(item) => item.type}
+            getItemSubcategory={getMaterialSubcategory}
+            onCategoryChange={(key) => {
+              setActiveMaterialCategory(key);
+              setMaterialPage(1);
+            }}
+            onSubcategoryChange={(categoryKey, subcategoryKey) => {
+              setActiveMaterialSubcategories((current) => ({
+                ...current,
+                [categoryKey]: subcategoryKey,
+              }));
+              setMaterialPage(1);
+            }}
+            onPageChange={(_, value) => setMaterialPage(value)}
+            onSelectItem={onSelectMaterial}
+            renderCard={(material) => (
+              <MaterialCard
+                material={material}
+                selected={selectedMaterial?.id === material.id}
+              />
+            )}
+          />
+        )}
+      </Stack>
+
+      <CategoryDrawer
+        open={categoryDrawerOpen}
+        onClose={() => setCategoryDrawerOpen(false)}
+        form={categoryForm}
+        setForm={setCategoryForm}
+        productGroups={catalogGroups}
+        materialGroups={materialGroups}
+        addCategory={addCategory}
+      />
+      <ProductDrawer
+        open={productDrawerOpen}
+        onClose={() => setProductDrawerOpen(false)}
+        catalogGroups={catalogGroups}
+        newProduct={newProduct}
+        setNewProduct={setNewProduct}
+        getDefaultProductSubcategory={getDefaultProductSubcategory}
+        handleNewModelFile={handleNewModelFile}
+        addManualProduct={addManualProduct}
+      />
+      <SelectedProductDrawer
+        selectedProduct={selectedProduct}
+        catalogGroups={catalogGroups}
+        onCloseProduct={onCloseProduct}
+        onUpdateProduct={onUpdateProduct}
+        updateSelectedProduct={updateSelectedProduct}
+        updateSelectedProductField={updateSelectedProductField}
+        getDefaultProductSubcategory={getDefaultProductSubcategory}
+        getProductCategoryLabel={getProductCategoryLabel}
+      />
+      <SelectedMaterialDrawer
+        selectedMaterial={selectedMaterial}
+        materialGroups={materialGroups}
+        onCloseMaterial={onCloseMaterial}
+        updateSelectedMaterial={updateSelectedMaterial}
+      />
+    </>
+  );
+};
+
+const CatalogWorkbench = ({
+  mode,
+  groups,
+  items,
+  activeCategory,
+  activeSubcategory,
+  page,
+  pageSize,
+  pagedItems,
+  filteredCount,
+  getItemCategory = (item) => item.category,
+  getItemSubcategory = getProductSubcategory,
+  onCategoryChange,
+  onSubcategoryChange,
+  onPageChange,
+  onSelectItem,
+  renderCard,
+}) => (
+  <Grid container spacing={1.3}>
+    <Grid item xs={12} md={3.4}>
+      <Paper elevation={0} sx={{ ...cardSx, p: 1, minHeight: 560 }}>
+        <Typography sx={{ px: 1, py: 0.8, fontWeight: 950 }}>
+          Ana Kategoriler
+        </Typography>
+        <Stack spacing={0.8}>
+          {groups.map((group) => {
+            const groupItems = items.filter((item) => getItemCategory(item) === group.key);
+            const expanded = activeCategory === group.key;
+            const subcategories = group.subcategories?.length
+              ? group.subcategories
+              : [{ key: "standard", title: "Tüm Liste" }];
+            return (
+              <Accordion
+                key={group.key}
+                expanded={expanded}
+                onChange={() => onCategoryChange(group.key)}
+                disableGutters
+                elevation={0}
+                sx={{
+                  border: "1px solid rgba(148,163,184,0.25)",
+                  borderRadius: "6px !important",
+                  overflow: "hidden",
+                  "&:before": { display: "none" },
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%" }}>
+                    <Box
+                      sx={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: 1,
+                        display: "grid",
+                        placeItems: "center",
+                        bgcolor: expanded ? "#2563EB" : "#EFF6FF",
+                        color: expanded ? "#FFFFFF" : "#2563EB",
+                      }}
+                    >
+                      <CategoryOutlinedIcon sx={{ fontSize: 17 }} />
+                    </Box>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography sx={{ fontWeight: 950 }} noWrap>
+                        {group.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {groupItems.length} {mode === "products" ? "ürün" : "malzeme"}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0.2 }}>
+                  <Stack spacing={0.5}>
+                    {subcategories.map((subcategory) => {
+                      const count = groupItems.filter(
+                        (item) =>
+                          !group.subcategories?.length ||
+                          getItemSubcategory(item) === subcategory.key,
+                      ).length;
+                      const active = expanded && activeSubcategory === subcategory.key;
+                      return (
+                        <Box
+                          key={subcategory.key}
+                          component="button"
+                          type="button"
+                          onClick={() => onSubcategoryChange(group.key, subcategory.key)}
+                          style={{ border: 0, textAlign: "left" }}
+                          sx={{
+                            borderRadius: 0.8,
+                            px: 1,
+                            py: 0.8,
+                            cursor: "pointer",
+                            bgcolor: active ? "#EFF6FF" : "transparent",
+                            color: active ? "#1D4ED8" : "#475569",
+                          }}
+                        >
+                          <Stack direction="row" justifyContent="space-between" spacing={1}>
+                            <Typography sx={{ fontSize: 13, fontWeight: 900 }} noWrap>
+                              {subcategory.title}
+                            </Typography>
+                            <Typography sx={{ fontSize: 12, fontWeight: 900 }}>
+                              {count}
+                            </Typography>
+                          </Stack>
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
+        </Stack>
+      </Paper>
+    </Grid>
+    <Grid item xs={12} md={8.6}>
+      <Paper elevation={0} sx={{ ...cardSx, p: 1.2, minHeight: 560 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 950 }}>
+              {mode === "products" ? "Ürün Listesi" : "Malzeme Listesi"}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Seçili alt kategoriye ait kayıtlar
+            </Typography>
+          </Box>
+          <Chip
+            label={`${filteredCount} kayıt`}
+            sx={{ borderRadius: 1, fontWeight: 900 }}
+          />
+        </Stack>
+        <Grid container spacing={1}>
+          {pagedItems.map((item) => (
+            <Grid item xs={12} sm={mode === "products" ? 6 : 4} key={item.id}>
+              <Box onClick={() => onSelectItem(item)}>{renderCard(item)}</Box>
+            </Grid>
+          ))}
+        </Grid>
+        <Stack alignItems="center" sx={{ pt: 1.4 }}>
+          <Pagination
+            page={page}
+            count={Math.max(Math.ceil(filteredCount / pageSize), 1)}
+            onChange={onPageChange}
+            color="primary"
+            shape="rounded"
+          />
+        </Stack>
+      </Paper>
+    </Grid>
+  </Grid>
+);
+
+const ProductCard = ({ product, catalogGroups, selected }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      border: selected ? "2px solid #2563EB" : "1px solid rgba(148,163,184,0.28)",
+      borderRadius: 1,
+      p: 1,
+      cursor: "pointer",
+      background: selected
+        ? "linear-gradient(145deg, #EFF6FF, #FFFFFF)"
+        : "linear-gradient(145deg, #FFFFFF, #F8FBFF)",
+      boxShadow: "0 10px 24px rgba(15,23,42,0.06)",
+      transition: "transform 140ms ease, box-shadow 140ms ease",
+      "&:hover": {
+        transform: "translateY(-2px)",
+        boxShadow: "0 16px 32px rgba(15,23,42,0.11)",
+      },
+    }}
+  >
+    <Stack direction="row" spacing={1.1}>
+      <Box
+        component="img"
+        src={product.image_url || "/images/kitchen/base-cabinet.svg"}
+        alt={product.name}
+        sx={{
+          width: 112,
+          height: 92,
+          objectFit: "contain",
+          borderRadius: 1,
+          border: "1px solid rgba(148,163,184,0.26)",
+          background: "linear-gradient(145deg, #F8FBFF, #EAF2FB)",
+          p: 0.6,
+        }}
+      />
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Stack direction="row" justifyContent="space-between" spacing={1}>
+          <Typography sx={{ fontWeight: 950 }} noWrap>
+            {product.name}
+          </Typography>
+          <TuneIcon color="primary" fontSize="small" />
+        </Stack>
+        <Typography variant="caption" color="text.secondary">
+          {product.sku} · {getSubcategoryLabel(catalogGroups, product) || product.category}
+        </Typography>
+        <Stack direction="row" spacing={0.6} sx={{ mt: 1, flexWrap: "wrap" }}>
+          <Chip
+            size="small"
+            label={`${product.dimensions?.width || 0} x ${product.dimensions?.height || 0} cm`}
+            sx={{ borderRadius: 0.8, fontWeight: 800 }}
+          />
+          <Chip
+            size="small"
+            color="primary"
+            variant="outlined"
+            label={money(product.base_price)}
+            sx={{ borderRadius: 0.8, fontWeight: 900 }}
+          />
+        </Stack>
+      </Box>
+    </Stack>
+  </Paper>
+);
+
+const MaterialCard = ({ material, selected }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      border: selected ? "2px solid #2563EB" : "1px solid rgba(148,163,184,0.28)",
+      borderRadius: 1,
+      p: 1,
+      cursor: "pointer",
+      bgcolor: "#FFFFFF",
+      boxShadow: "0 10px 24px rgba(15,23,42,0.05)",
+    }}
+  >
+    <Stack direction="row" spacing={1}>
+      <Box
+        sx={{
+          width: 42,
+          height: 42,
+          borderRadius: 1,
+          bgcolor: material.color_hex || "#CBD5E1",
+          border: "1px solid rgba(148,163,184,0.45)",
+          flexShrink: 0,
+        }}
+      />
+      <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ fontWeight: 950 }} noWrap>
+          {material.name}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {material.code} · {materialModifierLabel(material)}
+        </Typography>
+      </Box>
+    </Stack>
+  </Paper>
+);
+
+const DrawerHeader = ({ title, subtitle, onClose }) => (
+  <Stack direction="row" alignItems="center" justifyContent="space-between">
+    <Box>
+      <Typography variant="h6" sx={{ fontWeight: 950 }}>
+        {title}
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        {subtitle}
+      </Typography>
+    </Box>
+    <IconButton onClick={onClose}>
+      <CloseIcon />
+    </IconButton>
+  </Stack>
+);
+
+const CategoryDrawer = ({
+  open,
+  onClose,
+  form,
+  setForm,
+  productGroups,
+  materialGroups,
+  addCategory,
+}) => {
+  const parentGroups = form.target.startsWith("material")
+    ? materialGroups
+    : productGroups;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 1,
+          overflow: "hidden",
+          background: "linear-gradient(145deg, #FFFFFF 0%, #F6FAFF 100%)",
+          border: "1px solid rgba(148,163,184,0.28)",
+          boxShadow: "0 30px 80px rgba(15,23,42,0.24)",
+        },
+      }}
+    >
+      <DialogContent sx={{ p: 2.4 }}>
+        <Stack spacing={2}>
+          <DrawerHeader title="Kategori Oluştur" subtitle="Ana kategori veya alt kategori ekleyin." onClose={onClose} />
+          <TextField select label="Yapı tipi" size="small" value={form.target} onChange={(event) => setForm((current) => ({ ...current, target: event.target.value, parentKey: parentGroups[0]?.key || "" }))}>
+            <MenuItem value="product_category">Ürün ana kategorisi</MenuItem>
+            <MenuItem value="product_subcategory">Ürün alt kategorisi</MenuItem>
+            <MenuItem value="material_category">Malzeme ana kategorisi</MenuItem>
+            <MenuItem value="material_subcategory">Malzeme alt kategorisi</MenuItem>
+          </TextField>
+          {form.target.endsWith("subcategory") && (
+            <TextField select label="Bağlı ana kategori" size="small" value={form.parentKey} onChange={(event) => setForm((current) => ({ ...current, parentKey: event.target.value }))}>
+              {parentGroups.map((group) => (
                 <MenuItem key={group.key} value={group.key}>
                   {group.title}
                 </MenuItem>
               ))}
             </TextField>
-            <TextField
-              label="Fiyat"
-              type="number"
-              size="small"
-              value={newProduct.base_price}
-              onChange={(event) =>
-                setNewProduct((current) => ({
-                  ...current,
-                  base_price: event.target.value,
-                }))
-              }
-            />
-            <Grid container spacing={1}>
-              {[
-                ["min_width", "Min genislik"],
-                ["max_width", "Max genislik"],
-                ["min_height", "Min yukseklik"],
-                ["max_height", "Max yukseklik"],
-              ].map(([field, label]) => (
-                <Grid item xs={6} key={field}>
-                  <TextField
-                    fullWidth
-                    label={label}
-                    type="number"
-                    size="small"
-                    value={newProduct[field]}
-                    onChange={(event) =>
-                      setNewProduct((current) => ({
-                        ...current,
-                        [field]: event.target.value,
-                      }))
-                    }
-                  />
-                </Grid>
-              ))}
-            </Grid>
-            <Button
-              variant="contained"
-              onClick={addManualProduct}
-              disabled={!newProduct.name || !newProduct.model_url}
-              sx={{ textTransform: "none", fontWeight: 900 }}
-            >
-              Ürünü Kataloga Ekle
-            </Button>
-          </Stack>
-        </ClickAwayListener>
-      </Drawer>
-
-      <Drawer
-        anchor="right"
-        open={Boolean(selectedProduct)}
-        onClose={onCloseProduct}
-        variant="persistent"
-        PaperProps={{
-          sx: {
-            width: { xs: 320, sm: 390 },
-            p: 2,
-            top: 0,
-            height: "100%",
-            borderLeft: "1px solid #E2E8F0",
-            boxShadow: "-12px 0 30px rgba(15,23,42,0.12)",
-            zIndex: 1300,
-          },
-        }}
-      >
-        {selectedProduct && (
-          <ClickAwayListener
-            mouseEvent="onMouseDown"
-            touchEvent="onTouchStart"
-            onClickAway={onCloseProduct}
-          >
-            <Stack spacing={2}>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                    Ürün Yonetimi
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {selectedProduct.sku} -{" "}
-                    {getProductCategoryLabel(selectedProduct.category)}
-                  </Typography>
-                </Box>
-                <IconButton onClick={onCloseProduct}>
-                  <CloseIcon />
-                </IconButton>
-              </Stack>
-
-              <Box
-                component="img"
-                src={
-                  selectedProduct.image_url ||
-                  "/images/kitchen/base-cabinet.svg"
-                }
-                alt={selectedProduct.name}
-                sx={{
-                  width: "100%",
-                  height: 160,
-                  objectFit: "cover",
-                  borderRadius: 1,
-                  border: "1px solid #E2E8F0",
-                  bgcolor: "#F8FAFC",
-                }}
-              />
-              <TextField
-                label="Ürün adı"
-                size="small"
-                value={selectedProduct.name}
-                onChange={(event) =>
-                  updateSelectedProductField("name", event.target.value)
-                }
-              />
-              <TextField
-                label="Ürün fiyatı"
-                type="number"
-                size="small"
-                value={selectedProduct.base_price || 0}
-                onChange={(event) =>
-                  updateSelectedProductField("base_price", event.target.value)
-                }
-                helperText="Sahneye eklenen bu ürünün ana fiyatını belirler."
-              />
-              <TextField
-                label="Ürün resmi"
-                size="small"
-                value={selectedProduct.image_url || ""}
-                onChange={(event) =>
-                  updateSelectedProductField("image_url", event.target.value)
-                }
-                helperText="public klasorune gore yol: /images/kitchen/base-cabinet.svg"
-              />
-              <TextField
-                label="3D model dosyasi"
-                size="small"
-                value={selectedProduct.model_url || ""}
-                onChange={(event) =>
-                  onUpdateProduct(selectedProduct.id, (product) => ({
-                    ...product,
-                    model_url: event.target.value,
-                  }))
-                }
-                helperText="public klasorune gore yol: /models/kitchen/base-cabinet-demo.gltf"
-              />
-              <TextField
-                select
-                label="Kategori"
-                size="small"
-                value={selectedProduct.category}
-                onChange={(event) =>
-                  updateSelectedProductField("category", event.target.value)
-                }
-              >
-                {catalogGroups.map((group) => (
-                  <MenuItem key={group.key} value={group.key}>
-                    {group.title}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                label="Minimum genislik"
-                type="number"
-                size="small"
-                value={selectedProduct.constraints?.min_width || 0}
-                onChange={(event) =>
-                  updateSelectedProduct("min_width", event.target.value)
-                }
-              />
-              <TextField
-                label="Maksimum genislik"
-                type="number"
-                size="small"
-                value={selectedProduct.constraints?.max_width || 0}
-                onChange={(event) =>
-                  updateSelectedProduct("max_width", event.target.value)
-                }
-              />
-              <TextField
-                label="Minimum yukseklik"
-                type="number"
-                size="small"
-                value={selectedProduct.constraints?.min_height || 0}
-                onChange={(event) =>
-                  updateSelectedProduct("min_height", event.target.value)
-                }
-              />
-              <TextField
-                label="Maksimum yukseklik"
-                type="number"
-                size="small"
-                value={selectedProduct.constraints?.max_height || 0}
-                onChange={(event) =>
-                  updateSelectedProduct("max_height", event.target.value)
-                }
-              />
-              <Typography variant="caption" color="text.secondary">
-                Bu aralik sahnedeki genislik/yukseklik degistirme ve kose
-                tutamaclari icin sinir olarak kullanilir.
-              </Typography>
-            </Stack>
-          </ClickAwayListener>
-        )}
-      </Drawer>
-    </>
+          )}
+          <TextField label={form.target.endsWith("subcategory") ? "Alt kategori adı" : "Ana kategori adı"} size="small" value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} />
+          <Button variant="contained" startIcon={<CategoryOutlinedIcon />} onClick={addCategory} disabled={!form.title.trim()} sx={{ borderRadius: 1, textTransform: "none", fontWeight: 900 }}>
+            Kaydet
+          </Button>
+        </Stack>
+      </DialogContent>
+    </Dialog>
   );
 };
+
+const ProductDrawer = ({
+  open,
+  onClose,
+  catalogGroups,
+  newProduct,
+  setNewProduct,
+  getDefaultProductSubcategory,
+  handleNewModelFile,
+  addManualProduct,
+}) => (
+  <Dialog
+    open={open}
+    onClose={onClose}
+    maxWidth="md"
+    fullWidth
+    PaperProps={{
+      sx: {
+        borderRadius: 1,
+        overflow: "hidden",
+        background: "linear-gradient(145deg, #FFFFFF 0%, #F6FAFF 100%)",
+        border: "1px solid rgba(148,163,184,0.28)",
+        boxShadow: "0 30px 80px rgba(15,23,42,0.24)",
+      },
+    }}
+  >
+    <DialogContent sx={{ p: 2.4 }}>
+      <Stack spacing={2}>
+        <DrawerHeader title="Ürün Ekle" subtitle="Kategori, ölçü ve model bilgilerini girin." onClose={onClose} />
+        <Button component="label" variant="outlined" startIcon={<UploadFileIcon />} sx={{ borderRadius: 1, textTransform: "none", fontWeight: 900 }}>
+          GLTF / GLB Dosyası Seç
+          <input hidden type="file" accept=".gltf,.glb,model/gltf+json,model/gltf-binary" onChange={handleNewModelFile} />
+        </Button>
+        {newProduct.file_name && <Chip label={newProduct.file_name} color="primary" variant="outlined" sx={{ alignSelf: "flex-start" }} />}
+        <TextField label="Ürün adı" size="small" value={newProduct.name} onChange={(event) => setNewProduct((current) => ({ ...current, name: event.target.value }))} />
+        <TextField select label="Ana kategori" size="small" value={newProduct.category} onChange={(event) => setNewProduct((current) => ({ ...current, category: event.target.value, subcategory: getDefaultProductSubcategory(event.target.value) }))}>
+          {catalogGroups.map((group) => (
+            <MenuItem key={group.key} value={group.key}>
+              {group.title}
+            </MenuItem>
+          ))}
+        </TextField>
+        {catalogGroups.find((group) => group.key === newProduct.category)?.subcategories?.length ? (
+          <TextField select label="Alt kategori" size="small" value={newProduct.subcategory || getDefaultProductSubcategory(newProduct.category)} onChange={(event) => setNewProduct((current) => ({ ...current, subcategory: event.target.value }))}>
+            {catalogGroups.find((group) => group.key === newProduct.category)?.subcategories?.map((subcategory) => (
+              <MenuItem key={subcategory.key} value={subcategory.key}>
+                {subcategory.title}
+              </MenuItem>
+            ))}
+          </TextField>
+        ) : null}
+        <TextField label="Fiyat" type="number" size="small" value={newProduct.base_price} onChange={(event) => setNewProduct((current) => ({ ...current, base_price: event.target.value }))} />
+        <Grid container spacing={1}>
+          {[
+            ["min_width", "Min genişlik"],
+            ["max_width", "Max genişlik"],
+            ["min_height", "Min yükseklik"],
+            ["max_height", "Max yükseklik"],
+          ].map(([field, label]) => (
+            <Grid item xs={6} key={field}>
+              <TextField fullWidth label={label} type="number" size="small" value={newProduct[field]} onChange={(event) => setNewProduct((current) => ({ ...current, [field]: event.target.value }))} />
+            </Grid>
+          ))}
+        </Grid>
+        <Button variant="contained" onClick={addManualProduct} disabled={!newProduct.name.trim()} sx={{ borderRadius: 1, textTransform: "none", fontWeight: 900 }}>
+          Ürünü Kataloga Ekle
+        </Button>
+      </Stack>
+    </DialogContent>
+  </Dialog>
+);
+
+const SelectedProductDrawer = ({
+  selectedProduct,
+  catalogGroups,
+  onCloseProduct,
+  onUpdateProduct,
+  updateSelectedProduct,
+  updateSelectedProductField,
+  getDefaultProductSubcategory,
+  getProductCategoryLabel,
+}) => (
+  <Drawer anchor="right" open={Boolean(selectedProduct)} onClose={onCloseProduct} variant="persistent" PaperProps={{ sx: { width: { xs: 330, sm: 430 }, p: 2, top: 0, height: "100%", borderLeft: "1px solid #E2E8F0", boxShadow: "-16px 0 42px rgba(15,23,42,0.14)", zIndex: 1300 } }}>
+    {selectedProduct && (
+      <ClickAwayListener mouseEvent="onMouseDown" touchEvent="onTouchStart" onClickAway={onCloseProduct}>
+        <Stack spacing={2}>
+          <DrawerHeader title="Ürün Yönetimi" subtitle={`${selectedProduct.sku} · ${getProductCategoryLabel(selectedProduct.category)}`} onClose={onCloseProduct} />
+          <Box component="img" src={selectedProduct.image_url || "/images/kitchen/base-cabinet.svg"} alt={selectedProduct.name} sx={{ width: "100%", height: 170, objectFit: "contain", borderRadius: 1, border: "1px solid rgba(148,163,184,0.28)", background: "linear-gradient(145deg, #F8FBFF, #EAF2FB)", p: 1 }} />
+          <TextField label="Ürün adı" size="small" value={selectedProduct.name} onChange={(event) => updateSelectedProductField("name", event.target.value)} />
+          <TextField label="Ürün fiyatı" type="number" size="small" value={selectedProduct.base_price || 0} onChange={(event) => updateSelectedProductField("base_price", event.target.value)} />
+          <TextField label="Ürün resmi" size="small" value={selectedProduct.image_url || ""} onChange={(event) => updateSelectedProductField("image_url", event.target.value)} />
+          <TextField label="3D model dosyası" size="small" value={selectedProduct.model_url || ""} onChange={(event) => onUpdateProduct(selectedProduct.id, (product) => ({ ...product, model_url: event.target.value }))} />
+          <TextField select label="Ana kategori" size="small" value={selectedProduct.category} onChange={(event) => onUpdateProduct(selectedProduct.id, (product) => ({ ...product, category: event.target.value, subcategory: getDefaultProductSubcategory(event.target.value) }))}>
+            {catalogGroups.map((group) => (
+              <MenuItem key={group.key} value={group.key}>
+                {group.title}
+              </MenuItem>
+            ))}
+          </TextField>
+          {catalogGroups.find((group) => group.key === selectedProduct.category)?.subcategories?.length ? (
+            <TextField select label="Alt kategori" size="small" value={getProductSubcategory(selectedProduct)} onChange={(event) => updateSelectedProductField("subcategory", event.target.value)}>
+              {catalogGroups.find((group) => group.key === selectedProduct.category)?.subcategories?.map((subcategory) => (
+                <MenuItem key={subcategory.key} value={subcategory.key}>
+                  {subcategory.title}
+                </MenuItem>
+              ))}
+            </TextField>
+          ) : null}
+          {[
+            ["min_width", "Minimum genişlik"],
+            ["max_width", "Maksimum genişlik"],
+            ["min_height", "Minimum yükseklik"],
+            ["max_height", "Maksimum yükseklik"],
+          ].map(([field, label]) => (
+            <TextField key={field} label={label} type="number" size="small" value={selectedProduct.constraints?.[field] || 0} onChange={(event) => updateSelectedProduct(field, event.target.value)} />
+          ))}
+        </Stack>
+      </ClickAwayListener>
+    )}
+  </Drawer>
+);
+
+const SelectedMaterialDrawer = ({
+  selectedMaterial,
+  materialGroups,
+  onCloseMaterial,
+  updateSelectedMaterial,
+}) => (
+  <Drawer anchor="right" open={Boolean(selectedMaterial)} onClose={onCloseMaterial} variant="persistent" PaperProps={{ sx: { width: { xs: 330, sm: 420 }, p: 2, top: 0, height: "100%", borderLeft: "1px solid #E2E8F0", boxShadow: "-16px 0 42px rgba(15,23,42,0.14)", zIndex: 1300 } }}>
+    {selectedMaterial && (
+      <ClickAwayListener mouseEvent="onMouseDown" touchEvent="onTouchStart" onClickAway={onCloseMaterial}>
+        <Stack spacing={2}>
+          <DrawerHeader title="Malzeme Yönetimi" subtitle={selectedMaterial.code} onClose={onCloseMaterial} />
+          <TextField label="Malzeme adı" size="small" value={selectedMaterial.name} onChange={(event) => updateSelectedMaterial("name", event.target.value)} />
+          <TextField select label="Ana kategori" size="small" value={selectedMaterial.type} onChange={(event) => updateSelectedMaterial("type", event.target.value)}>
+            {materialGroups.map((group) => (
+              <MenuItem key={group.key} value={group.key}>
+                {group.title}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField label="Renk kodu" size="small" value={selectedMaterial.color_hex || ""} onChange={(event) => updateSelectedMaterial("color_hex", event.target.value)} />
+          <TextField label="Önizleme model dosyası" size="small" value={selectedMaterial.preview_model_url || ""} onChange={(event) => updateSelectedMaterial("preview_model_url", event.target.value)} />
+          <TextField label="Fiyat etkisi" type="number" size="small" value={selectedMaterial.price_modifier || 0} onChange={(event) => updateSelectedMaterial("price_modifier", event.target.value)} />
+          <TextField select label="Fiyat tipi" size="small" value={selectedMaterial.modifier_type} onChange={(event) => updateSelectedMaterial("modifier_type", event.target.value)}>
+            <MenuItem value="percent">Yüzde</MenuItem>
+            <MenuItem value="fixed">Sabit</MenuItem>
+          </TextField>
+        </Stack>
+      </ClickAwayListener>
+    )}
+  </Drawer>
+);
 
 export default KitchenCatalogManager;

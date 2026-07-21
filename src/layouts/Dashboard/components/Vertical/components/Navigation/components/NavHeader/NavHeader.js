@@ -108,7 +108,7 @@ const NavHeader = ({
             //   !navHover && {
             //     width: 75,
             //   }),
-            mt: 2,
+            mt: 5,
             transition: "height .2s",
             transformOrigin: "center left",
             height: navCollapsed && !navHover ? 80 : 80,

@@ -20,11 +20,11 @@ import KitchenOutlinedIcon from "@mui/icons-material/KitchenOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 
 const nav = (me, formatMessage) => [
-  {
-    title: formatMessage("nav.overview", "Overview"),
-    icon: HomeOutline,
-    path: DASHBOARD.overview,
-  },
+  // {
+  //   title: formatMessage("nav.overview", "Overview"),
+  //   icon: HomeOutline,
+  //   path: DASHBOARD.overview,
+  // },
   {
     type: "section",
     icon: ViewInArOutlinedIcon,
