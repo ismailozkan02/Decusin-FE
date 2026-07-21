@@ -1,12 +1,14 @@
 import { useRef, useState } from "react";
 import { styled, useTheme } from "@mui/material/styles";
 import { Box, Button, List } from "@mui/material";
+import { useLocation } from "react-router-dom";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import useAuth from "hooks/useAuth";
 import useLocale from "hooks/useLocale";
 import useTheming from "hooks/useTheming";
 import nav from "routes/nav";
 import hexToRGBA from "utils/hexToRgba";
+import QuoteSummaryControl from "../QuoteSummaryControl";
 import { Drawer, NavHeader, NavItems } from "./components";
 
 const StyledBoxForShadow = styled(Box)({
@@ -27,12 +29,14 @@ const Navigation = (props) => {
   const { me, logout } = useAuth();
 
   const { navHover } = props;
+  const { pathname } = useLocation();
   const theme = useTheme();
   const { skin, navCollapsed } = useTheming();
   const { formatMessage } = useLocale();
   const shadowRef = useRef(null);
   const [groupActive, setGroupActive] = useState([]);
   const [currentActiveGroup, setCurrentActiveGroup] = useState([]);
+  const showQuoteSummary = pathname.endsWith("/kitchen-designer");
 
   // ** Scroll Menu
   const scrollMenu = (container) => {
@@ -79,6 +83,8 @@ const Navigation = (props) => {
         onScroll={scrollMenu}
         sx={{
           position: "relative",
+          display: "flex",
+          flexDirection: "column",
           overflowY: "auto",
           overflowX: "hidden",
           flex: 1,
@@ -102,6 +108,10 @@ const Navigation = (props) => {
           sx={{
             transition: "padding .25s ease",
             pr: !navCollapsed || (navCollapsed && navHover) ? 4.5 : 1.25,
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
             minHeight: "100%",
           }}
         >
@@ -109,7 +119,8 @@ const Navigation = (props) => {
             sx={{
               display: "flex",
               flexDirection: "column",
-              justifyContent: "space-between",
+              flex: 1,
+              width: "100%",
               minHeight: "100%",
             }}
           >
@@ -121,6 +132,20 @@ const Navigation = (props) => {
               setCurrentActiveGroup={setCurrentActiveGroup}
               {...props}
             />
+            {showQuoteSummary && (
+              <Box
+                sx={{
+                  flex: 1,
+                  px: navCollapsed && !navHover ? 0 : 2.75,
+                  py: 3,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <QuoteSummaryControl compact={navCollapsed && !navHover} />
+              </Box>
+            )}
           </Box>
         </List>
       </Box>

@@ -45,6 +45,7 @@ const Vertical = ({ children, ...rest }) => {
   const [navHover, setNavHover] = useState(false);
   const [navVisible, setNavVisible] = useState(false);
   const [showBackdrop, setShowBackdrop] = useState(false);
+  const isKitchenPage = pathname.startsWith("/kitchen-");
   const hideFooter = pathname.endsWith("/kitchen-designer");
 
   const toggleNavVisibility = () => setNavVisible(!navVisible);
@@ -64,12 +65,21 @@ const Vertical = ({ children, ...rest }) => {
           {...rest}
         />
         <MainContentWrapper className={"layout-content-wrapper"}>
-          <AppBar setShowBackdrop={setShowBackdrop} toggleNavVisibility={toggleNavVisibility} {...rest} />
+          {!isKitchenPage && (
+            <AppBar
+              setShowBackdrop={setShowBackdrop}
+              toggleNavVisibility={toggleNavVisibility}
+              {...rest}
+            />
+          )}
           <ContentWrapper
             className={"layout-page-content"}
             sx={{
+              ...(isKitchenPage && {
+                pt: 2.5,
+              }),
               ...(hideFooter && {
-                height: "calc(100vh - 64px)",
+                height: "100vh",
                 minHeight: 0,
                 overflow: "hidden",
                 bgcolor: "#FFFFFF",

@@ -6,6 +6,7 @@ import PermissionBasedGuard from "guards/PermissionBasedGuard";
 import GuestGuard from "guards/GuestGuard"; // login olmussa atla
 import BlankLayout from "layouts/Blank";
 import DashboardLayout from "layouts/Dashboard";
+import KitchenStudioPage from "pages/Kitchen/KitchenStudioPage";
 
 const Loadable = (Component) => (props) => (
   <Suspense fallback={<LoadingScreen />}>
@@ -21,7 +22,6 @@ const Login = Loadable(lazy(() => import("pages/Auth")));
 const Signup = Loadable(lazy(() => import("pages/Auth")));
 // Dashboard
 const Overview = Loadable(lazy(() => import("pages/Overview")));
-const KitchenStudio = Loadable(lazy(() => import("pages/Kitchen/KitchenStudioPage")));
 
 const EmptyPage = Loadable(lazy(() => import("pages/EmptyPage")));
 
@@ -73,11 +73,11 @@ const Router = () =>
         { element: <Navigate to={"/overview"} replace />, index: true },
 
         { path: "overview", element: <Overview /> },
-        { path: "kitchen-designer", element: <KitchenStudio initialTab="designer" /> },
-        { path: "kitchen-catalog", element: <KitchenStudio initialTab="catalog" /> },
-        { path: "kitchen-pricing", element: <KitchenStudio initialTab="pricing" /> },
-        { path: "kitchen-projects", element: <KitchenStudio initialTab="projects" /> },
-        { path: "kitchen-customers", element: <KitchenStudio initialTab="customers" /> },
+        { path: "kitchen-designer", element: <KitchenStudioPage initialTab="designer" /> },
+        { path: "kitchen-catalog", element: <KitchenStudioPage initialTab="catalog" /> },
+        { path: "kitchen-pricing", element: <KitchenStudioPage initialTab="pricing" /> },
+        { path: "kitchen-projects", element: <KitchenStudioPage initialTab="projects" /> },
+        { path: "kitchen-customers", element: <KitchenStudioPage initialTab="customers" /> },
 
         {
           path: "profile",
