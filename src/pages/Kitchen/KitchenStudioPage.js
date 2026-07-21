@@ -17,20 +17,29 @@ import {
   Typography,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import CameraAltOutlinedIcon from "@mui/icons-material/CameraAltOutlined";
 import FlareOutlinedIcon from "@mui/icons-material/FlareOutlined";
+import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
+import MovieCreationOutlinedIcon from "@mui/icons-material/MovieCreationOutlined";
 import NightsStayOutlinedIcon from "@mui/icons-material/NightsStayOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
+import RedoOutlinedIcon from "@mui/icons-material/RedoOutlined";
 import SearchIcon from "@mui/icons-material/Search";
+import StraightenOutlinedIcon from "@mui/icons-material/StraightenOutlined";
+import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
 import Page from "components/Page";
 import { SERVER } from "routes/paths";
 import { getData, postData } from "utils/axiosForPhyton";
+import AlignHorizontalCenterOutlinedIcon from "@mui/icons-material/AlignHorizontalCenterOutlined";
 import KitchenCatalogManager from "./components/KitchenCatalogManager";
 import KitchenCustomizer from "./components/KitchenCustomizer";
 import KitchenPaletteDrawer from "./components/KitchenPaletteDrawer";
@@ -128,6 +137,7 @@ const defaultRoomSurfaces = {
   sceneMode: "day",
   lampVisible: false,
   lightsOn: false,
+  lampType: "spot",
 };
 
 const floorPatternOptions = [
@@ -303,6 +313,65 @@ const toolbarControlLabelSx = {
   lineHeight: "11px",
   textAlign: "center",
 };
+
+const toolbarPrimaryButtonSx = (active = false) => ({
+  width: active ? 128 : 122,
+  minWidth: active ? 128 : 122,
+  maxWidth: active ? 128 : 122,
+  height: 42,
+  px: 0.85,
+  borderRadius: 1.15,
+  textTransform: "none",
+  fontSize: 0,
+  fontWeight: 950,
+  letterSpacing: 0,
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  position: "relative",
+  isolation: "isolate",
+  boxShadow: active
+    ? "0 14px 28px rgba(15,87,190,0.22), inset 0 1px 0 rgba(255,255,255,0.28)"
+    : "0 12px 24px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.92)",
+  border: active
+    ? "1px solid rgba(147,197,253,0.7)"
+    : "1px solid rgba(25,118,210,0.26)",
+  bgcolor: active ? "#145FCC" : "#FFFFFF",
+  background: active
+    ? "linear-gradient(135deg, #0F5ED7 0%, #1D8BFF 52%, #0B4CB5 100%)"
+    : "linear-gradient(135deg, #FFFFFF 0%, #F4F9FF 58%, #EAF3FF 100%)",
+  color: active ? "#FFFFFF" : "#0F5ED7",
+  "&:hover": {
+    bgcolor: active ? "#0F5ED7" : "#F8FBFF",
+    background: active
+      ? "linear-gradient(135deg, #0B4CB5 0%, #1D8BFF 54%, #083E96 100%)"
+      : "linear-gradient(135deg, #FFFFFF 0%, #EEF6FF 100%)",
+    boxShadow: active
+      ? "0 16px 34px rgba(15,87,190,0.28), inset 0 1px 0 rgba(255,255,255,0.26)"
+      : "0 14px 28px rgba(25,118,210,0.13), inset 0 1px 0 rgba(255,255,255,0.92)",
+  },
+  "& .MuiButton-startIcon": {
+    width: 24,
+    height: 24,
+    mr: 0.7,
+    ml: -0.25,
+    borderRadius: 0.8,
+    display: "grid",
+    placeItems: "center",
+    bgcolor: active ? "rgba(255,255,255,0.18)" : "rgba(25,118,210,0.08)",
+    boxShadow: active
+      ? "inset 0 0 0 1px rgba(255,255,255,0.24)"
+      : "inset 0 0 0 1px rgba(25,118,210,0.12)",
+  },
+  "& .MuiButton-startIcon > *": {
+    fontSize: 17,
+  },
+  "&::after": {
+    content: active ? '"Urun Ekle"' : '"Ekli Urunler"',
+    fontSize: 11.5,
+    fontWeight: 950,
+    lineHeight: 1,
+  },
+});
 
 const ToolbarNumberControl = ({ label, value, onChange }) => (
   <Box sx={toolbarControlBoxSx}>
@@ -641,6 +710,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const navigate = useNavigate();
   const sceneRef = useRef(null);
   const copiedSceneItemRef = useRef(null);
+  const skipSceneHistoryRef = useRef(false);
+  const lastSceneItemsSnapshotRef = useRef(null);
   const tab = TABS[initialTab] || 0;
   const [pendingProject] = useState(() => {
     const project = consumePendingProject(initialTab);
@@ -679,7 +750,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const [dragState, setDragState] = useState(null);
   const [resizeState, setResizeState] = useState(null);
   const [selectedSceneIndex, setSelectedSceneIndex] = useState(null);
+  const [selectedSceneIndices, setSelectedSceneIndices] = useState([]);
   const [customizerOpen, setCustomizerOpen] = useState(false);
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
   const [zoom] = useState(1);
   const [installationFee, setInstallationFee] = useState(() =>
     Number(pendingProject?.installation_fee || 0),
@@ -698,6 +772,16 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     ...defaultRoomSurfaces,
     ...(pendingProject?.room_surfaces || {}),
   });
+  const [premiumTools, setPremiumTools] = useState({
+    quality: true,
+    measurements: true,
+    walls: true,
+    topView: false,
+    cameraTour: false,
+    multiSelect: false,
+    smartPlacement: true,
+  });
+  const [cameraPresetSignal, setCameraPresetSignal] = useState(null);
 
   const materialMap = useMemo(
     () => Object.fromEntries(materials.map((item) => [item.id, item])),
@@ -773,6 +857,11 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     selectedSceneIndex === null
       ? null
       : localQuote.lines[selectedSceneIndex] || null;
+  const selectedItemCount = premiumTools.multiSelect
+    ? selectedSceneIndices.length
+    : selectedSceneIndex === null
+      ? 0
+      : 1;
   const filteredProjects = useMemo(() => {
     const query = projectSearch.trim().toLocaleLowerCase("tr-TR");
     if (!query) return projects;
@@ -1052,6 +1141,33 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     );
   }, [localQuote]);
 
+  useEffect(() => {
+    const currentSnapshot = cloneProjectData(sceneItems);
+
+    if (!lastSceneItemsSnapshotRef.current) {
+      lastSceneItemsSnapshotRef.current = currentSnapshot;
+      return;
+    }
+
+    if (skipSceneHistoryRef.current) {
+      skipSceneHistoryRef.current = false;
+      lastSceneItemsSnapshotRef.current = currentSnapshot;
+      return;
+    }
+
+    if (
+      JSON.stringify(lastSceneItemsSnapshotRef.current) ===
+      JSON.stringify(currentSnapshot)
+    ) {
+      return;
+    }
+
+    const previousSnapshot = lastSceneItemsSnapshotRef.current;
+    setUndoStack((current) => [...current, previousSnapshot].slice(-40));
+    setRedoStack([]);
+    lastSceneItemsSnapshotRef.current = currentSnapshot;
+  }, [sceneItems]);
+
   const buildItemOptions = (product) => {
     const options = {};
     if (["base_cabinet", "wall_cabinet"].includes(product.category)) {
@@ -1098,9 +1214,16 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       const metrics = getSceneMetrics();
       const wallTopCm = isWallMountedProduct(product, dimensions) ? 28 : null;
       const nextY = wallTopCm === null ? y : wallTopCm * metrics.cmToPx;
+      const isCornerProduct =
+        `${product.name || ""} ${product.sku || ""}`
+          .toLocaleLowerCase("tr-TR")
+          .includes("kose") ||
+        `${product.name || ""} ${product.sku || ""}`
+          .toLocaleLowerCase("tr-TR")
+          .includes("köşe");
       const nextItem = {
         catalog_item_id: product.id,
-        position: { x, y: nextY, z: 0 },
+        position: { x: isCornerProduct ? 0 : x, y: nextY, z: 0 },
         placement: getProductPlacement(product, dimensions),
         rotation: { x: 0, y: 0, z: 0 },
         dimensions,
@@ -1108,15 +1231,12 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         quantity: 1,
       };
       const position = clampScenePosition(nextItem, product, x, nextY);
-      const resolvedPosition = resolveInitialSceneItemPosition(
-        current,
-        nextItem,
-        product,
-        {
-          ...nextItem.position,
-          ...position,
-        },
-      );
+      const resolvedPosition = premiumTools.smartPlacement
+        ? resolveInitialSceneItemPosition(current, nextItem, product, {
+            ...nextItem.position,
+            ...position,
+          })
+        : position;
       return [
         ...current,
         {
@@ -1133,6 +1253,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setSceneItems((current) =>
       current.map((item, itemIndex) => {
         if (itemIndex !== index) return item;
+        if (item.locked) return item;
 
         const product = catalogMap[item.catalog_item_id] || {};
         const position = clampScenePosition(item, product, x, y);
@@ -1145,6 +1266,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setSceneItems((current) =>
       current.map((item, itemIndex) => {
         if (itemIndex !== index) return item;
+        if (item.locked) return item;
 
         return {
           ...item,
@@ -1192,6 +1314,12 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setPaletteOpen(false);
     setSceneItemsOpen(false);
     setSelectedSceneIndex(index);
+    setSelectedSceneIndices((current) => {
+      if (!premiumTools.multiSelect) return [index];
+      return current.includes(index)
+        ? current.filter((itemIndex) => itemIndex !== index)
+        : [...current, index];
+    });
     setCustomizerOpen(false);
     setDragState(null);
     setResizeState(null);
@@ -1311,6 +1439,11 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       if (current > index) return current - 1;
       return current;
     });
+    setSelectedSceneIndices((current) =>
+      current
+        .filter((itemIndex) => itemIndex !== index)
+        .map((itemIndex) => (itemIndex > index ? itemIndex - 1 : itemIndex)),
+    );
   };
 
   const copySceneItem = useCallback(
@@ -1358,6 +1491,144 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     pasteSceneItem();
   };
 
+  const undoSceneChange = useCallback(() => {
+    setUndoStack((current) => {
+      if (!current.length) return current;
+
+      const previous = current[current.length - 1];
+      skipSceneHistoryRef.current = true;
+      setRedoStack((redoCurrent) => [
+        cloneProjectData(sceneItems),
+        ...redoCurrent,
+      ].slice(0, 40));
+      setSceneItems(cloneProjectData(previous));
+      setSelectedSceneIndex(null);
+      setSelectedSceneIndices([]);
+      setCustomizerOpen(false);
+      return current.slice(0, -1);
+    });
+  }, [sceneItems]);
+
+  const redoSceneChange = useCallback(() => {
+    setRedoStack((current) => {
+      if (!current.length) return current;
+
+      const next = current[0];
+      skipSceneHistoryRef.current = true;
+      setUndoStack((undoCurrent) => [
+        ...undoCurrent,
+        cloneProjectData(sceneItems),
+      ].slice(-40));
+      setSceneItems(cloneProjectData(next));
+      setSelectedSceneIndex(null);
+      setSelectedSceneIndices([]);
+      setCustomizerOpen(false);
+      return current.slice(1);
+    });
+  }, [sceneItems]);
+
+  const toggleSelectedItemLock = () => {
+    const targetIndices =
+      premiumTools.multiSelect && selectedSceneIndices.length
+        ? selectedSceneIndices
+        : selectedSceneIndex === null
+          ? []
+          : [selectedSceneIndex];
+    if (!targetIndices.length) return;
+
+    setSceneItems((current) => {
+      const shouldLock = targetIndices.some((index) => !current[index]?.locked);
+      return current.map((item, index) =>
+        targetIndices.includes(index) ? { ...item, locked: shouldLock } : item,
+      );
+    });
+  };
+
+  const autoAlignSceneItems = useCallback(() => {
+    const metrics = getSceneMetrics();
+    const cmToPx = metrics.cmToPx || 1;
+
+    setSceneItems((current) => {
+      const nextItems = current.map((item) => ({
+        ...item,
+        position: { ...(item.position || {}) },
+      }));
+      const alignGroup = (indices, wallMode) => {
+        let cursor = 0;
+
+        indices
+          .sort(
+            (first, second) =>
+              Number(current[first].position?.x || 0) -
+              Number(current[second].position?.x || 0),
+          )
+          .forEach((itemIndex) => {
+            const item = nextItems[itemIndex];
+            const product = catalogMap[item.catalog_item_id] || {};
+            const dimensions = normalizeProductDimensions(
+              product,
+              item.dimensions,
+            );
+            const width = Math.max(Number(dimensions.width || 60), 1);
+
+            item.position.x = cursor * cmToPx;
+            if (wallMode) {
+              item.position.y = Number(item.position.y || 28 * cmToPx);
+              item.position.z = 0;
+            } else {
+              item.position.z = 0;
+            }
+            cursor += width;
+          });
+      };
+      const floorIndices = [];
+      const wallIndices = [];
+
+      nextItems.forEach((item, index) => {
+        const product = catalogMap[item.catalog_item_id] || {};
+        if (
+          product.category === "countertop" ||
+          isCountertopMountedProduct(product)
+        )
+          return;
+
+        const dimensions = normalizeProductDimensions(product, item.dimensions);
+        const placement = item.placement || getProductPlacement(product, dimensions);
+
+        if (placement === "wall") wallIndices.push(index);
+        else floorIndices.push(index);
+      });
+
+      alignGroup(floorIndices, false);
+      alignGroup(wallIndices, true);
+
+      return nextItems;
+    });
+  }, [catalogMap, getSceneMetrics]);
+
+  const alignUpperCabinets = useCallback(() => {
+    const metrics = getSceneMetrics();
+    const cmToPx = metrics.cmToPx || 1;
+
+    setSceneItems((current) =>
+      current.map((item) => {
+        const product = catalogMap[item.catalog_item_id] || {};
+        const dimensions = normalizeProductDimensions(product, item.dimensions);
+        if (!isWallMountedProduct(product, dimensions)) return item;
+
+        return {
+          ...item,
+          position: {
+            ...(item.position || {}),
+            y: 28 * cmToPx,
+            z: 0,
+          },
+          placement: "wall",
+        };
+      }),
+    );
+  }, [catalogMap, getSceneMetrics]);
+
   useEffect(() => {
     const handleKeyDown = (event) => {
       const activeTag = document.activeElement?.tagName?.toLowerCase();
@@ -1392,6 +1663,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       setSceneItems((current) =>
         current.map((item, itemIndex) => {
           if (itemIndex !== selectedSceneIndex) return item;
+          if (item.locked) return item;
 
           const product = catalogMap[item.catalog_item_id] || {};
           const position = clampScenePosition(
@@ -1538,6 +1810,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const handleSceneBackgroundMouseDown = (event) => {
     if (event.target === event.currentTarget) {
       setSelectedSceneIndex(null);
+      setSelectedSceneIndices([]);
       setCustomizerOpen(false);
       setPaletteOpen(false);
     }
@@ -1545,6 +1818,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
 
   const clearSceneSelection = () => {
     setSelectedSceneIndex(null);
+    setSelectedSceneIndices([]);
     setCustomizerOpen(false);
     setPaletteOpen(false);
     setDragState(null);
@@ -1559,6 +1833,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setCustomizerOpen(false);
     const point = scenePointFromEvent(event);
     const item = sceneItems[index];
+    if (item?.locked) {
+      setDragState(null);
+      return;
+    }
     setDragState({
       index,
       offsetX: point.x - Number(item.position?.x || 0),
@@ -1882,6 +2160,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           setPaletteOpen(false);
           setSceneItemsOpen(false);
           setSelectedSceneIndex(index);
+          setSelectedSceneIndices([index]);
           setCustomizerOpen(false);
         }}
         onDeleteItem={removeSceneItem}
@@ -1936,12 +2215,19 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           </Stack>
 
           <Stack
-            direction={{ xs: "column", md: "row" }}
-            alignItems={{ xs: "stretch", md: "center" }}
-            justifyContent="flex-start"
-            spacing={1}
-            sx={{ flexWrap: "wrap", width: "100%" }}
+            direction={{ xs: "column", xl: "row" }}
+            alignItems={{ xs: "stretch", xl: "center" }}
+            justifyContent="space-between"
+            spacing={1.2}
+            sx={{ width: "100%" }}
           >
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="flex-start"
+              spacing={0.75}
+              sx={{ flexWrap: "wrap", minWidth: 0 }}
+            >
             <Button
               variant="contained"
               startIcon={<Inventory2OutlinedIcon />}
@@ -1950,11 +2236,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 setSceneItemsOpen(false);
                 setPaletteOpen(true);
               }}
-              sx={{
-                textTransform: "none",
-                fontWeight: 900,
-                whiteSpace: "nowrap",
-              }}
+              sx={toolbarPrimaryButtonSx(true)}
             >
               Sahneye Ürün Ekle
             </Button>
@@ -1965,11 +2247,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 setPaletteOpen(false);
                 setSceneItemsOpen(true);
               }}
-              sx={{
-                textTransform: "none",
-                fontWeight: 900,
-                whiteSpace: "nowrap",
-              }}
+              sx={toolbarPrimaryButtonSx(false)}
             >
               Ekli Ürünler
             </Button>
@@ -2016,18 +2294,139 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               inactiveTitle="Aydinlatma kapali"
               activeIcon={<FlareOutlinedIcon sx={{ fontSize: 17 }} />}
               inactiveIcon={<FlareOutlinedIcon sx={{ fontSize: 17 }} />}
-              disabled={roomSurfaces.lampVisible !== true}
               onToggle={() =>
                 setRoomSurfaces((current) => ({
                   ...current,
-                  lightsOn:
-                    current.lampVisible === true
-                      ? current.lightsOn !== true
-                      : false,
+                  lampVisible: true,
+                  lightsOn: current.lightsOn !== true,
                 }))
               }
             />
-            <Box sx={{ flexGrow: 1, minWidth: { xs: "100%", md: 24 } }} />
+            <ToolbarSceneToggleControl
+              label="Tur"
+              active={premiumTools.cameraTour}
+              activeTitle="Kamera animasyonu acik"
+              inactiveTitle="Kamera animasyonu baslat"
+              activeIcon={<MovieCreationOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<MovieCreationOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={() =>
+                setPremiumTools((current) => ({
+                  ...current,
+                  cameraTour: !current.cameraTour,
+                }))
+              }
+            />
+            <ToolbarSceneToggleControl
+              label="On"
+              active={!premiumTools.topView}
+              activeTitle="On gorunum"
+              inactiveTitle="On gorunume gec"
+              activeIcon={<CameraAltOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<CameraAltOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={() => {
+                setPremiumTools((current) => ({
+                  ...current,
+                  topView: false,
+                }));
+                setCameraPresetSignal({ preset: "on", tick: Date.now() });
+              }}
+            />
+            <ToolbarSceneToggleControl
+              label="Ust"
+              active={premiumTools.topView}
+              activeTitle="Ust gorunum"
+              inactiveTitle="Ust gorunume gec"
+              activeIcon={<CameraAltOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<CameraAltOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={() => {
+                setPremiumTools((current) => ({
+                  ...current,
+                  topView: true,
+                }));
+                setCameraPresetSignal({ preset: "ust", tick: Date.now() });
+              }}
+            />
+            <ToolbarSceneToggleControl
+              label="Olcu"
+              active={premiumTools.measurements}
+              activeTitle="Olculer gorunur"
+              inactiveTitle="Olculer gizli"
+              activeIcon={<StraightenOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<StraightenOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={() =>
+                setPremiumTools((current) => ({
+                  ...current,
+                  measurements: !current.measurements,
+                }))
+              }
+            />
+            <ToolbarSceneToggleControl
+              label="Hizala"
+              active={false}
+              activeTitle="Urunleri hizala"
+              inactiveTitle="Urunleri hizala"
+              activeIcon={
+                <AlignHorizontalCenterOutlinedIcon sx={{ fontSize: 17 }} />
+              }
+              inactiveIcon={
+                <AlignHorizontalCenterOutlinedIcon sx={{ fontSize: 17 }} />
+              }
+              onToggle={autoAlignSceneItems}
+            />
+            <ToolbarSceneToggleControl
+              label="Ust Hiz"
+              active={false}
+              activeTitle="Ust dolaplari hizala"
+              inactiveTitle="Ust dolaplari hizala"
+              activeIcon={
+                <AlignHorizontalCenterOutlinedIcon sx={{ fontSize: 17 }} />
+              }
+              inactiveIcon={
+                <AlignHorizontalCenterOutlinedIcon sx={{ fontSize: 17 }} />
+              }
+              onToggle={alignUpperCabinets}
+            />
+            <ToolbarSceneToggleControl
+              label="Kilit"
+              active={
+                selectedSceneIndex !== null &&
+                sceneItems[selectedSceneIndex]?.locked
+              }
+              activeTitle="Secili urun kilitli"
+              inactiveTitle="Secili urunu kilitle"
+              disabled={selectedItemCount === 0}
+              activeIcon={<LockOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<LockOpenOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={toggleSelectedItemLock}
+            />
+            <ToolbarSceneToggleControl
+              label="Geri"
+              active={false}
+              activeTitle="Geri al"
+              inactiveTitle="Geri al"
+              disabled={!undoStack.length}
+              activeIcon={<UndoOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<UndoOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={undoSceneChange}
+            />
+            <ToolbarSceneToggleControl
+              label="Ileri"
+              active={false}
+              activeTitle="Ileri al"
+              inactiveTitle="Ileri al"
+              disabled={!redoStack.length}
+              activeIcon={<RedoOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<RedoOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={redoSceneChange}
+            />
+            </Stack>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent={{ xs: "flex-start", xl: "flex-end" }}
+              spacing={0.55}
+              sx={{ flexWrap: "wrap", minWidth: 0 }}
+            >
             <ToolbarNumberControl
               label="Genislik"
               value={roomDimensions.width}
@@ -2064,6 +2463,20 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 }
               />
             ))}
+            <ToolbarSceneToggleControl
+              label="Duvar"
+              active={premiumTools.walls}
+              activeTitle="Duvarlar gorunur"
+              inactiveTitle="Duvarlar gizli"
+              activeIcon={<GridViewOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<GridViewOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={() =>
+                setPremiumTools((current) => ({
+                  ...current,
+                  walls: !current.walls,
+                }))
+              }
+            />
             {[
               ["backWallVisible", "Arka"],
               ["leftWallVisible", "Sol"],
@@ -2124,6 +2537,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 </Typography>
               </Stack>
             </Paper>
+            </Stack>
           </Stack>
         </Stack>
       </Paper>
@@ -2138,8 +2552,11 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             selectedGlass={selectedGlass}
             selectedCounter={selectedCounter}
             selectedSceneIndex={selectedSceneIndex}
+            selectedSceneIndices={selectedSceneIndices}
             roomDimensions={roomDimensions}
             roomSurfaces={roomSurfaces}
+            premiumTools={premiumTools}
+            cameraPresetSignal={cameraPresetSignal}
             dragState={dragState}
             zoom={zoom}
             onDragOver={(event) => event.preventDefault()}

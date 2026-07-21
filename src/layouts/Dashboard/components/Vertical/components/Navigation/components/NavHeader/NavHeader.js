@@ -34,13 +34,20 @@ const StyledLink = styled(RouterLink)({
   textDecoration: "none",
 });
 
-const NavHeader = ({ hidden, navHover, collapsedNavWidth, toggleNavVisibility, navigationBorderWidth }) => {
+const NavHeader = ({
+  hidden,
+  navHover,
+  collapsedNavWidth,
+  toggleNavVisibility,
+  navigationBorderWidth,
+}) => {
   const { me } = useAuth();
   const { navCollapsed, onChange } = useTheming();
   const {
     system: { logo, title },
   } = useSettings();
-  const menuCollapsedStyles = navCollapsed && !navHover ? { opacity: 0 } : { opacity: 1 };
+  const menuCollapsedStyles =
+    navCollapsed && !navHover ? { opacity: 0 } : { opacity: 1 };
 
   const menuHeaderPaddingLeft = () => {
     if (navCollapsed && !navHover) {
@@ -53,13 +60,13 @@ const NavHeader = ({ hidden, navHover, collapsedNavWidth, toggleNavVisibility, n
   const [organization, setorganization] = useState({ name: "", logo: "" });
 
   useEffect(() => {
-    if (me?.organization?.id ) {
+    if (me?.organization?.id) {
       setorganization({
         name: me.organization.name,
         logo: me.organization.details.logo,
       });
       console.log(
-        `${baseURL}${organization.logo ? "/files/" + organization.logo : "/favs/favicon.png"}`
+        `${baseURL}${organization.logo ? "/files/" + organization.logo : "/favs/favicon.png"}`,
       );
     }
   }, [me?.organization]);
@@ -87,28 +94,27 @@ const NavHeader = ({ hidden, navHover, collapsedNavWidth, toggleNavVisibility, n
   );
 
   return (
-    <MenuHeaderWrapper className={"nav-header"} sx={{ pl: menuHeaderPaddingLeft() }}>
+    <MenuHeaderWrapper
+      className={"nav-header"}
+      sx={{ pl: menuHeaderPaddingLeft() }}
+    >
       <StyledLink to={"/"}>
         <Box
           component={"img"}
           src={"/favs/favicon.png"}
-          alt= { organization?.name || title}
+          alt={organization?.name || title}
           sx={{
             // ...(navCollapsed &&
             //   !navHover && {
             //     width: 75,
             //   }),
+            mt: 2,
             transition: "height .2s",
             transformOrigin: "center left",
-            height: navCollapsed && !navHover ? 45 : 45,
+            height: navCollapsed && !navHover ? 80 : 80,
+            borderRadius: "4px",
           }}
         />
-        <HeaderTitle
-          variant={"h6"}
-          sx={{ fontSize: 16, ...menuCollapsedStyles, ...(navCollapsed && !navHover ? {} : { ml: 3, mt: 1 }) }}
-        >
-          {organization?.name ||title}
-        </HeaderTitle>
       </StyledLink>
       {hidden ? (
         <IconButton
@@ -120,18 +126,7 @@ const NavHeader = ({ hidden, navHover, collapsedNavWidth, toggleNavVisibility, n
           <Close fontSize={"small"} />
         </IconButton>
       ) : (
-        <IconButton
-          disableRipple
-          disableFocusRipple
-          onClick={() => onChange("navCollapsed", !navCollapsed)}
-          sx={{
-            padding: 0,
-            color: "text.primary",
-            backgroundColor: "transparent !important",
-          }}
-        >
-          {navCollapsed ? MenuUnlockedIcon() : MenuLockedIcon()}
-        </IconButton>
+        ""
       )}
     </MenuHeaderWrapper>
   );

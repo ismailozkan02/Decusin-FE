@@ -236,6 +236,7 @@ const KitchenScene = ({
   selectedGlass,
   selectedCounter,
   selectedSceneIndex,
+  selectedSceneIndices = [],
   roomDimensions,
   roomSurfaces,
   dragState,
@@ -260,6 +261,8 @@ const KitchenScene = ({
   onClearItems,
   onExportPdf,
   onToggleFullscreen,
+  premiumTools,
+  cameraPresetSignal,
 }) => {
   void onResizeMouseDown;
   void onSceneItemMouseDown;
@@ -269,8 +272,16 @@ const KitchenScene = ({
   const pendingDragRef = useRef(null);
   const [sceneBox, setSceneBox] = useState({ width: 0, top: 0 });
   const [drag3DIndex, setDrag3DIndex] = useState(null);
+  const [hover3DIndex, setHover3DIndex] = useState(null);
   const [controlsLocked, setControlsLocked] = useState(false);
   const [sceneReady, setSceneReady] = useState(kitchenSceneHasBooted);
+  const scenePremiumTools = premiumTools || {
+    quality: true,
+    measurements: true,
+    walls: true,
+    topView: false,
+  };
+  const highQualityScene = scenePremiumTools.quality;
   const [viewportHeight, setViewportHeight] = useState(
     typeof window === "undefined" ? 900 : window.innerHeight,
   );
@@ -296,11 +307,15 @@ const KitchenScene = ({
         nightMode,
         lampVisible,
         lightsOn,
-        background: lightsOn ? "#171B22" : "#080D16",
-        ambient: lightsOn ? 0.2 : 0.045,
-        hemisphere: lightsOn ? 0.18 : 0.055,
-        sun: lightsOn ? 0.16 : 0.035,
-        fill: lightsOn ? 0.06 : 0.015,
+        background: lightsOn ? "#05050A" : "#000000",
+        ambient: lightsOn ? 0.3 : 0.18,
+        hemisphere: lightsOn ? 0.28 : 0.2,
+        sun: lightsOn ? 0.26 : 0.22,
+        fill: lightsOn ? 0.18 : 0.1,
+        sunColor: "#CFE5FF",
+        fillColor: lightsOn ? "#FFDCA3" : "#D7DDE6",
+        hemisphereSky: "#F2F4F7",
+        hemisphereGround: "#070707",
       };
     }
 
@@ -313,6 +328,10 @@ const KitchenScene = ({
       hemisphere: lightsOn ? 0.48 : 0.42,
       sun: lightsOn ? 1.42 : 1.35,
       fill: lightsOn ? 0.28 : 0.22,
+      sunColor: "#FFFFFF",
+      fillColor: "#FFFFFF",
+      hemisphereSky: "#FFFFFF",
+      hemisphereGround: "#D8D0C2",
     };
   }, [
     roomSurfaces?.lampVisible,
@@ -349,6 +368,34 @@ const KitchenScene = ({
     },
     [defaultCameraView],
   );
+  const applyCameraPreset = useCallback(
+    (preset) => {
+      const controls = controlsRef.current;
+      const camera = controls?.object;
+      if (!camera || !controls) return;
+
+      const roomWidth = cmToUnit(roomWidthCm);
+      const roomHeight = cmToUnit(roomHeightCm);
+      const roomDepth = cmToUnit(roomDepthCm);
+      const target = new Vector3(0, roomHeight * 0.5, -roomDepth * 0.16);
+      const distance = Math.max(roomWidth, roomDepth);
+      const cameraPositions = {
+        on: [0, roomHeight * 0.62, distance * 1.48],
+        ust: [0, roomHeight * 2.85, distance * 0.18],
+      };
+
+      camera.position.set(...(cameraPositions[preset] || cameraPositions.on));
+      camera.lookAt(target);
+      camera.updateProjectionMatrix();
+      controls.target.copy(target);
+      controls.update();
+    },
+    [roomDepthCm, roomHeightCm, roomWidthCm],
+  );
+  useEffect(() => {
+    if (!cameraPresetSignal?.preset) return;
+    applyCameraPreset(cameraPresetSignal.preset);
+  }, [applyCameraPreset, cameraPresetSignal]);
   const isWallDrag = (index) => {
     const item = sceneItems[index];
     const product = catalogMap[item?.catalog_item_id] || {};
@@ -544,7 +591,7 @@ const KitchenScene = ({
         alignItems: "center",
         justifyContent: "center",
         position: "relative",
-        minHeight: layoutReady ? fittedHeight + 32 : placeholderHeight,
+        minHeight: layoutReady ? fittedHeight + 104 : placeholderHeight + 72,
         p: { xs: 1, md: 2 },
         background: "#FFFFFF",
       }}
@@ -695,6 +742,12 @@ const KitchenScene = ({
             ? "1px dashed rgba(15,23,42,0.18)"
             : "1px dashed transparent",
           borderRadius: 1.5,
+          cursor:
+            drag3DIndex !== null
+              ? "grabbing"
+              : hover3DIndex !== null || selectedSceneIndex !== null
+                ? "grab"
+                : "default",
           "&:fullscreen": {
             width: "100vw",
             height: "100vh",
@@ -719,7 +772,7 @@ const KitchenScene = ({
           {layoutReady && (
             <Canvas
               shadows
-              dpr={[1, 1.7]}
+              dpr={[1, highQualityScene ? 1.9 : 1.25]}
               camera={{
                 position: defaultCameraView.position,
                 fov: 38,
@@ -737,25 +790,38 @@ const KitchenScene = ({
                 }
               }}
             >
-              <color attach="background" args={[lighting.background]} />
+              {lighting.nightMode ? (
+                <TwilightSceneBackground lightsOn={lighting.lightsOn} />
+              ) : (
+                <color attach="background" args={[lighting.background]} />
+              )}
               <ambientLight intensity={lighting.ambient} />
               <hemisphereLight
-                args={["#FFFFFF", "#D8D0C2", lighting.hemisphere]}
+                args={[
+                  lighting.hemisphereSky,
+                  lighting.hemisphereGround,
+                  lighting.hemisphere,
+                ]}
               />
               <directionalLight
                 castShadow
-                position={[0.8, 4.8, 3.2]}
+                color={lighting.sunColor}
+                position={lighting.nightMode ? [-3.2, 4.8, 2.8] : [0.8, 4.8, 3.2]}
                 intensity={lighting.sun}
-                shadow-mapSize={[2048, 2048]}
+                shadow-mapSize={
+                  highQualityScene ? [2048, 2048] : [1024, 1024]
+                }
                 shadow-bias={-0.0003}
               />
               <directionalLight
+                color={lighting.fillColor}
                 position={[-2.4, 2.8, 2.4]}
                 intensity={lighting.fill}
               />
               <RoomShell
                 roomDimensions={roomDimensions}
                 roomSurfaces={roomSurfaces}
+                premiumTools={scenePremiumTools}
                 onEmptyPointerDown={clearSelectionForOrbit}
                 onEmptyClick={clearSelectionForOrbit}
               />
@@ -764,6 +830,7 @@ const KitchenScene = ({
                 visible={lighting.lampVisible}
                 active={lighting.lightsOn}
                 nightMode={lighting.nightMode}
+                lampType={roomSurfaces?.lampType || "spot"}
               />
               {!floorPatternPalettes[roomSurfaces?.floorPattern] && (
                 <gridHelper
@@ -799,6 +866,9 @@ const KitchenScene = ({
               )}
               {sceneItems.map((item, index) => {
                 const product = catalogMap[item.catalog_item_id] || {};
+                const selected =
+                  selectedSceneIndex === index ||
+                  selectedSceneIndices.includes(index);
 
                 return (
                   <SceneItem3D
@@ -810,13 +880,15 @@ const KitchenScene = ({
                     selectedDoor={selectedDoor}
                     selectedGlass={selectedGlass}
                     selectedCounter={selectedCounter}
-                    selected={selectedSceneIndex === index}
+                    selected={selected}
+                    showMeasurements={scenePremiumTools.measurements}
                     sceneItems={sceneItems}
                     catalogMap={catalogMap}
                     roomDimensions={roomDimensions}
                     roomSurfaces={roomSurfaces}
                     cmToPx={cmToPx}
                     onSelectItem={onSelectItem}
+                    onHoverItem={setHover3DIndex}
                     onOpenCustomizer={onOpenCustomizer}
                     onPrepareDrag={prepareItemDrag}
                     onMaybeStartDrag={maybeStartItemDrag}
@@ -827,7 +899,11 @@ const KitchenScene = ({
               <OrbitControls
                 ref={controlsRef}
                 makeDefault
-                enabled={drag3DIndex === null && !controlsLocked}
+                enabled={
+                  drag3DIndex === null &&
+                  !controlsLocked &&
+                  !scenePremiumTools.cameraTour
+                }
                 enableDamping
                 dampingFactor={0.08}
                 enablePan
@@ -838,6 +914,12 @@ const KitchenScene = ({
                 maxPolarAngle={Math.PI - 0.04}
                 target={defaultCameraView.target}
               />
+              {scenePremiumTools.cameraTour && (
+                <CameraTourController
+                  controlsRef={controlsRef}
+                  roomDimensions={roomDimensions}
+                />
+              )}
               <InitialCameraView
                 controlsRef={controlsRef}
                 applyView={applyDefaultCameraView}
@@ -861,6 +943,42 @@ const InitialCameraView = ({ controlsRef, applyView, onReady }) => {
     const frameId = requestAnimationFrame(() => onReady());
     return () => cancelAnimationFrame(frameId);
   }, [applyView, camera, controlsRef, onReady]);
+
+  return null;
+};
+
+const CameraTourController = ({ controlsRef, roomDimensions }) => {
+  const { camera, clock } = useThree();
+  const startTimeRef = useRef(null);
+  const roomWidth = cmToUnit(roomDimensions?.width || 450);
+  const roomHeight = cmToUnit(roomDimensions?.height || 250);
+  const roomDepth = cmToUnit(roomDimensions?.depth || 240);
+
+  useFrame(() => {
+    const controls = controlsRef.current;
+    const target = new Vector3(0, roomHeight * 0.52, -roomDepth * 0.16);
+    const radius = Math.max(roomWidth, roomDepth) * 1.58;
+    const elapsed = clock.getElapsedTime();
+
+    if (startTimeRef.current === null) {
+      startTimeRef.current = elapsed;
+    }
+
+    const angle = (elapsed - startTimeRef.current) * 0.18;
+
+    camera.position.set(
+      Math.sin(angle) * radius,
+      roomHeight * 0.72,
+      Math.cos(angle) * radius,
+    );
+    camera.lookAt(target);
+    camera.updateProjectionMatrix();
+
+    if (controls) {
+      controls.target.copy(target);
+      controls.update();
+    }
+  });
 
   return null;
 };
@@ -1557,37 +1675,168 @@ const createParquetTexture = (pattern = "oakHerringbone") => {
   return texture;
 };
 
-const CeilingLights = ({ roomDimensions, visible, active, nightMode }) => {
+const seededRandom = (seed) => {
+  const value = Math.sin(seed * 12.9898) * 43758.5453;
+  return value - Math.floor(value);
+};
+
+const createTwilightSkyTexture = () => {
+  if (typeof document === "undefined") return null;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 512;
+  const context = canvas.getContext("2d");
+
+  if (!context) return null;
+
+  const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "#000000");
+  gradient.addColorStop(0.56, "#02030A");
+  gradient.addColorStop(1, "#070B16");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let index = 0; index < 170; index += 1) {
+    const x = seededRandom(index + 4) * canvas.width;
+    const y = 8 + seededRandom(index + 19) * canvas.height * 0.7;
+    const brightness = 0.34 + seededRandom(index + 41) * 0.6;
+    const radius =
+      seededRandom(index + 77) > 0.92
+        ? 1.45
+        : 0.45 + seededRandom(index + 93) * 0.45;
+    context.fillStyle = `rgba(255,255,255,${brightness})`;
+    context.beginPath();
+    context.arc(x, y, radius, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  const moonX = canvas.width * 0.09;
+  const moonY = canvas.height * 0.1;
+  const moonGlow = context.createRadialGradient(
+    moonX,
+    moonY,
+    4,
+    moonX,
+    moonY,
+    44,
+  );
+  moonGlow.addColorStop(0, "rgba(238,246,255,0.18)");
+  moonGlow.addColorStop(0.42, "rgba(238,246,255,0.06)");
+  moonGlow.addColorStop(1, "rgba(238,246,255,0)");
+  context.fillStyle = moonGlow;
+  context.beginPath();
+  context.arc(moonX, moonY, 44, 0, Math.PI * 2);
+  context.fill();
+
+  const moonBody = context.createRadialGradient(
+    moonX - 8,
+    moonY - 9,
+    2,
+    moonX,
+    moonY,
+    14,
+  );
+  moonBody.addColorStop(0, "#FFFFFF");
+  moonBody.addColorStop(0.62, "#E8EDF2");
+  moonBody.addColorStop(1, "#BFC7CF");
+  context.fillStyle = moonBody;
+  context.beginPath();
+  context.arc(moonX, moonY, 12, 0, Math.PI * 2);
+  context.fill();
+
+  context.fillStyle = "rgba(150,158,168,0.18)";
+  context.beginPath();
+  context.arc(moonX - 2.5, moonY + 3, 2.2, 0, Math.PI * 2);
+  context.arc(moonX + 3.5, moonY - 1.5, 1.6, 0, Math.PI * 2);
+  context.arc(moonX + 2, moonY + 4.5, 1.3, 0, Math.PI * 2);
+  context.fill();
+
+  const texture = new CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+};
+
+const TwilightSceneBackground = ({ lightsOn }) => {
+  void lightsOn;
+  const texture = useMemo(() => createTwilightSkyTexture(), []);
+
+  useEffect(() => () => texture?.dispose(), [texture]);
+
+  if (!texture) return null;
+
+  return <primitive attach="background" object={texture} />;
+};
+
+const CeilingLights = ({
+  roomDimensions,
+  visible,
+  active,
+  nightMode,
+  lampType = "spot",
+}) => {
   const width = cmToUnit(roomDimensions?.width || 450);
   const height = cmToUnit(roomDimensions?.height || 250);
   const depth = cmToUnit(roomDimensions?.depth || 240);
   const y = Math.max(height - 0.06, 0.2);
-  const lightPositions = [
-    [-width * 0.24, y, -depth * 0.28],
-    [width * 0.24, y, -depth * 0.28],
-    [-width * 0.24, y, depth * 0.12],
-    [width * 0.24, y, depth * 0.12],
-  ];
-  const lightIntensity = active ? (nightMode ? 1.7 : 0.72) : 0;
+  const lightPositions =
+    lampType === "chandelier"
+      ? [
+          [-width * 0.16, y - 0.18, -depth * 0.12],
+          [width * 0.16, y - 0.18, -depth * 0.12],
+        ]
+      : [
+          [-width * 0.24, y, -depth * 0.28],
+          [width * 0.24, y, -depth * 0.28],
+          [-width * 0.24, y, depth * 0.12],
+          [width * 0.24, y, depth * 0.12],
+        ];
+  const lightIntensity = active ? (nightMode ? 1.55 : 0.72) : 0;
   const fixtureColor = active ? "#FFE4A3" : "#D8D3C8";
 
   if (!visible) return null;
 
   return (
     <group>
+      {lampType === "track" && (
+        <mesh position={[0, y + 0.006, -depth * 0.08]} raycast={() => null}>
+          <boxGeometry args={[width * 0.62, 0.025, 0.035]} />
+          <meshStandardMaterial color="#1F2937" roughness={0.36} metalness={0.28} />
+        </mesh>
+      )}
       {lightPositions.map((position, index) => (
         <group key={`${position.join("-")}-${index}`} position={position}>
+          {lampType === "chandelier" && (
+            <mesh position={[0, 0.09, 0]} raycast={() => null}>
+              <cylinderGeometry args={[0.006, 0.006, 0.34, 12]} />
+              <meshStandardMaterial color="#94A3B8" roughness={0.3} metalness={0.5} />
+            </mesh>
+          )}
           <mesh rotation={[Math.PI / 2, 0, 0]} raycast={() => null}>
-            <cylinderGeometry args={[0.075, 0.075, 0.018, 32]} />
+            <cylinderGeometry
+              args={[
+                lampType === "chandelier" ? 0.105 : 0.078,
+                lampType === "chandelier" ? 0.075 : 0.078,
+                lampType === "track" ? 0.038 : 0.022,
+                36,
+              ]}
+            />
             <meshStandardMaterial
-              color="#F7F4EC"
+              color={
+                lampType === "track"
+                  ? "#111827"
+                  : nightMode
+                    ? "#EFECE4"
+                    : "#F7F4EC"
+              }
               emissive={active ? "#FFE2A6" : "#000000"}
-              emissiveIntensity={active ? 0.55 : 0}
+              emissiveIntensity={active ? (nightMode ? 0.46 : 0.34) : 0}
               roughness={0.42}
+              metalness={0.08}
             />
           </mesh>
           <mesh
-            position={[0, -0.012, 0]}
+            position={[0, -0.014, 0]}
             rotation={[Math.PI / 2, 0, 0]}
             raycast={() => null}
           >
@@ -1595,21 +1844,19 @@ const CeilingLights = ({ roomDimensions, visible, active, nightMode }) => {
             <meshBasicMaterial
               color={fixtureColor}
               transparent
-              opacity={active ? 0.96 : 0.5}
+              opacity={active ? 0.88 : 0.45}
             />
           </mesh>
-          {active && (
-            <pointLight
-              color="#FFE7B8"
-              intensity={lightIntensity}
-              distance={Math.max(width, depth) * 1.12}
-              decay={1.65}
-              position={[0, -0.08, 0]}
-              castShadow={nightMode}
-              shadow-mapSize={[1024, 1024]}
-              shadow-bias={-0.00025}
-            />
-          )}
+          <pointLight
+            color="#FFE7B8"
+            intensity={lightIntensity}
+            distance={Math.max(width, depth) * (nightMode ? 0.72 : 0.95)}
+            decay={nightMode ? 2.15 : 1.8}
+            position={[0, -0.1, 0]}
+            castShadow={nightMode && active}
+            shadow-mapSize={[1024, 1024]}
+            shadow-bias={-0.00025}
+          />
         </group>
       ))}
     </group>
@@ -1619,6 +1866,7 @@ const CeilingLights = ({ roomDimensions, visible, active, nightMode }) => {
 const RoomShell = ({
   roomDimensions,
   roomSurfaces,
+  premiumTools,
   onEmptyClick,
   onEmptyPointerDown,
 }) => {
@@ -1640,8 +1888,22 @@ const RoomShell = ({
     ceilingVisible: true,
     ...(roomSurfaces || {}),
   };
+  const isNight = surfaces.sceneMode === "night";
+  const lightsOn = surfaces.lampVisible === true && surfaces.lightsOn === true;
+  const surfaceColor = (value, fallback) => {
+    const color = new Color(value || fallback);
+
+    if (!isNight) return color;
+
+    color.lerp(new Color(lightsOn ? "#FFE4B8" : "#8FA9CC"), lightsOn ? 0.1 : 0.18);
+    color.multiplyScalar(lightsOn ? 0.78 : 0.48);
+
+    return color;
+  };
+  const trimMaterialColor = surfaceColor(trimColor, "#D0D0CA");
   const floorTexture = useMemo(() => {
-    if (!floorPatternPalettes[surfaces.floorPattern]) return null;
+    if (!floorPatternPalettes[surfaces.floorPattern])
+      return null;
 
     const texture = createParquetTexture(surfaces.floorPattern);
     if (texture) {
@@ -1649,6 +1911,12 @@ const RoomShell = ({
     }
     return texture;
   }, [depth, surfaces.floorPattern, width]);
+  const wallsVisible =
+    premiumTools?.walls !== false && premiumTools?.cameraTour !== true;
+  const ceilingVisible =
+    wallsVisible &&
+    premiumTools?.topView !== true &&
+    surfaces.ceilingVisible !== false;
 
   useEffect(() => () => floorTexture?.dispose(), [floorTexture]);
 
@@ -1672,13 +1940,17 @@ const RoomShell = ({
       >
         <boxGeometry args={[width, 0.04, depth]} />
         <meshStandardMaterial
-          color={floorTexture ? "#FFFFFF" : surfaces.floor}
+          color={
+            floorTexture
+              ? surfaceColor("#FFFFFF", "#FFFFFF")
+              : surfaceColor(surfaces.floor, "#DDBF86")
+          }
           map={floorTexture || null}
           roughness={0.42}
           metalness={0.02}
         />
       </mesh>
-      {surfaces.backWallVisible !== false && (
+      {wallsVisible && surfaces.backWallVisible !== false && (
         <>
           <mesh
             position={[0, height / 2, -depth / 2 - wallThickness / 2]}
@@ -1690,7 +1962,7 @@ const RoomShell = ({
               args={[width + wallThickness * 2, height, wallThickness]}
             />
             <meshStandardMaterial
-              color={surfaces.backWall}
+              color={surfaceColor(surfaces.backWall, "#E8E6DE")}
               roughness={0.88}
               metalness={0}
             />
@@ -1700,11 +1972,11 @@ const RoomShell = ({
             raycast={() => null}
           >
             <boxGeometry args={[width + 0.02, 0.035, 0.035]} />
-            <meshStandardMaterial color={trimColor} roughness={0.82} />
+            <meshStandardMaterial color={trimMaterialColor} roughness={0.82} />
           </mesh>
         </>
       )}
-      {surfaces.leftWallVisible !== false && (
+      {wallsVisible && surfaces.leftWallVisible !== false && (
         <>
           <mesh
             position={[-width / 2 - wallThickness / 2, height / 2, 0]}
@@ -1714,14 +1986,14 @@ const RoomShell = ({
           >
             <boxGeometry args={[wallThickness, height, depth]} />
             <meshStandardMaterial
-              color={surfaces.sideWall}
+              color={surfaceColor(surfaces.sideWall, "#E1DED5")}
               roughness={0.92}
               metalness={0}
             />
           </mesh>
         </>
       )}
-      {surfaces.rightWallVisible !== false && (
+      {wallsVisible && surfaces.rightWallVisible !== false && (
         <>
           <mesh
             position={[width / 2 + wallThickness / 2, height / 2, 0]}
@@ -1731,14 +2003,14 @@ const RoomShell = ({
           >
             <boxGeometry args={[wallThickness, height, depth]} />
             <meshStandardMaterial
-              color={surfaces.sideWall}
+              color={surfaceColor(surfaces.sideWall, "#E1DED5")}
               roughness={0.92}
               metalness={0}
             />
           </mesh>
         </>
       )}
-      {surfaces.ceilingVisible !== false && (
+      {ceilingVisible && (
         <mesh
           position={[0, height + wallThickness / 2, 0]}
           receiveShadow
@@ -1753,30 +2025,32 @@ const RoomShell = ({
             ]}
           />
           <meshStandardMaterial
-            color={surfaces.ceiling}
+            color={surfaceColor(surfaces.ceiling, "#D4CDC0")}
             roughness={0.9}
             metalness={0}
           />
         </mesh>
       )}
-      {surfaces.backWallVisible !== false &&
+      {wallsVisible &&
+        surfaces.backWallVisible !== false &&
         surfaces.leftWallVisible !== false && (
           <mesh
             position={[-width / 2 + 0.018, height / 2, -depth / 2 + 0.018]}
             raycast={() => null}
           >
             <boxGeometry args={[0.028, height, 0.028]} />
-            <meshStandardMaterial color={trimColor} roughness={0.88} />
+            <meshStandardMaterial color={trimMaterialColor} roughness={0.88} />
           </mesh>
         )}
-      {surfaces.backWallVisible !== false &&
+      {wallsVisible &&
+        surfaces.backWallVisible !== false &&
         surfaces.rightWallVisible !== false && (
           <mesh
             position={[width / 2 - 0.018, height / 2, -depth / 2 + 0.018]}
             raycast={() => null}
           >
             <boxGeometry args={[0.028, height, 0.028]} />
-            <meshStandardMaterial color={trimColor} roughness={0.88} />
+            <meshStandardMaterial color={trimMaterialColor} roughness={0.88} />
           </mesh>
         )}
     </group>
@@ -2105,10 +2379,12 @@ const SceneItem3D = ({
   selectedGlass,
   selectedCounter,
   selected,
+  showMeasurements,
   roomDimensions,
   roomSurfaces,
   cmToPx,
   onSelectItem,
+  onHoverItem,
   onOpenCustomizer,
   onPrepareDrag,
   onMaybeStartDrag,
@@ -2155,18 +2431,28 @@ const SceneItem3D = ({
   return (
     <group
       position={transform.position}
-      onPointerDown={(event) => {
+      onPointerOver={(event) => {
+        event.stopPropagation();
+        onHoverItem(index);
+      }}
+      onPointerOut={(event) => {
+        event.stopPropagation();
+        onHoverItem((current) => (current === index ? null : current));
+      }}
+  onPointerDown={(event) => {
         event.stopPropagation();
         event.sourceEvent?.preventDefault?.();
         event.sourceEvent?.stopPropagation?.();
         onSelectItem(index);
-        onPrepareDrag(index, event);
-        event.target.setPointerCapture?.(event.pointerId);
-        event.currentTarget.setPointerCapture?.(event.pointerId);
+        if (!item.locked) {
+          onPrepareDrag(index, event);
+          event.target.setPointerCapture?.(event.pointerId);
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+        }
       }}
       onPointerMove={(event) => {
         event.stopPropagation();
-        onMaybeStartDrag(index, event);
+        if (!item.locked) onMaybeStartDrag(index, event);
       }}
       onPointerUp={(event) => {
         event.stopPropagation();
@@ -2202,7 +2488,7 @@ const SceneItem3D = ({
           />
         )}
       </Suspense>
-      {selected && !overlayHidden && (
+      {selected && !overlayHidden && showMeasurements && (
         <>
           <mesh>
             <boxGeometry args={transform.size.map((value) => value + 0.035)} />
@@ -2214,6 +2500,14 @@ const SceneItem3D = ({
             dimensions={transform.dimensions}
           />
         </>
+      )}
+      {selected && item.locked && !overlayHidden && (
+        <DimensionLabel
+          position={[0, transform.size[1] / 2 + 0.22, 0]}
+          distanceFactor={8}
+        >
+          Kilitli
+        </DimensionLabel>
       )}
     </group>
   );
