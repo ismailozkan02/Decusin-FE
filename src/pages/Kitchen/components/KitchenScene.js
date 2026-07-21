@@ -1,5 +1,19 @@
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Box, CircularProgress, IconButton, Paper, Stack, Typography } from "@mui/material";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  Box,
+  CircularProgress,
+  IconButton,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DeleteSweepOutlinedIcon from "@mui/icons-material/DeleteSweepOutlined";
@@ -13,8 +27,23 @@ import RotateRightIcon from "@mui/icons-material/RotateRight";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Edges, Environment, Html, OrbitControls, useGLTF } from "@react-three/drei";
-import { Box3, CanvasTexture, Color, DoubleSide, Plane, RepeatWrapping, Vector2, Vector3 } from "three";
+import {
+  Edges,
+  Environment,
+  Html,
+  OrbitControls,
+  useGLTF,
+} from "@react-three/drei";
+import {
+  Box3,
+  CanvasTexture,
+  Color,
+  DoubleSide,
+  Plane,
+  RepeatWrapping,
+  Vector2,
+  Vector3,
+} from "three";
 
 const modelScaleByCategory = {
   base_cabinet: 1,
@@ -31,7 +60,9 @@ const getModelMaterialColor = (materialName, category, palette) => {
   if (name.includes("glass")) return palette.glass;
   if (name.includes("stone")) return palette.countertop;
   if (name.includes("oak") || name.includes("light") || name.includes("door")) {
-    return ["base_cabinet", "wall_cabinet"].includes(category) ? palette.door : null;
+    return ["base_cabinet", "wall_cabinet"].includes(category)
+      ? palette.door
+      : null;
   }
 
   return null;
@@ -47,7 +78,11 @@ const ModelInstance = ({ modelUrl, category, rotation, palette }) => {
 
       const applyMaterial = (material) => {
         const nextMaterial = material.clone();
-        const nextColor = getModelMaterialColor(nextMaterial.name || object.name || "", category, palette);
+        const nextColor = getModelMaterialColor(
+          nextMaterial.name || object.name || "",
+          category,
+          palette,
+        );
 
         if (nextColor && nextMaterial.color) {
           nextMaterial.color = new Color(nextColor);
@@ -277,7 +312,11 @@ const KitchenScene = ({
       sun: lightsOn ? 1.42 : 1.35,
       fill: lightsOn ? 0.28 : 0.22,
     };
-  }, [roomSurfaces?.lampVisible, roomSurfaces?.lightsOn, roomSurfaces?.sceneMode]);
+  }, [
+    roomSurfaces?.lampVisible,
+    roomSurfaces?.lightsOn,
+    roomSurfaces?.sceneMode,
+  ]);
   const defaultCameraView = useMemo(() => {
     const roomWidth = cmToUnit(roomWidthCm);
     const roomHeight = cmToUnit(roomHeightCm);
@@ -290,22 +329,29 @@ const KitchenScene = ({
     };
   }, [roomDepthCm, roomHeightCm, roomWidthCm]);
   const handleSceneReady = useCallback(() => setSceneReady(true), []);
-  const applyDefaultCameraView = useCallback((camera, controls) => {
-    const target = new Vector3(...defaultCameraView.target);
+  const applyDefaultCameraView = useCallback(
+    (camera, controls) => {
+      const target = new Vector3(...defaultCameraView.target);
 
-    camera.position.set(...defaultCameraView.position);
-    camera.lookAt(target);
-    camera.updateProjectionMatrix();
+      camera.position.set(...defaultCameraView.position);
+      camera.lookAt(target);
+      camera.updateProjectionMatrix();
 
-    if (controls) {
-      controls.target.copy(target);
-      controls.update();
-    }
-  }, [defaultCameraView]);
+      if (controls) {
+        controls.target.copy(target);
+        controls.update();
+      }
+    },
+    [defaultCameraView],
+  );
   const isWallDrag = (index) => {
     const item = sceneItems[index];
     const product = catalogMap[item?.catalog_item_id] || {};
-    return isWallMountedItem(item, product, getSceneItemDimensions(product, item));
+    return isWallMountedItem(
+      item,
+      product,
+      getSceneItemDimensions(product, item),
+    );
   };
   const getDragSurfaceHeight = (index) => {
     const item = sceneItems[index];
@@ -320,7 +366,9 @@ const KitchenScene = ({
     });
 
     return cmToUnit(
-      elevation !== null && elevation !== undefined && Number.isFinite(Number(elevation))
+      elevation !== null &&
+        elevation !== undefined &&
+        Number.isFinite(Number(elevation))
         ? elevation
         : 0.035,
     );
@@ -423,7 +471,12 @@ const KitchenScene = ({
     const sourceEvent = event.sourceEvent || event;
     const pendingDrag = pendingDragRef.current;
 
-    if (!pendingDrag || pendingDrag.index !== index || sourceEvent.buttons !== 1) return;
+    if (
+      !pendingDrag ||
+      pendingDrag.index !== index ||
+      sourceEvent.buttons !== 1
+    )
+      return;
 
     const deltaX = Number(sourceEvent.clientX || 0) - pendingDrag.x;
     const deltaY = Number(sourceEvent.clientY || 0) - pendingDrag.y;
@@ -515,8 +568,17 @@ const KitchenScene = ({
           )}
         </Stack>
       )}
-      <Stack data-kitchen-scene-controls="true" direction="column" spacing={0.45} sx={sceneToolPanelSx}>
-        <IconButton aria-label="Yeni proje" onClick={onNewProject} sx={sceneIconButtonSx("#1976D2")}>
+      <Stack
+        data-kitchen-scene-controls="true"
+        direction="column"
+        spacing={0.45}
+        sx={sceneToolPanelSx}
+      >
+        <IconButton
+          aria-label="Yeni proje"
+          onClick={onNewProject}
+          sx={sceneIconButtonSx("#1976D2")}
+        >
           <RestartAltOutlinedIcon />
         </IconButton>
         <IconButton
@@ -527,10 +589,18 @@ const KitchenScene = ({
         >
           <SaveOutlinedIcon />
         </IconButton>
-        <IconButton aria-label="PDF aktar" onClick={onExportPdf} sx={sceneIconButtonSx("#F97316")}>
+        <IconButton
+          aria-label="PDF aktar"
+          onClick={onExportPdf}
+          sx={sceneIconButtonSx("#F97316")}
+        >
           <PictureAsPdfOutlinedIcon />
         </IconButton>
-        <IconButton aria-label="Sahneyi buyut" onClick={onToggleFullscreen} sx={sceneIconButtonSx("#111827")}>
+        <IconButton
+          aria-label="Sahneyi buyut"
+          onClick={onToggleFullscreen}
+          sx={sceneIconButtonSx("#111827")}
+        >
           <OpenInFullOutlinedIcon />
         </IconButton>
         <IconButton
@@ -620,7 +690,9 @@ const KitchenScene = ({
           background: sceneReady ? "#FFFFFF" : "transparent",
           perspective: "1000px",
           overflow: "visible",
-          border: sceneReady ? "1px dashed rgba(15,23,42,0.18)" : "1px dashed transparent",
+          border: sceneReady
+            ? "1px dashed rgba(15,23,42,0.18)"
+            : "1px dashed transparent",
           borderRadius: 1.5,
           "&:fullscreen": {
             width: "100vw",
@@ -664,99 +736,114 @@ const KitchenScene = ({
                 }
               }}
             >
-            <color attach="background" args={[lighting.background]} />
-            <ambientLight intensity={lighting.ambient} />
-            <hemisphereLight args={["#FFFFFF", "#D8D0C2", lighting.hemisphere]} />
-            <directionalLight
-              castShadow
-              position={[0.8, 4.8, 3.2]}
-              intensity={lighting.sun}
-              shadow-mapSize={[2048, 2048]}
-              shadow-bias={-0.0003}
-            />
-            <directionalLight position={[-2.4, 2.8, 2.4]} intensity={lighting.fill} />
-            <RoomShell
-              roomDimensions={roomDimensions}
-              roomSurfaces={roomSurfaces}
-              onEmptyPointerDown={clearSelectionForOrbit}
-              onEmptyClick={clearSelectionForOrbit}
-            />
-            <CeilingLights
-              roomDimensions={roomDimensions}
-              visible={lighting.lampVisible}
-              active={lighting.lightsOn}
-              nightMode={lighting.nightMode}
-            />
-            {!floorPatternPalettes[roomSurfaces?.floorPattern] && (
-              <gridHelper
-                args={[Math.max(cmToUnit(roomWidthCm), cmToUnit(roomDimensions?.depth || 240)), 24, "#D8DEE8", "#EEF2F7"]}
-                position={[0, 0.008, 0]}
+              <color attach="background" args={[lighting.background]} />
+              <ambientLight intensity={lighting.ambient} />
+              <hemisphereLight
+                args={["#FFFFFF", "#D8D0C2", lighting.hemisphere]}
               />
-            )}
-            {drag3DIndex !== null && (
-              <>
-                <SceneDragController
-                  roomDimensions={roomDimensions}
-                  wallMode={isWallDrag(drag3DIndex)}
-                  surfaceHeight={getDragSurfaceHeight(drag3DIndex)}
-                  onDragPoint={handle3DDragPoint}
-                  onDragEnd={handle3DPointerUp}
+              <directionalLight
+                castShadow
+                position={[0.8, 4.8, 3.2]}
+                intensity={lighting.sun}
+                shadow-mapSize={[2048, 2048]}
+                shadow-bias={-0.0003}
+              />
+              <directionalLight
+                position={[-2.4, 2.8, 2.4]}
+                intensity={lighting.fill}
+              />
+              <RoomShell
+                roomDimensions={roomDimensions}
+                roomSurfaces={roomSurfaces}
+                onEmptyPointerDown={clearSelectionForOrbit}
+                onEmptyClick={clearSelectionForOrbit}
+              />
+              <CeilingLights
+                roomDimensions={roomDimensions}
+                visible={lighting.lampVisible}
+                active={lighting.lightsOn}
+                nightMode={lighting.nightMode}
+              />
+              {!floorPatternPalettes[roomSurfaces?.floorPattern] && (
+                <gridHelper
+                  args={[
+                    Math.max(
+                      cmToUnit(roomWidthCm),
+                      cmToUnit(roomDimensions?.depth || 240),
+                    ),
+                    24,
+                    "#D8DEE8",
+                    "#EEF2F7",
+                  ]}
+                  position={[0, 0.008, 0]}
                 />
-                <DragSurface
-                  roomDimensions={roomDimensions}
-                  wallMode={isWallDrag(drag3DIndex)}
-                  surfaceHeight={getDragSurfaceHeight(drag3DIndex)}
-                  onPointerMove={handle3DSurfaceMove}
-                  onPointerUp={handle3DPointerUp}
-                />
-              </>
-            )}
-            {sceneItems.map((item, index) => {
-              const product = catalogMap[item.catalog_item_id] || {};
+              )}
+              {drag3DIndex !== null && (
+                <>
+                  <SceneDragController
+                    roomDimensions={roomDimensions}
+                    wallMode={isWallDrag(drag3DIndex)}
+                    surfaceHeight={getDragSurfaceHeight(drag3DIndex)}
+                    onDragPoint={handle3DDragPoint}
+                    onDragEnd={handle3DPointerUp}
+                  />
+                  <DragSurface
+                    roomDimensions={roomDimensions}
+                    wallMode={isWallDrag(drag3DIndex)}
+                    surfaceHeight={getDragSurfaceHeight(drag3DIndex)}
+                    onPointerMove={handle3DSurfaceMove}
+                    onPointerUp={handle3DPointerUp}
+                  />
+                </>
+              )}
+              {sceneItems.map((item, index) => {
+                const product = catalogMap[item.catalog_item_id] || {};
 
-              return (
-                <SceneItem3D
-                  key={`${item.catalog_item_id}-${index}`}
-                  item={item}
-                  index={index}
-                  product={product}
-                  materialMap={materialMap}
-                  selectedDoor={selectedDoor}
-                  selectedGlass={selectedGlass}
-                  selectedCounter={selectedCounter}
-                  selected={selectedSceneIndex === index}
-                  sceneItems={sceneItems}
-                  catalogMap={catalogMap}
-                  roomDimensions={roomDimensions}
-                  roomSurfaces={roomSurfaces}
-                  cmToPx={cmToPx}
-                  onSelectItem={onSelectItem}
-                  onPrepareDrag={prepareItemDrag}
-                  onMaybeStartDrag={maybeStartItemDrag}
-                  onEndDrag={handle3DPointerUp}
-                />
-              );
-            })}
-            <OrbitControls
-              ref={controlsRef}
-              makeDefault
-              enabled={drag3DIndex === null && !controlsLocked}
-              enableDamping
-              dampingFactor={0.08}
-              enablePan
-              screenSpacePanning
-              minDistance={0.28}
-              maxDistance={8}
-              minPolarAngle={0.04}
-              maxPolarAngle={Math.PI - 0.04}
-              target={defaultCameraView.target}
-            />
-            <InitialCameraView
-              controlsRef={controlsRef}
-              applyView={applyDefaultCameraView}
-              onReady={handleSceneReady}
-            />
-            <Environment preset={lighting.nightMode ? "night" : "apartment"} />
+                return (
+                  <SceneItem3D
+                    key={`${item.catalog_item_id}-${index}`}
+                    item={item}
+                    index={index}
+                    product={product}
+                    materialMap={materialMap}
+                    selectedDoor={selectedDoor}
+                    selectedGlass={selectedGlass}
+                    selectedCounter={selectedCounter}
+                    selected={selectedSceneIndex === index}
+                    sceneItems={sceneItems}
+                    catalogMap={catalogMap}
+                    roomDimensions={roomDimensions}
+                    roomSurfaces={roomSurfaces}
+                    cmToPx={cmToPx}
+                    onSelectItem={onSelectItem}
+                    onPrepareDrag={prepareItemDrag}
+                    onMaybeStartDrag={maybeStartItemDrag}
+                    onEndDrag={handle3DPointerUp}
+                  />
+                );
+              })}
+              <OrbitControls
+                ref={controlsRef}
+                makeDefault
+                enabled={drag3DIndex === null && !controlsLocked}
+                enableDamping
+                dampingFactor={0.08}
+                enablePan
+                screenSpacePanning
+                minDistance={0.28}
+                maxDistance={8}
+                minPolarAngle={0.04}
+                maxPolarAngle={Math.PI - 0.04}
+                target={defaultCameraView.target}
+              />
+              <InitialCameraView
+                controlsRef={controlsRef}
+                applyView={applyDefaultCameraView}
+                onReady={handleSceneReady}
+              />
+              <Environment
+                preset={lighting.nightMode ? "night" : "apartment"}
+              />
             </Canvas>
           )}
         </Box>
@@ -794,17 +881,28 @@ const snapRoomValue = (value, roomSize, itemSize) => {
 };
 
 const isCountertopMountedProduct = (product) => {
-  const name = `${product?.name || ""} ${product?.category || ""}`.toLowerCase();
-  return ["evye", "ocak", "ankastre", "sink", "hob", "cooktop", "built-in"].some((keyword) =>
-    name.includes(keyword),
-  );
+  const name =
+    `${product?.name || ""} ${product?.category || ""}`.toLowerCase();
+  return [
+    "evye",
+    "ocak",
+    "ankastre",
+    "sink",
+    "hob",
+    "cooktop",
+    "built-in",
+  ].some((keyword) => name.includes(keyword));
 };
 
-const isWallMountedProduct = (product, dimensions = product?.dimensions || {}) => {
-  const text = `${product?.name || ""} ${product?.sku || ""} ${product?.category || ""}`
-    .toLocaleLowerCase("tr-TR")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+const isWallMountedProduct = (
+  product,
+  dimensions = product?.dimensions || {},
+) => {
+  const text =
+    `${product?.name || ""} ${product?.sku || ""} ${product?.category || ""}`
+      .toLocaleLowerCase("tr-TR")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
   const depth = Number(dimensions?.depth || product?.dimensions?.depth || 0);
   const height = Number(dimensions?.height || product?.dimensions?.height || 0);
 
@@ -817,12 +915,18 @@ const isWallMountedProduct = (product, dimensions = product?.dimensions || {}) =
     text.includes("ãœst dolap") ||
     text.includes("ust-") ||
     text.includes("ust_") ||
-    (depth > 0 && depth <= 40 && height >= 40 && product?.category !== "countertop")
+    (depth > 0 &&
+      depth <= 40 &&
+      height >= 40 &&
+      product?.category !== "countertop")
   );
 };
 
-const isWallMountedItem = (item, product, dimensions = item?.dimensions || product?.dimensions || {}) =>
-  item?.placement === "wall" || isWallMountedProduct(product, dimensions);
+const isWallMountedItem = (
+  item,
+  product,
+  dimensions = item?.dimensions || product?.dimensions || {},
+) => item?.placement === "wall" || isWallMountedProduct(product, dimensions);
 
 const getSceneItemDimensions = (product, item = {}) => {
   const mounted = isCountertopMountedProduct(product);
@@ -845,7 +949,10 @@ const getSceneItemDimensions = (product, item = {}) => {
   if (mounted && Number(dimensions.height || 0) > 20) {
     dimensions.height = 6;
   }
-  if (product.category === "countertop" && Number(dimensions.height || 0) > 12) {
+  if (
+    product.category === "countertop" &&
+    Number(dimensions.height || 0) > 12
+  ) {
     dimensions.height = 4;
   }
 
@@ -900,7 +1007,10 @@ const resolveDragCollisionCm = ({
     if (!isCollisionBlockingProduct(otherProduct)) return;
 
     const otherDimensions = getSceneItemDimensions(otherProduct, otherItem);
-    if (isWallMountedItem(otherItem, otherProduct, otherDimensions) !== wallMode) return;
+    if (
+      isWallMountedItem(otherItem, otherProduct, otherDimensions) !== wallMode
+    )
+      return;
 
     const other = {
       x: Number(otherItem.position?.x || 0) / cmToPx,
@@ -929,7 +1039,8 @@ const resolveDragCollisionCm = ({
       if (Math.abs(movement.x) >= Math.abs(movement.y) || xPen <= yPen) {
         resolved.x = movement.x >= 0 ? other.x - width : other.x + other.width;
       } else {
-        resolved.y = movement.y >= 0 ? other.y - height : other.y + other.height;
+        resolved.y =
+          movement.y >= 0 ? other.y - height : other.y + other.height;
       }
       return;
     }
@@ -975,31 +1086,60 @@ const getItemFootprintCm = (item, product, cmToPx) => {
   };
 };
 
-const getBaseSupportTopCm = ({ sceneItems, catalogMap, targetIndex, targetFootprint, cmToPx }) => {
+const getBaseSupportTopCm = ({
+  sceneItems,
+  catalogMap,
+  targetIndex,
+  targetFootprint,
+  cmToPx,
+}) => {
   let supportTop = 0;
 
   sceneItems.forEach((supportItem, supportIndex) => {
     if (supportIndex === targetIndex) return;
 
     const supportProduct = catalogMap[supportItem.catalog_item_id] || {};
-    if (!["base_cabinet", "appliance"].includes(supportProduct.category)) return;
+    if (!["base_cabinet", "appliance"].includes(supportProduct.category))
+      return;
 
-    const supportFootprint = getItemFootprintCm(supportItem, supportProduct, cmToPx);
+    const supportFootprint = getItemFootprintCm(
+      supportItem,
+      supportProduct,
+      cmToPx,
+    );
     const overlaps =
-      rangesOverlap(targetFootprint.x, targetFootprint.width, supportFootprint.x, supportFootprint.width) &&
-      rangesOverlap(targetFootprint.z, targetFootprint.depth, supportFootprint.z, supportFootprint.depth);
+      rangesOverlap(
+        targetFootprint.x,
+        targetFootprint.width,
+        supportFootprint.x,
+        supportFootprint.width,
+      ) &&
+      rangesOverlap(
+        targetFootprint.z,
+        targetFootprint.depth,
+        supportFootprint.z,
+        supportFootprint.depth,
+      );
 
     if (!overlaps) return;
 
     const supportElevation = Number(supportItem.position?.elevation);
-    const supportBottom = Number.isFinite(supportElevation) ? supportElevation : 0;
+    const supportBottom = Number.isFinite(supportElevation)
+      ? supportElevation
+      : 0;
     supportTop = Math.max(supportTop, supportBottom + supportFootprint.height);
   });
 
   return supportTop;
 };
 
-const getCountertopSupportTopCm = ({ sceneItems, catalogMap, targetIndex, targetFootprint, cmToPx }) => {
+const getCountertopSupportTopCm = ({
+  sceneItems,
+  catalogMap,
+  targetIndex,
+  targetFootprint,
+  cmToPx,
+}) => {
   let supportTop = 0;
 
   sceneItems.forEach((supportItem, supportIndex) => {
@@ -1008,10 +1148,24 @@ const getCountertopSupportTopCm = ({ sceneItems, catalogMap, targetIndex, target
     const supportProduct = catalogMap[supportItem.catalog_item_id] || {};
     if (supportProduct.category !== "countertop") return;
 
-    const supportFootprint = getItemFootprintCm(supportItem, supportProduct, cmToPx);
+    const supportFootprint = getItemFootprintCm(
+      supportItem,
+      supportProduct,
+      cmToPx,
+    );
     const overlaps =
-      rangesOverlap(targetFootprint.x, targetFootprint.width, supportFootprint.x, supportFootprint.width) &&
-      rangesOverlap(targetFootprint.z, targetFootprint.depth, supportFootprint.z, supportFootprint.depth);
+      rangesOverlap(
+        targetFootprint.x,
+        targetFootprint.width,
+        supportFootprint.x,
+        supportFootprint.width,
+      ) &&
+      rangesOverlap(
+        targetFootprint.z,
+        targetFootprint.depth,
+        supportFootprint.z,
+        supportFootprint.depth,
+      );
 
     if (!overlaps) return;
 
@@ -1024,13 +1178,23 @@ const getCountertopSupportTopCm = ({ sceneItems, catalogMap, targetIndex, target
         cmToPx,
       }) || Number(supportItem.position?.elevation || 0);
 
-    supportTop = Math.max(supportTop, countertopBottom + supportFootprint.height);
+    supportTop = Math.max(
+      supportTop,
+      countertopBottom + supportFootprint.height,
+    );
   });
 
   return supportTop;
 };
 
-const getDynamicElevationCm = ({ item, index, product, sceneItems, catalogMap, cmToPx }) => {
+const getDynamicElevationCm = ({
+  item,
+  index,
+  product,
+  sceneItems,
+  catalogMap,
+  cmToPx,
+}) => {
   const footprint = getItemFootprintCm(item, product, cmToPx);
 
   if (product.category === "countertop") {
@@ -1066,7 +1230,14 @@ const getDynamicElevationCm = ({ item, index, product, sceneItems, catalogMap, c
   return Number.isFinite(elevation) ? elevation : null;
 };
 
-const getCategoryPlacement = (item, product, roomHeightCm, dimensions, topCm, elevationCm) => {
+const getCategoryPlacement = (
+  item,
+  product,
+  roomHeightCm,
+  dimensions,
+  topCm,
+  elevationCm,
+) => {
   const category = product?.category;
   const height = Number(dimensions.height || 72);
   const hasElevation =
@@ -1077,11 +1248,16 @@ const getCategoryPlacement = (item, product, roomHeightCm, dimensions, topCm, el
 
   if (hasElevation) {
     const maxElevation = Math.max(roomHeightCm - height, 0);
-    return cmToUnit(Math.min(Math.max(elevation, 0), maxElevation) + height / 2);
+    return cmToUnit(
+      Math.min(Math.max(elevation, 0), maxElevation) + height / 2,
+    );
   }
 
   if (isWallMountedItem(item, product, dimensions)) {
-    return Math.max(cmToUnit(roomHeightCm - topCm - height / 2), cmToUnit(height / 2));
+    return Math.max(
+      cmToUnit(roomHeightCm - topCm - height / 2),
+      cmToUnit(height / 2),
+    );
   }
 
   if (category === "countertop" || isCountertopMountedProduct(product)) {
@@ -1092,7 +1268,15 @@ const getCategoryPlacement = (item, product, roomHeightCm, dimensions, topCm, el
   return cmToUnit(height / 2);
 };
 
-const getItem3DTransform = ({ item, index, product, sceneItems, catalogMap, roomDimensions, cmToPx }) => {
+const getItem3DTransform = ({
+  item,
+  index,
+  product,
+  sceneItems,
+  catalogMap,
+  roomDimensions,
+  cmToPx,
+}) => {
   const roomWidthCm = Math.max(Number(roomDimensions?.width || 450), 1);
   const roomHeightCm = Math.max(Number(roomDimensions?.height || 250), 1);
   const roomDepthCm = Math.max(Number(roomDimensions?.depth || 240), 1);
@@ -1100,8 +1284,14 @@ const getItem3DTransform = ({ item, index, product, sceneItems, catalogMap, room
   const widthCm = Math.max(Number(dimensions.width || 60), 1);
   const heightCm = Math.max(Number(dimensions.height || 72), 1);
   const depthCm = Math.max(Number(dimensions.depth || 56), 1);
-  const xCm = Math.min(Math.max(Number(item.position?.x || 0) / cmToPx, 0), roomWidthCm);
-  const topCm = Math.min(Math.max(Number(item.position?.y || 0) / cmToPx, 0), roomHeightCm);
+  const xCm = Math.min(
+    Math.max(Number(item.position?.x || 0) / cmToPx, 0),
+    roomWidthCm,
+  );
+  const topCm = Math.min(
+    Math.max(Number(item.position?.y || 0) / cmToPx, 0),
+    roomHeightCm,
+  );
   const zCm = Math.min(Math.max(Number(item.position?.z || 0), 0), roomDepthCm);
   const roomWidth = cmToUnit(roomWidthCm);
   const roomDepth = cmToUnit(roomDepthCm);
@@ -1117,7 +1307,14 @@ const getItem3DTransform = ({ item, index, product, sceneItems, catalogMap, room
     catalogMap,
     cmToPx,
   });
-  const y = getCategoryPlacement(item, product, roomHeightCm, dimensions, topCm, dynamicElevation);
+  const y = getCategoryPlacement(
+    item,
+    product,
+    roomHeightCm,
+    dimensions,
+    topCm,
+    dynamicElevation,
+  );
   const z =
     product.category === "room"
       ? 0
@@ -1210,7 +1407,15 @@ const floorPatternPalettes = {
   },
 };
 
-const drawWoodGrain = (context, x, y, width, height, seed = 0, dark = false) => {
+const drawWoodGrain = (
+  context,
+  x,
+  y,
+  width,
+  height,
+  seed = 0,
+  dark = false,
+) => {
   for (let grain = 0; grain < 7; grain += 1) {
     const grainY = y + 10 + grain * (height / 8) + ((seed + grain) % 5);
     context.strokeStyle = dark
@@ -1231,11 +1436,23 @@ const drawWoodGrain = (context, x, y, width, height, seed = 0, dark = false) => 
   }
 };
 
-const paintWoodTile = (context, x, y, width, height, color, seed = 0, dark = false) => {
+const paintWoodTile = (
+  context,
+  x,
+  y,
+  width,
+  height,
+  color,
+  seed = 0,
+  dark = false,
+) => {
   const gradient = context.createLinearGradient(x, y, x + width, y + height);
 
   gradient.addColorStop(0, color);
-  gradient.addColorStop(0.48, dark ? "rgba(92,64,42,0.92)" : "rgba(255,238,184,0.9)");
+  gradient.addColorStop(
+    0.48,
+    dark ? "rgba(92,64,42,0.92)" : "rgba(255,238,184,0.9)",
+  );
   gradient.addColorStop(1, color);
   context.fillStyle = gradient;
   context.fillRect(x, y, width, height);
@@ -1248,7 +1465,8 @@ const paintWoodTile = (context, x, y, width, height, color, seed = 0, dark = fal
 const createParquetTexture = (pattern = "oakHerringbone") => {
   if (typeof document === "undefined") return null;
 
-  const palette = floorPatternPalettes[pattern] || floorPatternPalettes.oakHerringbone;
+  const palette =
+    floorPatternPalettes[pattern] || floorPatternPalettes.oakHerringbone;
   const canvas = document.createElement("canvas");
   canvas.width = 768;
   canvas.height = 768;
@@ -1264,23 +1482,35 @@ const createParquetTexture = (pattern = "oakHerringbone") => {
 
     for (let y = -tile; y < canvas.height + tile; y += tile) {
       for (let x = -tile; x < canvas.width + tile; x += tile) {
-        const color = palette.colors[((x / tile) + (y / tile) + 8) % palette.colors.length];
+        const color =
+          palette.colors[(x / tile + y / tile + 8) % palette.colors.length];
         context.save();
         context.translate(x + tile / 2, y + tile / 2);
         context.rotate(Math.PI / 4);
-        paintWoodTile(context, -tile / 2, -tile / 8, tile, tile / 4, color, x + y, palette.dark);
-        context.restore();
-
-        context.save();
-        context.translate(x + tile / 2, y + tile / 2);
-        context.rotate(palette.mode === "chevron" ? -Math.PI / 4 : (Math.PI * 3) / 4);
         paintWoodTile(
           context,
           -tile / 2,
           -tile / 8,
           tile,
           tile / 4,
-          palette.colors[((x / tile) + (y / tile) + 11) % palette.colors.length],
+          color,
+          x + y,
+          palette.dark,
+        );
+        context.restore();
+
+        context.save();
+        context.translate(x + tile / 2, y + tile / 2);
+        context.rotate(
+          palette.mode === "chevron" ? -Math.PI / 4 : (Math.PI * 3) / 4,
+        );
+        paintWoodTile(
+          context,
+          -tile / 2,
+          -tile / 8,
+          tile,
+          tile / 4,
+          palette.colors[(x / tile + y / tile + 11) % palette.colors.length],
           x - y,
           palette.dark,
         );
@@ -1298,9 +1528,19 @@ const createParquetTexture = (pattern = "oakHerringbone") => {
       while (x < canvas.width) {
         const plankWidth = plankWidths[plankIndex % plankWidths.length];
         const y = row * plankHeight;
-        const color = palette.colors[(row + plankIndex) % palette.colors.length];
+        const color =
+          palette.colors[(row + plankIndex) % palette.colors.length];
 
-        paintWoodTile(context, x, y, plankWidth, plankHeight, color, row + plankIndex, palette.dark);
+        paintWoodTile(
+          context,
+          x,
+          y,
+          plankWidth,
+          plankHeight,
+          color,
+          row + plankIndex,
+          palette.dark,
+        );
         x += plankWidth;
         plankIndex += 1;
       }
@@ -1346,9 +1586,17 @@ const CeilingLights = ({ roomDimensions, visible, active, nightMode }) => {
               roughness={0.42}
             />
           </mesh>
-          <mesh position={[0, -0.012, 0]} rotation={[Math.PI / 2, 0, 0]} raycast={() => null}>
+          <mesh
+            position={[0, -0.012, 0]}
+            rotation={[Math.PI / 2, 0, 0]}
+            raycast={() => null}
+          >
             <circleGeometry args={[0.052, 32]} />
-            <meshBasicMaterial color={fixtureColor} transparent opacity={active ? 0.96 : 0.5} />
+            <meshBasicMaterial
+              color={fixtureColor}
+              transparent
+              opacity={active ? 0.96 : 0.5}
+            />
           </mesh>
           {active && (
             <pointLight
@@ -1368,7 +1616,12 @@ const CeilingLights = ({ roomDimensions, visible, active, nightMode }) => {
   );
 };
 
-const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick, onEmptyPointerDown }) => {
+const RoomShell = ({
+  roomDimensions,
+  roomSurfaces,
+  onEmptyClick,
+  onEmptyPointerDown,
+}) => {
   const width = cmToUnit(roomDimensions?.width || 450);
   const height = cmToUnit(roomDimensions?.height || 250);
   const depth = cmToUnit(roomDimensions?.depth || 240);
@@ -1433,10 +1686,19 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick, onEmptyPointerD
             onClick={handleEmptyClick}
             raycast={() => null}
           >
-            <boxGeometry args={[width + wallThickness * 2, height, wallThickness]} />
-            <meshStandardMaterial color={surfaces.backWall} roughness={0.88} metalness={0} />
+            <boxGeometry
+              args={[width + wallThickness * 2, height, wallThickness]}
+            />
+            <meshStandardMaterial
+              color={surfaces.backWall}
+              roughness={0.88}
+              metalness={0}
+            />
           </mesh>
-          <mesh position={[0, height - 0.025, -depth / 2 + 0.035]} raycast={() => null}>
+          <mesh
+            position={[0, height - 0.025, -depth / 2 + 0.035]}
+            raycast={() => null}
+          >
             <boxGeometry args={[width + 0.02, 0.035, 0.035]} />
             <meshStandardMaterial color={trimColor} roughness={0.82} />
           </mesh>
@@ -1451,7 +1713,11 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick, onEmptyPointerD
             raycast={() => null}
           >
             <boxGeometry args={[wallThickness, height, depth]} />
-            <meshStandardMaterial color={surfaces.sideWall} roughness={0.92} metalness={0} />
+            <meshStandardMaterial
+              color={surfaces.sideWall}
+              roughness={0.92}
+              metalness={0}
+            />
           </mesh>
         </>
       )}
@@ -1464,7 +1730,11 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick, onEmptyPointerD
             raycast={() => null}
           >
             <boxGeometry args={[wallThickness, height, depth]} />
-            <meshStandardMaterial color={surfaces.sideWall} roughness={0.92} metalness={0} />
+            <meshStandardMaterial
+              color={surfaces.sideWall}
+              roughness={0.92}
+              metalness={0}
+            />
           </mesh>
         </>
       )}
@@ -1475,27 +1745,51 @@ const RoomShell = ({ roomDimensions, roomSurfaces, onEmptyClick, onEmptyPointerD
           onClick={handleEmptyClick}
           raycast={() => null}
         >
-          <boxGeometry args={[width + wallThickness * 2, wallThickness, depth + wallThickness]} />
-          <meshStandardMaterial color={surfaces.ceiling} roughness={0.9} metalness={0} />
+          <boxGeometry
+            args={[
+              width + wallThickness * 2,
+              wallThickness,
+              depth + wallThickness,
+            ]}
+          />
+          <meshStandardMaterial
+            color={surfaces.ceiling}
+            roughness={0.9}
+            metalness={0}
+          />
         </mesh>
       )}
-      {surfaces.backWallVisible !== false && surfaces.leftWallVisible !== false && (
-        <mesh position={[-width / 2 + 0.018, height / 2, -depth / 2 + 0.018]} raycast={() => null}>
-          <boxGeometry args={[0.028, height, 0.028]} />
-          <meshStandardMaterial color={trimColor} roughness={0.88} />
-        </mesh>
-      )}
-      {surfaces.backWallVisible !== false && surfaces.rightWallVisible !== false && (
-        <mesh position={[width / 2 - 0.018, height / 2, -depth / 2 + 0.018]} raycast={() => null}>
-          <boxGeometry args={[0.028, height, 0.028]} />
-          <meshStandardMaterial color={trimColor} roughness={0.88} />
-        </mesh>
-      )}
+      {surfaces.backWallVisible !== false &&
+        surfaces.leftWallVisible !== false && (
+          <mesh
+            position={[-width / 2 + 0.018, height / 2, -depth / 2 + 0.018]}
+            raycast={() => null}
+          >
+            <boxGeometry args={[0.028, height, 0.028]} />
+            <meshStandardMaterial color={trimColor} roughness={0.88} />
+          </mesh>
+        )}
+      {surfaces.backWallVisible !== false &&
+        surfaces.rightWallVisible !== false && (
+          <mesh
+            position={[width / 2 - 0.018, height / 2, -depth / 2 + 0.018]}
+            raycast={() => null}
+          >
+            <boxGeometry args={[0.028, height, 0.028]} />
+            <meshStandardMaterial color={trimColor} roughness={0.88} />
+          </mesh>
+        )}
     </group>
   );
 };
 
-const DragSurface = ({ roomDimensions, wallMode, surfaceHeight, onPointerMove, onPointerUp }) => {
+const DragSurface = ({
+  roomDimensions,
+  wallMode,
+  surfaceHeight,
+  onPointerMove,
+  onPointerUp,
+}) => {
   const width = cmToUnit(roomDimensions?.width || 450);
   const height = cmToUnit(roomDimensions?.height || 250);
   const depth = cmToUnit(roomDimensions?.depth || 240);
@@ -1508,7 +1802,12 @@ const DragSurface = ({ roomDimensions, wallMode, surfaceHeight, onPointerMove, o
         onPointerUp={onPointerUp}
       >
         <planeGeometry args={[width, height]} />
-        <meshBasicMaterial transparent opacity={0.01} depthWrite={false} side={DoubleSide} />
+        <meshBasicMaterial
+          transparent
+          opacity={0.01}
+          depthWrite={false}
+          side={DoubleSide}
+        />
       </mesh>
     );
   }
@@ -1521,12 +1820,23 @@ const DragSurface = ({ roomDimensions, wallMode, surfaceHeight, onPointerMove, o
       onPointerUp={onPointerUp}
     >
       <planeGeometry args={[width, depth]} />
-      <meshBasicMaterial transparent opacity={0.01} depthWrite={false} side={DoubleSide} />
+      <meshBasicMaterial
+        transparent
+        opacity={0.01}
+        depthWrite={false}
+        side={DoubleSide}
+      />
     </mesh>
   );
 };
 
-const SceneDragController = ({ roomDimensions, wallMode, surfaceHeight, onDragPoint, onDragEnd }) => {
+const SceneDragController = ({
+  roomDimensions,
+  wallMode,
+  surfaceHeight,
+  onDragPoint,
+  onDragEnd,
+}) => {
   const { camera, gl, raycaster } = useThree();
   const pointer = useRef(new Vector2());
   const point = useRef(new Vector3());
@@ -1602,7 +1912,11 @@ const FallbackCabinet3D = ({ product, size, palette }) => {
       </mesh>
       <mesh position={[width * 0.24, 0, depth / 2 + 0.018]}>
         <boxGeometry args={[0.018, height * 0.42, 0.012]} />
-        <meshStandardMaterial color="#9CA3AF" metalness={0.25} roughness={0.42} />
+        <meshStandardMaterial
+          color="#9CA3AF"
+          metalness={0.25}
+          roughness={0.42}
+        />
       </mesh>
     </group>
   );
@@ -1618,7 +1932,11 @@ const Model3D = ({ product, size, rotation, palette }) => {
 
       const applyMaterial = (material) => {
         const nextMaterial = material.clone();
-        const nextColor = getModelMaterialColor(nextMaterial.name || object.name || "", product.category, palette);
+        const nextColor = getModelMaterialColor(
+          nextMaterial.name || object.name || "",
+          product.category,
+          palette,
+        );
 
         if (nextColor && nextMaterial.color) {
           nextMaterial.color = new Color(nextColor);
@@ -1663,7 +1981,10 @@ const Model3D = ({ product, size, rotation, palette }) => {
 
   return (
     <group rotation={[rotationX, rotationY, rotationZ]} scale={scale}>
-      <primitive object={model} position={[-fit.center.x, -fit.center.y, -fit.center.z]} />
+      <primitive
+        object={model}
+        position={[-fit.center.x, -fit.center.y, -fit.center.z]}
+      />
     </group>
   );
 };
@@ -1728,14 +2049,20 @@ const SceneItemDimensionGuides = ({ size, dimensions }) => {
         {formatDimensionValue(dimensions.width)}
       </DimensionLabel>
 
-      <DimensionLine position={[leftX, 0, guideColorZ]} size={[0.01, height, 0.01]} />
+      <DimensionLine
+        position={[leftX, 0, guideColorZ]}
+        size={[0.01, height, 0.01]}
+      />
       <DimensionEndCap position={[leftX, -height / 2, guideColorZ]} vertical />
       <DimensionEndCap position={[leftX, height / 2, guideColorZ]} vertical />
       <DimensionLabel position={[leftX - 0.06, 0, guideColorZ]}>
         {formatDimensionValue(dimensions.height)}
       </DimensionLabel>
 
-      <DimensionLine position={[sideX, bottomY, 0]} size={[0.01, 0.01, depth]} />
+      <DimensionLine
+        position={[sideX, bottomY, 0]}
+        size={[0.01, 0.01, depth]}
+      />
       <DimensionEndCap position={[sideX, bottomY, -depth / 2]} />
       <DimensionEndCap position={[sideX, bottomY, depth / 2]} />
       <DimensionLabel position={[sideX + 0.06, bottomY + 0.03, 0]}>
@@ -1745,17 +2072,25 @@ const SceneItemDimensionGuides = ({ size, dimensions }) => {
   );
 };
 
-const isCameraBehindVisibleRoomWall = ({ cameraPosition, roomDimensions, roomSurfaces }) => {
+const isCameraBehindVisibleRoomWall = ({
+  cameraPosition,
+  roomDimensions,
+  roomSurfaces,
+}) => {
   const roomWidth = cmToUnit(roomDimensions?.width || 450);
   const roomHeight = cmToUnit(roomDimensions?.height || 250);
   const roomDepth = cmToUnit(roomDimensions?.depth || 240);
   const margin = 0.025;
 
   return (
-    (roomSurfaces?.leftWallVisible !== false && cameraPosition.x < -roomWidth / 2 - margin) ||
-    (roomSurfaces?.rightWallVisible !== false && cameraPosition.x > roomWidth / 2 + margin) ||
-    (roomSurfaces?.backWallVisible !== false && cameraPosition.z < -roomDepth / 2 - margin) ||
-    (roomSurfaces?.ceilingVisible !== false && cameraPosition.y > roomHeight + margin)
+    (roomSurfaces?.leftWallVisible !== false &&
+      cameraPosition.x < -roomWidth / 2 - margin) ||
+    (roomSurfaces?.rightWallVisible !== false &&
+      cameraPosition.x > roomWidth / 2 + margin) ||
+    (roomSurfaces?.backWallVisible !== false &&
+      cameraPosition.z < -roomDepth / 2 - margin) ||
+    (roomSurfaces?.ceilingVisible !== false &&
+      cameraPosition.y > roomHeight + margin)
   );
 };
 
@@ -1791,8 +2126,10 @@ const SceneItem3D = ({
     cmToPx,
   });
   const itemDoor = materialMap[item.options?.door_material_id] || selectedDoor;
-  const itemGlass = materialMap[item.options?.glass_material_id] || selectedGlass;
-  const itemCounter = materialMap[item.options?.countertop_material_id] || selectedCounter;
+  const itemGlass =
+    materialMap[item.options?.glass_material_id] || selectedGlass;
+  const itemCounter =
+    materialMap[item.options?.countertop_material_id] || selectedCounter;
   const palette = {
     door: itemDoor?.color_hex || "#F8FAFC",
     glass: itemGlass?.color_hex || "#BAE6FD",
@@ -1850,7 +2187,11 @@ const SceneItem3D = ({
             palette={palette}
           />
         ) : (
-          <FallbackCabinet3D product={product} size={transform.size} palette={palette} />
+          <FallbackCabinet3D
+            product={product}
+            size={transform.size}
+            palette={palette}
+          />
         )}
       </Suspense>
       {selected && !overlayHidden && (
@@ -1860,7 +2201,10 @@ const SceneItem3D = ({
             <meshBasicMaterial transparent opacity={0} />
             <Edges color="#1976D2" linewidth={2} />
           </mesh>
-          <SceneItemDimensionGuides size={transform.size} dimensions={transform.dimensions} />
+          <SceneItemDimensionGuides
+            size={transform.size}
+            dimensions={transform.dimensions}
+          />
         </>
       )}
     </group>

@@ -59,7 +59,17 @@ const ProductPreview = ({ product, selectedDoor, selectedCounter }) => {
       <Box
         sx={{
           width: isRoom ? 68 : isCounter ? 68 : isShelf ? 58 : 44,
-          height: isRoom ? 42 : isCounter ? 10 : isShelf ? 8 : isWall ? 50 : isAppliance ? 38 : 56,
+          height: isRoom
+            ? 42
+            : isCounter
+              ? 10
+              : isShelf
+                ? 8
+                : isWall
+                  ? 50
+                  : isAppliance
+                    ? 38
+                    : 56,
           borderRadius: isAppliance ? "50%" : isRoom ? 1 : 0.5,
           bgcolor: isCounter
             ? selectedCounter?.color_hex || "#E5E7EB"

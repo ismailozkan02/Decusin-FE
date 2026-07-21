@@ -48,24 +48,34 @@ const KitchenQuoteButton = ({ quote, open, onOpen, onClose }) => (
                     {line.quantity} adet - opsiyon {money(line.modifiers_total)}
                   </Typography>
                 </Box>
-                <Typography sx={{ fontWeight: 900 }}>{money(line.line_total)}</Typography>
+                <Typography sx={{ fontWeight: 900 }}>
+                  {money(line.line_total)}
+                </Typography>
               </Stack>
             ))
           ) : (
-            <Typography color="text.secondary">Henuz fiyat kalemi yok.</Typography>
+            <Typography color="text.secondary">
+              Henuz fiyat kalemi yok.
+            </Typography>
           )}
           <Divider />
           <Stack direction="row" justifyContent="space-between">
             <Typography>Ara toplam</Typography>
-            <Typography sx={{ fontWeight: 800 }}>{money(quote?.subtotal)}</Typography>
+            <Typography sx={{ fontWeight: 800 }}>
+              {money(quote?.subtotal)}
+            </Typography>
           </Stack>
           <Stack direction="row" justifyContent="space-between">
             <Typography>Montaj</Typography>
-            <Typography sx={{ fontWeight: 800 }}>{money(quote?.installation)}</Typography>
+            <Typography sx={{ fontWeight: 800 }}>
+              {money(quote?.installation)}
+            </Typography>
           </Stack>
           <Stack direction="row" justifyContent="space-between">
             <Typography>Nakliye</Typography>
-            <Typography sx={{ fontWeight: 800 }}>{money(quote?.shipping)}</Typography>
+            <Typography sx={{ fontWeight: 800 }}>
+              {money(quote?.shipping)}
+            </Typography>
           </Stack>
           <Stack direction="row" justifyContent="space-between">
             <Typography variant="h6" sx={{ fontWeight: 900 }}>
