@@ -525,9 +525,20 @@ const KitchenScene = ({
 
     if (isWallMountedItem(item, product, dimensions)) {
       const rawTopCm = roomHeightCm - point.y * 100 - heightCm / 2;
-      const yCm = snapRoomValue(rawTopCm, roomHeightCm, heightCm);
+      const yCm = clampWallCabinetTopCm({
+        item,
+        index,
+        product,
+        dimensions,
+        sceneItems,
+        catalogMap,
+        cmToPx,
+        roomHeightCm,
+        nextTopCm: snapRoomValue(rawTopCm, roomHeightCm, heightCm),
+        nextXCm: xCm,
+      });
 
-      const nextPosition = resolveDragCollisionCm({
+      const resolvedPosition = resolveDragCollisionCm({
         item,
         index,
         product,
@@ -541,6 +552,22 @@ const KitchenScene = ({
           z: 0,
         },
       });
+      const nextPosition = {
+        ...resolvedPosition,
+        y:
+          clampWallCabinetTopCm({
+            item,
+            index,
+            product,
+            dimensions,
+            sceneItems,
+            catalogMap,
+            cmToPx,
+            roomHeightCm,
+            nextTopCm: Number(resolvedPosition.y || 0) / cmToPx,
+            nextXCm: Number(resolvedPosition.x || 0) / cmToPx,
+          }) * cmToPx,
+      };
 
       onMoveItem3D?.(index, nextPosition);
       return;
@@ -1042,6 +1069,8 @@ const KitchenScene = ({
                     onPrepareDrag={prepareItemDrag}
                     onMaybeStartDrag={maybeStartItemDrag}
                     onEndDrag={handle3DPointerUp}
+                    onCopyItem={onCopyItem}
+                    onDeleteItem={onDeleteItem}
                   />
                 );
               })}
@@ -1231,6 +1260,45 @@ const getSceneItemDimensions = (product, item = {}) => {
 
 const rangesOverlap = (startA, sizeA, startB, sizeB) =>
   Math.min(startA + sizeA, startB + sizeB) - Math.max(startA, startB) > 1;
+
+const clampWallCabinetTopCm = ({
+  item,
+  index,
+  product,
+  dimensions,
+  sceneItems,
+  catalogMap,
+  cmToPx,
+  roomHeightCm,
+  nextTopCm,
+  nextXCm,
+}) => {
+  if (!isWallMountedItem(item, product, dimensions)) return nextTopCm;
+
+  const width = Math.max(Number(dimensions.width || 60), 1);
+  const height = Math.max(Number(dimensions.height || 72), 1);
+  let maxTop = Math.max(roomHeightCm - height, 0);
+
+  sceneItems.forEach((otherItem, otherIndex) => {
+    if (otherIndex === index) return;
+
+    const otherProduct = catalogMap[otherItem.catalog_item_id] || {};
+    if (!["base_cabinet", "appliance"].includes(otherProduct.category)) return;
+
+    const otherDimensions = getSceneItemDimensions(otherProduct, otherItem);
+    const otherX = Number(otherItem.position?.x || 0) / cmToPx;
+    const otherWidth = Math.max(Number(otherDimensions.width || 60), 1);
+
+    if (!rangesOverlap(nextXCm, width, otherX, otherWidth)) return;
+
+    const otherElevation = Number(otherItem.position?.elevation);
+    const otherBottom = Number.isFinite(otherElevation) ? otherElevation : 0;
+    const otherTop = otherBottom + Math.max(Number(otherDimensions.height || 72), 1);
+    maxTop = Math.min(maxTop, Math.max(roomHeightCm - otherTop - height, 0));
+  });
+
+  return Math.min(Math.max(nextTopCm, 0), maxTop);
+};
 
 const isCollisionBlockingProduct = (product) =>
   Boolean(product) &&
@@ -1575,7 +1643,7 @@ const getItem3DTransform = ({
     Math.max(Number(item.position?.x || 0) / cmToPx, 0),
     roomWidthCm,
   );
-  const topCm = Math.min(
+  let topCm = Math.min(
     Math.max(Number(item.position?.y || 0) / cmToPx, 0),
     roomHeightCm,
   );
@@ -1586,6 +1654,18 @@ const getItem3DTransform = ({
   const height = cmToUnit(heightCm);
   const depth = cmToUnit(depthCm);
   const x = -roomWidth / 2 + cmToUnit(xCm) + width / 2;
+  topCm = clampWallCabinetTopCm({
+    item,
+    index,
+    product,
+    dimensions,
+    sceneItems,
+    catalogMap,
+    cmToPx,
+    roomHeightCm,
+    nextTopCm: topCm,
+    nextXCm: xCm,
+  });
   const dynamicElevation = getDynamicElevationCm({
     item,
     index,
@@ -2508,6 +2588,85 @@ const SceneItemDimensionGuides = ({ size, dimensions }) => {
   );
 };
 
+const SceneItemActionBar = ({ size, onCopy, onDelete }) => {
+  const [, height, depth] = size;
+  const bottomOffset = -height / 2 + 0.08;
+  const frontOffset = depth / 2 + 0.06;
+
+  const stopScenePointer = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    event.nativeEvent?.stopImmediatePropagation?.();
+  };
+
+  return (
+    <Html
+      position={[0, bottomOffset, frontOffset]}
+      center
+      distanceFactor={16}
+      zIndexRange={[80, 0]}
+    >
+      <Stack
+        direction="row"
+        spacing={0}
+        onPointerDown={stopScenePointer}
+        onPointerMove={stopScenePointer}
+        onPointerUp={stopScenePointer}
+        onClick={stopScenePointer}
+        sx={{
+          px: 0.18,
+          py: 0.06,
+          borderRadius: 999,
+          border: "1px solid rgba(226,232,240,0.92)",
+          bgcolor: "rgba(255,255,255,0.92)",
+          boxShadow: "0 3px 8px rgba(15,23,42,0.1)",
+          backdropFilter: "blur(8px)",
+          pointerEvents: "auto",
+        }}
+      >
+          <IconButton
+            aria-label="Seçili ürünü kopyala"
+            size="small"
+            onClick={(event) => {
+              stopScenePointer(event);
+              onCopy?.();
+            }}
+            sx={{
+              width: 6,
+              height: 6,
+              minWidth: 6,
+              p: 0,
+              color: "#2563EB",
+              bgcolor: "transparent",
+              "&:hover": { bgcolor: "transparent", color: "#1D4ED8" },
+            }}
+          >
+            <ContentCopyIcon sx={{ fontSize: 4.5 }} />
+          </IconButton>
+          <IconButton
+            aria-label="Seçili ürünü sil"
+            size="small"
+            onClick={(event) => {
+              stopScenePointer(event);
+              onDelete?.();
+            }}
+            sx={{
+              width: 6,
+              height: 6,
+              minWidth: 6,
+              p: 0,
+              color: "#EF4444",
+              bgcolor: "transparent",
+              "&:hover": { bgcolor: "transparent", color: "#DC2626" },
+            }}
+          >
+            <DeleteOutlineIcon sx={{ fontSize: 5 }} />
+          </IconButton>
+        </Stack>
+    </Html>
+  );
+};
+
 const isCameraBehindVisibleRoomWall = ({
   cameraPosition,
   roomDimensions,
@@ -2551,6 +2710,8 @@ const SceneItem3D = ({
   onPrepareDrag,
   onMaybeStartDrag,
   onEndDrag,
+  onCopyItem,
+  onDeleteItem,
 }) => {
   const camera = useThree((state) => state.camera);
   const overlayHiddenRef = useRef(false);
@@ -2601,7 +2762,7 @@ const SceneItem3D = ({
         event.stopPropagation();
         onHoverItem((current) => (current === index ? null : current));
       }}
-  onPointerDown={(event) => {
+      onPointerDown={(event) => {
         event.stopPropagation();
         event.sourceEvent?.preventDefault?.();
         event.sourceEvent?.stopPropagation?.();
@@ -2662,6 +2823,13 @@ const SceneItem3D = ({
             dimensions={transform.dimensions}
           />
         </>
+      )}
+      {selected && !overlayHidden && showMeasurements && (
+        <SceneItemActionBar
+          size={transform.size}
+          onCopy={() => onCopyItem?.(index)}
+          onDelete={() => onDeleteItem?.(index)}
+        />
       )}
       {selected && item.locked && !overlayHidden && (
         <DimensionLabel
