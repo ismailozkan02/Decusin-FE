@@ -11,6 +11,8 @@ export const categoryLabel = (value) =>
     wall_cabinet: "Üst dolap",
     countertop: "Tezgah",
     appliance: "Evye / cihaz",
+    sink: "Lavabo / evye",
+    cooktop: "Set üstü ocak",
     shelf: "Raf / boy modül",
     accessory: "Aksesuar",
   })[value] || value;
@@ -44,6 +46,10 @@ export const getProductSubcategory = (product) => {
 
     return "solid_wall";
   }
+
+  if (product?.category === "sink") return "sink_modules";
+  if (product?.category === "cooktop") return "cooktop_modules";
+  if (product?.category === "countertop") return "countertop_modules";
 
   return "standard";
 };

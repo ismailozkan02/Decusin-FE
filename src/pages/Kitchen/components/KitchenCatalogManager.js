@@ -69,8 +69,11 @@ const defaultMaterialGroups = [
 ];
 
 const previewByCategory = {
-  base_cabinet: "/images/kitchen/products/furnimesh/real-09-walnut-marble-rounded-cabinet.png",
-  wall_cabinet: "/images/kitchen/products/upper-wall/upper-01-wall-frame-21x40.jpg",
+  base_cabinet: "/images/kitchen/products/lightweight/kitchenCabinet.png",
+  wall_cabinet: "/images/kitchen/products/lightweight/kitchenCabinetUpper.png",
+  countertop: "/images/kitchen/products/lightweight/kitchenBar.png",
+  sink: "/images/kitchen/products/lightweight/kitchenSink.png",
+  cooktop: "/images/kitchen/products/lightweight/kitchenStoveElectric.png",
 };
 
 const slugify = (value) =>

@@ -243,8 +243,6 @@ const isWallMountedProduct = (
     product?.category === "shelf" ||
     text.includes("ust") ||
     text.includes("ust dolap") ||
-    text.includes("üst dolap") ||
-    text.includes("ãœst dolap") ||
     text.includes("ust-") ||
     text.includes("ust_") ||
     (depth > 0 &&
@@ -1150,15 +1148,24 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   }, [sceneItems]);
 
   const buildItemOptions = (product) => {
-    const options = {};
+    const options = { ...(product.default_options || {}) };
+    const subcategory = String(product?.subcategory || "");
     if (["base_cabinet", "wall_cabinet"].includes(product.category)) {
-      options.door_material_id = selectedDoorMaterial;
+      if (!options.door_material_id) {
+        options.door_material_id = subcategory.includes("handleless")
+          ? "mat-door-anthracite"
+          : subcategory.includes("drawer")
+            ? "mat-door-wood-oak"
+            : selectedDoorMaterial;
+      }
     }
     if (product.category === "wall_cabinet") {
-      options.glass_material_id = selectedGlassMaterial;
+      options.glass_material_id ||= subcategory.includes("glass")
+        ? "mat-glass-clear"
+        : selectedGlassMaterial;
     }
     if (product.category === "countertop") {
-      options.countertop_material_id = selectedCounterMaterial;
+      options.countertop_material_id ||= selectedCounterMaterial;
     }
     return options;
   };

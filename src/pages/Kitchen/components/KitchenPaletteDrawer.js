@@ -42,7 +42,9 @@ const ProductPreview = ({ product, selectedDoor, selectedCounter }) => {
   const isWall = product.category === "wall_cabinet";
   const isCounter = product.category === "countertop";
   const isShelf = product.category === "shelf";
-  const isAppliance = product.category === "appliance";
+  const isAppliance = ["appliance", "sink", "cooktop"].includes(
+    product.category,
+  );
   const isRoom = product.category === "room";
 
   return (

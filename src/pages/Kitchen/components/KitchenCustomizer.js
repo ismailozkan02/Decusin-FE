@@ -242,7 +242,7 @@ const KitchenCustomizer = ({
               ) && (
                 <TextField
                   select
-                  label="Bu item kapagi"
+                  label="Kapak rengi / malzemesi"
                   value={
                     selectedOptions.door_material_id || selectedDoorMaterial
                   }
@@ -268,7 +268,7 @@ const KitchenCustomizer = ({
               {selectedProduct.category === "wall_cabinet" && (
                 <TextField
                   select
-                  label="Bu item cami"
+                  label="Cam tipi"
                   value={
                     selectedOptions.glass_material_id || selectedGlassMaterial
                   }
@@ -294,7 +294,7 @@ const KitchenCustomizer = ({
               {selectedProduct.category === "countertop" && (
                 <TextField
                   select
-                  label="Bu tezgah malzemesi"
+                  label="Tezgah malzemesi"
                   value={
                     selectedOptions.countertop_material_id ||
                     selectedCounterMaterial

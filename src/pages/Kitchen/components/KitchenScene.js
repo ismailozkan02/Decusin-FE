@@ -59,23 +59,61 @@ const modelScaleByCategory = {
   shelf: 1,
   appliance: 1,
   accessory: 1,
+  sink: 1,
+  cooktop: 1,
 };
 
-const getModelMaterialColor = (materialName, category, palette) => {
-  const name = materialName.toLowerCase();
+const getModelMaterialColor = (materialName, objectName, product, palette) => {
+  const name = `${materialName || ""} ${objectName || ""}`.toLowerCase();
+  const category = product?.category;
+  const subcategory = product?.subcategory || "";
 
+  if (subcategory.includes("glass") && name.includes("door")) {
+    return palette.glass;
+  }
   if (name.includes("glass")) return palette.glass;
-  if (name.includes("stone")) return palette.countertop;
-  if (name.includes("oak") || name.includes("light") || name.includes("door")) {
-    return ["base_cabinet", "wall_cabinet"].includes(category)
-      ? palette.door
-      : null;
+  if (category === "countertop" || name.includes("stone")) {
+    return palette.countertop;
+  }
+  if (
+    ["base_cabinet", "wall_cabinet"].includes(category) &&
+    (name.includes("door") || name.includes("drawer"))
+  ) {
+    return palette.door;
   }
 
   return null;
 };
 
-const ModelInstance = ({ modelUrl, category, rotation, palette }) => {
+const applySceneModelMaterial = (material, object, product, palette) => {
+  const nextMaterial = material.clone();
+  const materialName = nextMaterial.name || "";
+  const objectName = object.name || "";
+  const nextColor = getModelMaterialColor(
+    materialName,
+    objectName,
+    product,
+    palette,
+  );
+  const isGlassSurface =
+    (product?.subcategory || "").includes("glass") &&
+    objectName.toLowerCase().includes("door");
+
+  if (nextColor && nextMaterial.color) {
+    nextMaterial.color = new Color(nextColor);
+    nextMaterial.needsUpdate = true;
+  }
+
+  if (isGlassSurface || materialName.toLowerCase().includes("glass")) {
+    nextMaterial.transparent = true;
+    nextMaterial.opacity = 0.46;
+    nextMaterial.needsUpdate = true;
+  }
+
+  return nextMaterial;
+};
+
+const ModelInstance = ({ modelUrl, product, rotation, palette }) => {
   const { scene } = useGLTF(modelUrl);
   const model = useMemo(() => {
     const clonedScene = scene.clone(true);
@@ -83,39 +121,19 @@ const ModelInstance = ({ modelUrl, category, rotation, palette }) => {
     clonedScene.traverse((object) => {
       if (!object.isMesh || !object.material) return;
 
-      const applyMaterial = (material) => {
-        const nextMaterial = material.clone();
-        const nextColor = getModelMaterialColor(
-          nextMaterial.name || object.name || "",
-          category,
-          palette,
-        );
-
-        if (nextColor && nextMaterial.color) {
-          nextMaterial.color = new Color(nextColor);
-          nextMaterial.needsUpdate = true;
-        }
-
-        if ((nextMaterial.name || "").toLowerCase().includes("glass")) {
-          nextMaterial.transparent = true;
-          nextMaterial.opacity = 0.42;
-          nextMaterial.needsUpdate = true;
-        }
-
-        return nextMaterial;
-      };
-
       object.material = Array.isArray(object.material)
-        ? object.material.map(applyMaterial)
-        : applyMaterial(object.material);
+        ? object.material.map((material) =>
+            applySceneModelMaterial(material, object, product, palette),
+          )
+        : applySceneModelMaterial(object.material, object, product, palette);
     });
 
     return clonedScene;
-  }, [category, palette, scene]);
+  }, [palette, product, scene]);
   const viewport = useThree((state) => state.viewport);
   const rotationX = (Number(rotation?.x || 0) * Math.PI) / 180;
   const rotationY = (Number(rotation?.y || 0) * Math.PI) / 180;
-  const baseScale = modelScaleByCategory[category] || 1;
+  const baseScale = modelScaleByCategory[product?.category] || 1;
   const fit = useMemo(() => {
     const box = new Box3().setFromObject(model);
     const size = new Vector3();
@@ -154,7 +172,7 @@ const ModelInstance = ({ modelUrl, category, rotation, palette }) => {
 const ProductImageFallback = ({ product, compact = false }) => (
   <Box
     component="img"
-    src={product.image_url || "/images/kitchen/products/furnimesh/real-09-walnut-marble-rounded-cabinet.png"}
+    src={product.image_url || "/images/kitchen/products/lightweight/kitchenCabinet.png"}
     alt={product.name || "Ürün"}
     sx={{
       position: "absolute",
@@ -195,7 +213,7 @@ const ProductModelCanvas = ({ product, rotation, materialPalette }) => {
         <Suspense fallback={null}>
           <ModelInstance
             modelUrl={product.model_url}
-            category={product.category}
+            product={product}
             rotation={rotation}
             palette={materialPalette}
           />
@@ -1165,8 +1183,6 @@ const isWallMountedProduct = (
     product?.category === "shelf" ||
     text.includes("ust") ||
     text.includes("ust dolap") ||
-    text.includes("üst dolap") ||
-    text.includes("ãœst dolap") ||
     text.includes("ust-") ||
     text.includes("ust_") ||
     (depth > 0 &&
@@ -1346,6 +1362,7 @@ const getBaseSupportTopCm = ({
   targetIndex,
   targetFootprint,
   cmToPx,
+  relaxedDepth = false,
 }) => {
   let supportTop = 0;
 
@@ -1361,19 +1378,25 @@ const getBaseSupportTopCm = ({
       supportProduct,
       cmToPx,
     );
-    const overlaps =
-      rangesOverlap(
-        targetFootprint.x,
-        targetFootprint.width,
-        supportFootprint.x,
-        supportFootprint.width,
-      ) &&
-      rangesOverlap(
-        targetFootprint.z,
-        targetFootprint.depth,
-        supportFootprint.z,
-        supportFootprint.depth,
-      );
+    const overlapsX = rangesOverlap(
+      targetFootprint.x,
+      targetFootprint.width,
+      supportFootprint.x,
+      supportFootprint.width,
+    );
+    const targetCenterZ = targetFootprint.z + targetFootprint.depth / 2;
+    const supportStartZ = supportFootprint.z - (relaxedDepth ? 18 : 0);
+    const supportEndZ =
+      supportFootprint.z + supportFootprint.depth + (relaxedDepth ? 18 : 0);
+    const overlapsZ = relaxedDepth
+      ? targetCenterZ >= supportStartZ && targetCenterZ <= supportEndZ
+      : rangesOverlap(
+          targetFootprint.z,
+          targetFootprint.depth,
+          supportFootprint.z,
+          supportFootprint.depth,
+        );
+    const overlaps = overlapsX && overlapsZ;
 
     if (!overlaps) return;
 
@@ -1393,6 +1416,7 @@ const getCountertopSupportTopCm = ({
   targetIndex,
   targetFootprint,
   cmToPx,
+  relaxedDepth = false,
 }) => {
   let supportTop = 0;
 
@@ -1407,19 +1431,25 @@ const getCountertopSupportTopCm = ({
       supportProduct,
       cmToPx,
     );
-    const overlaps =
-      rangesOverlap(
-        targetFootprint.x,
-        targetFootprint.width,
-        supportFootprint.x,
-        supportFootprint.width,
-      ) &&
-      rangesOverlap(
-        targetFootprint.z,
-        targetFootprint.depth,
-        supportFootprint.z,
-        supportFootprint.depth,
-      );
+    const overlapsX = rangesOverlap(
+      targetFootprint.x,
+      targetFootprint.width,
+      supportFootprint.x,
+      supportFootprint.width,
+    );
+    const targetCenterZ = targetFootprint.z + targetFootprint.depth / 2;
+    const supportStartZ = supportFootprint.z - (relaxedDepth ? 18 : 0);
+    const supportEndZ =
+      supportFootprint.z + supportFootprint.depth + (relaxedDepth ? 18 : 0);
+    const overlapsZ = relaxedDepth
+      ? targetCenterZ >= supportStartZ && targetCenterZ <= supportEndZ
+      : rangesOverlap(
+          targetFootprint.z,
+          targetFootprint.depth,
+          supportFootprint.z,
+          supportFootprint.depth,
+        );
+    const overlaps = overlapsX && overlapsZ;
 
     if (!overlaps) return;
 
@@ -1430,6 +1460,7 @@ const getCountertopSupportTopCm = ({
         targetIndex: supportIndex,
         targetFootprint: supportFootprint,
         cmToPx,
+        relaxedDepth,
       }) || Number(supportItem.position?.elevation || 0);
 
     supportTop = Math.max(
@@ -1469,6 +1500,7 @@ const getDynamicElevationCm = ({
         targetIndex: index,
         targetFootprint: footprint,
         cmToPx,
+        relaxedDepth: true,
       }) ||
       getBaseSupportTopCm({
         sceneItems,
@@ -1476,6 +1508,7 @@ const getDynamicElevationCm = ({
         targetIndex: index,
         targetFootprint: footprint,
         cmToPx,
+        relaxedDepth: true,
       })
     );
   }
@@ -1801,7 +1834,7 @@ const createParquetTexture = (pattern = "oakHerringbone") => {
     }
   }
 
-  context.fillStyle = `rgba(255,255,255,${palette.sheen ?? 0.08})`;
+  context.fillStyle = `rgba(255,255,255,${palette.sheen ? 0.08 : 0})`;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   const texture = new CanvasTexture(canvas);
@@ -2347,31 +2380,17 @@ const Model3D = ({ product, size, rotation, palette }) => {
     clonedScene.traverse((object) => {
       if (!object.isMesh || !object.material) return;
 
-      const applyMaterial = (material) => {
-        const nextMaterial = material.clone();
-        const nextColor = getModelMaterialColor(
-          nextMaterial.name || object.name || "",
-          product.category,
-          palette,
-        );
-
-        if (nextColor && nextMaterial.color) {
-          nextMaterial.color = new Color(nextColor);
-          nextMaterial.needsUpdate = true;
-        }
-
-        return nextMaterial;
-      };
-
       object.castShadow = true;
       object.receiveShadow = true;
       object.material = Array.isArray(object.material)
-        ? object.material.map(applyMaterial)
-        : applyMaterial(object.material);
+        ? object.material.map((material) =>
+            applySceneModelMaterial(material, object, product, palette),
+          )
+        : applySceneModelMaterial(object.material, object, product, palette);
     });
 
     return clonedScene;
-  }, [palette, product.category, scene]);
+  }, [palette, product, scene]);
   const fit = useMemo(() => {
     const box = new Box3().setFromObject(model);
     const boxSize = new Vector3();
