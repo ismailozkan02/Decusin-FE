@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useCallback,
-  useEffect,
-  useReducer,
-  useRef,
-} from "react";
+import { createContext, useCallback, useEffect, useReducer, useRef } from "react";
 import PropTypes from "prop-types";
 import useLocalStorage from "hooks/useLocalStorage";
 import { SERVER } from "routes/paths";
@@ -43,7 +37,7 @@ const reducer = (state, { action, payload }) => {
 const AuthContext = createContext(initialState);
 
 let authMeRequested = false;
-const DEMO_AUTH_ENABLED = import.meta.env.VITE_DEMO_AUTH !== "false";
+const DEMO_AUTH_ENABLED = import.meta.env.VITE_DEMO_AUTH === "true";
 
 const isDemoSession = (value) => value?.access?.token === "decusin-demo-access";
 
@@ -132,7 +126,10 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useLocalStorage("session");
   const nowRef = useRef(0);
   const tokenRef = useRef(null);
-  tokenRef.current = session?.access?.token || null;
+
+  useEffect(() => {
+    tokenRef.current = session?.access?.token || null;
+  }, [session?.access?.token]);
 
   useEffect(() => {
     const tick = setInterval(() => {
@@ -279,7 +276,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await axios().post(SERVER.auth.login, values);
 
-      localStorage.setItem("locale", data?.payload?.user?.language);
+      if (data?.payload?.user?.language) {
+        localStorage.setItem("locale", data.payload.user.language);
+      }
 
       const domain = (data?.payload?.user?.base_url ?? "").trim();
       // domain gerçekten subdomain mi? (pangea, app, apptest gibi)
@@ -298,13 +297,11 @@ export const AuthProvider = ({ children }) => {
         payload: data?.payload,
       });
 
-      const sessionPayload = data?.payload?.session ?? data?.payload;
+      const sessionPayload = data?.payload?.session;
       setSession(sessionPayload);
       if ("localStorage" in window) {
         localStorage.setItem("session", JSON.stringify(sessionPayload));
       }
-
-      await setMe();
 
       // Trigger to refresh
       // refreshTimer(data?.payload);
@@ -435,7 +432,7 @@ export const AuthProvider = ({ children }) => {
 
       // localStorage.setItem("locale", APP.MAIN_LANG_SHORT);
 
-      setSession(null);
+      setSession(undefined);
 
       dispatch({
         action: "SET_ME",
@@ -464,16 +461,24 @@ export const AuthProvider = ({ children }) => {
         throwAppError(data.error.message, data.error.code, data.error.args);
       }
 
-      setSession(data?.payload);
+      const nextSession = data?.payload?.session ?? data?.payload;
+      setSession(nextSession);
 
-      return Promise.resolve(data?.payload);
+      if (data?.payload?.user) {
+        dispatch({
+          action: "SET_ME",
+          payload: data?.payload,
+        });
+      }
+
+      return Promise.resolve(nextSession);
     } catch (e) {
       return Promise.reject(e);
     }
   }, []);
 
   const setMe = useCallback(async () => {
-    return getData(SERVER.auth.me, null, (payload) => {
+    return getData(SERVER.auth.me, null, () => {
       // trigger to refresh
       // refreshTimer({ ...payload, session });
     })

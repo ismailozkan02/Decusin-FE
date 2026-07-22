@@ -46,7 +46,9 @@ const axiosInstance = (timeout) => {
               ? token
               : `Bearer ${token}`;
         }
-      } catch (e) {}
+      } catch {
+        localStorage.removeItem("session");
+      }
 
       return config;
     },
@@ -66,7 +68,9 @@ const axiosInstance = (timeout) => {
         session =
           "localStorage" in window &&
           JSON.parse(localStorage.getItem("session"));
-      } catch (err) {}
+      } catch {
+        session = null;
+      }
 
       const originalRequest = e.config;
 
@@ -78,17 +82,17 @@ const axiosInstance = (timeout) => {
       }
 
       if (
-        e.response.status === 401 &&
-        e.response.data.error.code === "INVALID_SIGNATURE"
+        e.response?.status === 401 &&
+        e.response?.data?.error?.code === "INVALID_SIGNATURE"
       ) {
-        localStorage.setItem("session", null);
+        localStorage.removeItem("session");
         return; // In here returning null for prevent showing pop-up
       }
 
       if (
         !e.response ||
         (e.response.status === 401 &&
-          e.response.data.error.code !== "TOKEN_EXPIRED") ||
+          e.response.data?.error?.code !== "TOKEN_EXPIRED") ||
         !session ||
         !session?.refresh?.token
       ) {
@@ -114,10 +118,14 @@ const axiosInstance = (timeout) => {
 
               if (success && payload) {
                 if ("localStorage" in window) {
-                  localStorage.setItem("session", JSON.stringify(payload));
+                  localStorage.setItem(
+                    "session",
+                    JSON.stringify(payload?.session ?? payload),
+                  );
                 }
 
-                const refreshedToken = payload?.access?.token;
+                const refreshedToken =
+                  payload?.session?.access?.token ?? payload?.access?.token;
                 originalRequest.headers["Authorization"] =
                   refreshedToken?.startsWith("Bearer ") ||
                   refreshedToken?.startsWith("bearer ")
@@ -132,7 +140,7 @@ const axiosInstance = (timeout) => {
           })
           .catch((e) => {
             if (e.response?.data?.error?.code === "INVALID_TOKEN") {
-              localStorage.setItem("session", null);
+              localStorage.removeItem("session");
             } else if (e.response?.data?.error?.code === "INVALID_SIGNATURE") {
               const savedSession = JSON.parse(localStorage.getItem("session"));
               const savedToken = savedSession?.access?.token;
@@ -156,57 +164,44 @@ const axiosInstance = (timeout) => {
 
 const runData =
   (method) =>
-  (url, body, callback = null, timeout = null) => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const { data } = await axiosInstance(timeout || 60000)[method](
-          url,
-          body,
-        );
+  async (url, body, callback = null, timeout = null) => {
+    try {
+      const { data } = await axiosInstance(timeout || 60000)[method](url, body);
 
-        if (!data.success) {
-          let error = data.error;
+      if (!data.success) {
+        let error = data.error;
 
-          if (!error) {
-            error = new AppError("An error occurred", "UNKNOWN_ERROR");
-          }
-
-          throwAppError(error.message, error.code, error.args);
+        if (!error) {
+          error = new AppError("An error occurred", "UNKNOWN_ERROR");
         }
 
-        if (typeof callback === "function") {
-          callback(data.payload);
-        }
-
-        resolve(data.payload);
-      } catch (e) {
-        if (e.response) {
-          const { status, data: responseData } = e.response;
-          let errorMessage = responseData?.error.message || "An error occurred";
-          let errorCode = responseData?.error.code || status;
-          let errorArgs = responseData?.error.args || [];
-
-          const error = new AppError(
-            errorMessage,
-            errorCode,
-            errorArgs,
-            status,
-          );
-          reject(error);
-        } else {
-          // Handle cases where there is no response (e.g., network errors). It will only show console
-          reject(new AppError(e.message, e.code || "UNKNOWN_ERROR")); // COMMAND HERE AGAIN IF PROBLEM APPEAR WHEN SESSION END
-        }
+        throwAppError(error.message, error.code, error.args);
       }
-    });
+
+      if (typeof callback === "function") {
+        callback(data.payload);
+      }
+
+      return data.payload;
+    } catch (e) {
+      if (e.response) {
+        const { status, data: responseData } = e.response;
+        const errorMessage = responseData?.error?.message || "An error occurred";
+        const errorCode = responseData?.error?.code || status;
+        const errorArgs = responseData?.error?.args || [];
+
+        throw new AppError(errorMessage, errorCode, errorArgs, status);
+      }
+
+      throw new AppError(e.message, e.code || "UNKNOWN_ERROR");
+    }
   };
 
 export const postData = (url, body, callback = null, timeout = null) =>
   runData("post")(url, body, callback, timeout);
 
-export const getData = (url, params = null, callback = null) => {
-  return new Promise(async (resolve, reject) => {
-    try {
+export const getData = async (url, params = null, callback = null) => {
+  try {
       const { data } = await axiosInstance().get(url, {
         params,
       });
@@ -225,7 +220,7 @@ export const getData = (url, params = null, callback = null) => {
         callback(data.payload);
       }
 
-      resolve(data.payload);
+      return data.payload;
     } catch (e) {
       let error = e;
 
@@ -241,14 +236,14 @@ export const getData = (url, params = null, callback = null) => {
         if (error?.response?.data) {
           error = error?.response?.data;
 
-          if (error && error.hasOwnProperty("error")) {
+          if (error && Object.prototype.hasOwnProperty.call(error, "error")) {
             error = error.error;
           }
 
           error = new AppError(error.message, error?.code);
         }
 
-        reject(error);
+        throw error;
       } else {
         // Handle cases where there is no response (e.g., network errors). It will only show console
 
@@ -260,7 +255,7 @@ export const getData = (url, params = null, callback = null) => {
         if (isForbidden && !alreadyRedirected) {
           sessionStorage.setItem(CHECKOUT_REDIRECT_FLAG, "true");
           window.location.replace("/auth/login");
-          return;
+          return undefined;
         }
 
         if (!alreadyRedirected) {
@@ -269,7 +264,6 @@ export const getData = (url, params = null, callback = null) => {
         }
       }
     }
-  });
 };
 
 export const putData = (url, body, callback = null) =>

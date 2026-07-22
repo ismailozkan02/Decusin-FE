@@ -29,20 +29,21 @@ export const SERVER = {
   health: path("health"),
 
   auth: {
-    register: path("v1", "auth", "register"),
-    login: path("v1", "auth", "login"),
-    logout: path("v1", "auth", "logout"),
-    me: path("v1", "auth", "me"),
+    register: path("auth", "register"),
+    login: path("auth", "login"),
+    logout: path("auth", "logout"),
+    me: path("auth", "me"),
+    refresh: path("auth", "refresh"),
   },
 
-  lookups: (type) => path("v1", "lookup", type),
+  lookups: (type) => path("lookup", type),
 
   kitchen: {
-    templates: path("v1", "kitchen", "templates"),
-    catalogItems: path("v1", "kitchen", "catalog-items"),
-    materials: path("v1", "kitchen", "materials"),
-    projects: path("v1", "kitchen", "projects"),
-    quote: path("v1", "kitchen", "pricing", "quote"),
+    templates: path("kitchen", "templates"),
+    catalogItems: path("kitchen", "catalog-items"),
+    materials: path("kitchen", "materials"),
+    projects: path("kitchen", "projects"),
+    quote: path("kitchen", "pricing", "quote"),
   },
 };
 

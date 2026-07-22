@@ -3,18 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { FormattedMessage } from "react-intl";
 import { styled } from "@mui/material/styles";
 import { Avatar, Badge, Box, Divider, Menu, MenuItem, Typography } from "@mui/material";
-import CalendarBlankOutline from "mdi-material-ui/CalendarBlankOutline";
 import CogOutline from "mdi-material-ui/CogOutline";
-import EmailOutline from "mdi-material-ui/EmailOutline";
 import LogoutVariant from "mdi-material-ui/LogoutVariant";
 import AccountOutline from "mdi-material-ui/AccountOutline";
-import MessageOutline from "mdi-material-ui/MessageOutline";
 import HelpCircleOutline from "mdi-material-ui/HelpCircleOutline";
 import useAuth from "hooks/useAuth";
-import { CDN, DASHBOARD } from "routes/paths";
+import { CDN } from "routes/paths";
 import getInitials from "utils/getInitials";
 import hexToRGBA from "utils/hexToRgba";
-import useLocale, { baseURL } from "hooks/useLocale";
+import useLocale from "hooks/useLocale";
 
 const BadgeContentSpan = styled("span")(({ theme }) => ({
   width: 8,
@@ -30,6 +27,10 @@ const UserDropdown = () => {
   const { me, logout } = useAuth();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
+  const displayName =
+    [me?.first_name, me?.last_name].filter(Boolean).join(" ") ||
+    me?.email ||
+    "";
 
   const handleDropdownOpen = (e) => {
     setAnchorEl(e.currentTarget);
@@ -62,33 +63,23 @@ const UserDropdown = () => {
     handleDropdownClose();
   };
 
-  const DropdownUser = () => {
-    return me ? (
-      <Avatar
-        src={me.avatar && CDN.avatar(me.avatar)}
-        alt={me.display_name || ""}
-        sx={{
-          width: 40,
-          height: 40,
-          color: (theme) => theme.palette.grey[500],
-        }}
-        onClick={handleDropdownOpen}
-      >
-        {!me.avatar && getInitials(me?.display_name || "U S")}
-      </Avatar>
-    ) : (
-      <Avatar
-        src=""
-        alt={me?.display_name || ""}
-        sx={{
-          width: 40,
-          height: 40,
-          bgcolor: (theme) => hexToRGBA(theme.palette.primary.lighter, 0.5),
-        }}
-        onClick={handleDropdownOpen}
-      ></Avatar>
-    );
-  };
+  const renderAvatar = () => (
+    <Avatar
+      src={me?.avatar ? CDN.avatar(me.avatar) : ""}
+      alt={displayName}
+      sx={{
+        width: 40,
+        height: 40,
+        color: (theme) => theme.palette.grey[500],
+        bgcolor: !me
+          ? (theme) => hexToRGBA(theme.palette.primary.lighter, 0.5)
+          : undefined,
+      }}
+      onClick={handleDropdownOpen}
+    >
+      {me && !me.avatar ? getInitials(displayName || "D U") : null}
+    </Avatar>
+  );
 
   return (
     <Fragment>
@@ -102,7 +93,7 @@ const UserDropdown = () => {
           horizontal: "right",
         }}
       >
-        <DropdownUser />
+        {renderAvatar()}
       </Badge>
       <Menu
         anchorEl={anchorEl}
@@ -122,7 +113,7 @@ const UserDropdown = () => {
                 horizontal: "right",
               }}
             >
-              <DropdownUser />
+              {renderAvatar()}
             </Badge>
             <Box
               sx={{
@@ -132,7 +123,7 @@ const UserDropdown = () => {
                 flexDirection: "column",
               }}
             >
-              <Typography sx={{ fontWeight: 600 }}>{me?.display_name || ""}</Typography>
+              <Typography sx={{ fontWeight: 600 }}>{displayName}</Typography>
               <Typography variant={"body2"} sx={{ fontSize: "0.8rem", color: "text.disabled" }}>
                 {/* {ROLES.find((role) => role.id === me?.role)?.label || "guest"} */}
               </Typography>
@@ -162,21 +153,6 @@ const UserDropdown = () => {
 
         <Divider sx={{ mt: 0, mb: 1 }} />
 
-        <MenuItem sx={{ p: 0 }} onClick={() => handleDropdownClose("/appointment")}>
-          <Box sx={styles}>
-            <CalendarBlankOutline sx={{ marginRight: 2 }} />
-            <FormattedMessage id={"nav.calendar"} defaultMessage={formatMessage("label.Appointmant", "Appointmant")} />
-          </Box>
-        </MenuItem>
-
-        <MenuItem sx={{ p: 0 }} onClick={() => handleDropdownClose(DASHBOARD.email.inbox)}>
-          <Box sx={styles}>
-            <EmailOutline sx={{ marginRight: 2 }} />
-            <FormattedMessage id={"nav.inbox"} defaultMessage={formatMessage("label.Inbox", "Inbox")} />
-          </Box>
-        </MenuItem>
-
-        <Divider />
         <MenuItem sx={{ p: 0 }} onClick={() => handleDropdownClose("/profile")}>
           <Box sx={styles}>
             <CogOutline sx={{ marginRight: 2 }} />
