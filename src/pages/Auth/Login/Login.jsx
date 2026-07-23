@@ -102,8 +102,8 @@ const Login = () => {
 
   const inputSx = {
     "& .MuiOutlinedInput-root": {
-      minHeight: 54,
-      borderRadius: 1.4,
+      minHeight: 46,
+      borderRadius: 1.15,
       bgcolor: "#F8FAFC",
       transition: "background-color 160ms ease, box-shadow 160ms ease",
       "& fieldset": {
@@ -121,9 +121,10 @@ const Login = () => {
       },
     },
     "& .MuiInputBase-input": {
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: 600,
       color: "#101828",
+      py: 1.35,
     },
   };
 
@@ -161,9 +162,9 @@ const Login = () => {
           "0%": { backgroundPosition: "0% 50%" },
           "100%": { backgroundPosition: "200% 50%" },
         },
-        "@keyframes surfaceFlow": {
-          "0%": { backgroundPosition: "center, 0% 0%, 0 0, 0 0" },
-          "100%": { backgroundPosition: "center, 140% 0%, 36px 36px, -36px 28px" },
+        "@keyframes buttonSweep": {
+          "0%": { transform: "translateX(-38%)" },
+          "100%": { transform: "translateX(28%)" },
         },
       }}
     >
@@ -331,7 +332,6 @@ const Login = () => {
           background:
             `radial-gradient(circle at ${spotlight.x}% ${spotlight.y}%, rgba(218,178,95,0.34) 0%, rgba(47,179,68,0.12) 22%, transparent 42%), linear-gradient(115deg, rgba(255,255,255,0) 0%, rgba(199,166,106,0.14) 34%, rgba(47,179,68,0.09) 50%, rgba(255,255,255,0) 66%), linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(246,248,242,0.98) 48%, rgba(232,239,229,0.98) 100%), linear-gradient(90deg, rgba(16,24,40,0.04) 1px, transparent 1px)`,
           backgroundSize: "100% 100%, 220% 100%, 100% 100%, 36px 36px",
-          animation: "surfaceFlow 18s linear infinite",
           "&::before": {
             content: '""',
             position: "absolute",
@@ -474,27 +474,84 @@ const Login = () => {
                   loading={isSubmitting}
                   endIcon={<ArrowForward />}
                   sx={{
-                    height: 52,
-                    borderRadius: 1.4,
-                    bgcolor: "#101828",
+                    height: 46,
+                    borderRadius: 1.05,
+                    bgcolor: "#05070D",
+                    background:
+                      "linear-gradient(180deg, #171D2B 0%, #080B12 52%, #03050A 100%)",
+                    position: "relative",
+                    overflow: "hidden",
+                    isolation: "isolate",
                     textTransform: "none",
-                    fontWeight: 900,
-                    fontSize: 15,
-                    mt: 0.6,
-                    boxShadow: "0 18px 36px rgba(16, 24, 40, 0.24)",
+                    fontWeight: 800,
+                    fontSize: 14,
+                    mt: 0.25,
+                    color: "#FFFFFF",
+                    border: "1px solid rgba(255, 255, 255, 0.16)",
+                    boxShadow:
+                      "0 16px 34px rgba(2, 3, 8, 0.34), inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -10px 22px rgba(0,0,0,0.28)",
                     transition:
-                      "transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease",
+                      "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease",
+                    "&::before": {
+                      content: '""',
+                      position: "absolute",
+                      top: 0,
+                      bottom: 0,
+                      left: "-72%",
+                      width: "230%",
+                      background:
+                        "linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.025) 24%, rgba(76,88,112,0.18) 38%, rgba(132,145,170,0.16) 44%, rgba(30,40,60,0.2) 56%, transparent 70%)",
+                      opacity: 0.82,
+                      animation: "buttonSweep 4.8s linear infinite",
+                      pointerEvents: "none",
+                      zIndex: 0,
+                    },
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: "inherit",
+                      background:
+                        "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 38%, rgba(255,255,255,0.025) 100%)",
+                      pointerEvents: "none",
+                      zIndex: 1,
+                    },
+                    "& .MuiButton-endIcon, & .MuiButton-startIcon, & .MuiLoadingButton-loadingIndicator": {
+                      position: "relative",
+                      zIndex: 2,
+                    },
+                    "& .MuiButton-label": {
+                      position: "relative",
+                      zIndex: 2,
+                    },
+                    "& > *": {
+                      position: "relative",
+                      zIndex: 2,
+                    },
                     "&:hover": {
-                      bgcolor: "#1D2939",
+                      background:
+                        "linear-gradient(180deg, #20283A 0%, #0A0E17 52%, #03050A 100%)",
+                      borderColor: "rgba(255, 255, 255, 0.24)",
                       transform: "translateY(-1px)",
-                      boxShadow: "0 20px 42px rgba(16, 24, 40, 0.28)",
+                      boxShadow:
+                        "0 18px 40px rgba(2, 3, 8, 0.42), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -10px 22px rgba(0,0,0,0.32)",
                     },
                     "&:active": {
                       transform: "translateY(0)",
                     },
                   }}
                 >
-                  Giris yap
+                  <Box
+                    component="span"
+                    sx={{
+                      position: "relative",
+                      zIndex: 3,
+                      display: "inline-flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    Giris yap
+                  </Box>
                 </LoadingButton>
               </Stack>
             </Box>
