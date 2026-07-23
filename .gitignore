@@ -18,7 +18,7 @@
 # production
 /build
 /dist
-/public/*
+!public/*
 !/public/index.html
 !/index.html
 

@@ -396,8 +396,17 @@ const Login = () => {
               />
 
               <Box>
-                <Typography sx={{ color: "#667085", fontSize: 15, mt: 0.5 }}>
-                  Premium mutfak tasarim paneline guvenli giris.
+                <Typography
+                  sx={{
+                    color: "#596579",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    letterSpacing: 0.8,
+                    textTransform: "uppercase",
+                    mt: 0.5,
+                  }}
+                >
+                  Profesyonel tasarim paneli
                 </Typography>
               </Box>
             </Stack>
