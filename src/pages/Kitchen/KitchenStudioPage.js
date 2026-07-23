@@ -753,7 +753,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     quality: true,
     measurements: true,
     walls: true,
-    autoHideWalls: false,
+    autoHideWalls: true,
     topView: false,
     cameraTour: false,
     multiSelect: false,

@@ -359,7 +359,7 @@ const KitchenScene = ({
     quality: true,
     measurements: true,
     walls: true,
-    autoHideWalls: false,
+    autoHideWalls: true,
     topView: false,
   };
   const highQualityScene = scenePremiumTools.quality;
@@ -395,15 +395,15 @@ const KitchenScene = ({
         nightMode,
         lampVisible,
         lightsOn,
-        background: lightsOn ? "#130B18" : "#090712",
+        background: lightsOn ? "#071225" : "#020711",
         ambient: lightsOn ? 0.32 : 0.24,
         hemisphere: lightsOn ? 0.3 : 0.26,
         sun: lightsOn ? 0.3 : 0.28,
         fill: lightsOn ? 0.2 : 0.16,
         sunColor: "#FFC77A",
-        fillColor: lightsOn ? "#FFDCA3" : "#D7A4FF",
+        fillColor: lightsOn ? "#D8E7FF" : "#8CA8D8",
         hemisphereSky: "#FFD1A6",
-        hemisphereGround: "#201018",
+        hemisphereGround: "#020711",
       };
     }
 
@@ -2058,10 +2058,10 @@ const createTwilightSkyTexture = () => {
   if (!context) return null;
 
   const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, "#000105");
-  gradient.addColorStop(0.46, "#03030B");
-  gradient.addColorStop(0.76, "#090513");
-  gradient.addColorStop(1, "#120814");
+  gradient.addColorStop(0, "#000102");
+  gradient.addColorStop(0.42, "#01040D");
+  gradient.addColorStop(0.76, "#020816");
+  gradient.addColorStop(1, "#000102");
   context.fillStyle = gradient;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -2265,8 +2265,8 @@ const RoomShell = ({
 
     if (!isNight) return color;
 
-    color.lerp(new Color(lightsOn ? "#FFE4B8" : "#8FA9CC"), lightsOn ? 0.1 : 0.18);
-    color.multiplyScalar(lightsOn ? 0.78 : 0.48);
+    color.lerp(new Color(lightsOn ? "#E7EEF8" : "#6E7F96"), lightsOn ? 0.08 : 0.14);
+    color.multiplyScalar(lightsOn ? 0.68 : 0.4);
 
     return color;
   };
@@ -2339,7 +2339,7 @@ const RoomShell = ({
               args={[width + wallThickness * 2, height, wallThickness]}
             />
             <meshStandardMaterial
-              color={lightsOn ? "#FFFFFF" : "#F1F2ED"}
+              color={surfaceColor(lightsOn ? "#F4F5F0" : "#E4E5DF", "#E4E5DF")}
               map={wallGradientTexture}
               roughness={0.94}
               metalness={0}
@@ -2366,7 +2366,7 @@ const RoomShell = ({
           >
             <boxGeometry args={[wallThickness, height, depth]} />
             <meshStandardMaterial
-              color={lightsOn ? "#FFFFFF" : "#F1F2ED"}
+              color={surfaceColor(lightsOn ? "#F4F5F0" : "#E4E5DF", "#E4E5DF")}
               map={wallGradientTexture}
               roughness={0.94}
               metalness={0}
@@ -2385,9 +2385,11 @@ const RoomShell = ({
             raycast={() => null}
           >
             <boxGeometry args={[wallThickness, height, depth]} />
-            <meshBasicMaterial
-              color="#F1F2ED"
+            <meshStandardMaterial
+              color={surfaceColor(lightsOn ? "#F4F5F0" : "#E4E5DF", "#E4E5DF")}
               map={wallGradientTexture}
+              roughness={0.94}
+              metalness={0}
             />
           </mesh>
         </>
@@ -2407,7 +2409,7 @@ const RoomShell = ({
             ]}
           />
           <meshStandardMaterial
-            color={lightsOn ? "#C0C1BC" : ikeaCeilingColor}
+            color={surfaceColor(lightsOn ? "#A7A8A3" : "#9EA09B", ikeaCeilingColor)}
             roughness={0.92}
             metalness={0}
           />
