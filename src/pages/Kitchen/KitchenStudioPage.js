@@ -1624,7 +1624,30 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         ["input", "textarea", "select"].includes(activeTag) ||
         document.activeElement?.isContentEditable;
 
-      if (isTyping || selectedSceneIndex === null) return;
+      if (isTyping) return;
+
+      const isUndoShortcut =
+        (event.ctrlKey || event.metaKey) &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === "z";
+      const isRedoShortcut =
+        (event.ctrlKey || event.metaKey) &&
+        (event.key.toLowerCase() === "y" ||
+          (event.shiftKey && event.key.toLowerCase() === "z"));
+
+      if (isUndoShortcut) {
+        event.preventDefault();
+        undoSceneChange();
+        return;
+      }
+
+      if (isRedoShortcut) {
+        event.preventDefault();
+        redoSceneChange();
+        return;
+      }
+
+      if (selectedSceneIndex === null) return;
 
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c") {
         event.preventDefault();
@@ -1679,7 +1702,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     clampScenePosition,
     copySceneItem,
     pasteSceneItem,
+    redoSceneChange,
     selectedSceneIndex,
+    undoSceneChange,
   ]);
 
   const scenePointFromEvent = (event) => {
