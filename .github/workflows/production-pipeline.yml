@@ -83,6 +83,8 @@ jobs:
       #     aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS"
       #     aws configure set region "$AWS_REGION"  # Specify the region of your EC2 instance
 
+      
+      - uses: actions/checkout@v4 
       - name: Create .env file
         run: |
           echo "${{ secrets.ENV_FILE }}" > .env
