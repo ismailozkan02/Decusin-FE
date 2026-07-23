@@ -1943,15 +1943,15 @@ const createRoomWallGradientTexture = () => {
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   const topShadow = context.createLinearGradient(0, 0, 0, canvas.height);
-  topShadow.addColorStop(0, "rgba(64,66,62,0.42)");
-  topShadow.addColorStop(0.18, "rgba(64,66,62,0.2)");
+  topShadow.addColorStop(0, "rgba(64,66,62,0.34)");
+  topShadow.addColorStop(0.18, "rgba(64,66,62,0.16)");
   topShadow.addColorStop(0.38, "rgba(64,66,62,0)");
   context.fillStyle = topShadow;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   const leftCorner = context.createRadialGradient(0, 0, 8, 0, 0, 220);
-  leftCorner.addColorStop(0, "rgba(58,60,56,0.46)");
-  leftCorner.addColorStop(0.44, "rgba(58,60,56,0.18)");
+  leftCorner.addColorStop(0, "rgba(58,60,56,0.38)");
+  leftCorner.addColorStop(0.44, "rgba(58,60,56,0.14)");
   leftCorner.addColorStop(1, "rgba(80,82,78,0)");
   context.fillStyle = leftCorner;
   context.fillRect(0, 0, canvas.width, canvas.height);
@@ -1964,8 +1964,8 @@ const createRoomWallGradientTexture = () => {
     0,
     220,
   );
-  rightCorner.addColorStop(0, "rgba(58,60,56,0.46)");
-  rightCorner.addColorStop(0.44, "rgba(58,60,56,0.18)");
+  rightCorner.addColorStop(0, "rgba(58,60,56,0.38)");
+  rightCorner.addColorStop(0.44, "rgba(58,60,56,0.14)");
   rightCorner.addColorStop(1, "rgba(80,82,78,0)");
   context.fillStyle = rightCorner;
   context.fillRect(0, 0, canvas.width, canvas.height);
@@ -2318,11 +2318,9 @@ const RoomShell = ({
             raycast={() => null}
           >
             <boxGeometry args={[wallThickness, height, depth]} />
-            <meshStandardMaterial
-              color={lightsOn ? "#FFFFFF" : "#F1F2ED"}
+            <meshBasicMaterial
+              color="#F1F2ED"
               map={wallGradientTexture}
-              roughness={0.94}
-              metalness={0}
             />
           </mesh>
         </>
