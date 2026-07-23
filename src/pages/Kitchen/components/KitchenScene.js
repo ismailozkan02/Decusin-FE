@@ -337,6 +337,8 @@ const KitchenScene = ({
   onToggleFullscreen,
   onSelectCameraView,
   onToggleSceneWalls,
+  onToggleAutoHideWalls,
+  onAutoHideRoomSurface,
   onToggleRoomSurface,
   premiumTools,
   cameraPresetSignal,
@@ -346,6 +348,7 @@ const KitchenScene = ({
 
   const wrapperRef = useRef(null);
   const controlsRef = useRef(null);
+  const autoHiddenSurfaceRef = useRef(null);
   const pendingDragRef = useRef(null);
   const [sceneBox, setSceneBox] = useState({ width: 0, top: 0 });
   const [drag3DIndex, setDrag3DIndex] = useState(null);
@@ -356,6 +359,7 @@ const KitchenScene = ({
     quality: true,
     measurements: true,
     walls: true,
+    autoHideWalls: false,
     topView: false,
   };
   const highQualityScene = scenePremiumTools.quality;
@@ -477,10 +481,61 @@ const KitchenScene = ({
     },
     [roomDepthCm, roomHeightCm, roomWidthCm],
   );
+  const resolveAutoHiddenSurface = useCallback((camera, controls) => {
+    if (!camera || !controls) return null;
+
+    const roomWidth = cmToUnit(roomWidthCm);
+    const roomHeight = cmToUnit(roomHeightCm);
+    const roomDepth = cmToUnit(roomDepthCm);
+    const target = controls.target || new Vector3(0, roomHeight * 0.5, 0);
+    const offset = camera.position.clone().sub(target);
+    const xRatio = offset.x / Math.max(roomWidth, 0.1);
+    const yRatio = offset.y / Math.max(roomHeight, 0.1);
+    const zRatio = offset.z / Math.max(roomDepth, 0.1);
+
+    if (yRatio > 0.82) return "ceilingVisible";
+    if (xRatio > 0.48) return "rightWallVisible";
+    if (xRatio < -0.48) return "leftWallVisible";
+    if (zRatio < -0.42) return "backWallVisible";
+
+    return null;
+  }, [roomDepthCm, roomHeightCm, roomWidthCm]);
+  const syncAutoHiddenSurface = useCallback(() => {
+    if (!scenePremiumTools.autoHideWalls || scenePremiumTools.cameraTour) {
+      autoHiddenSurfaceRef.current = null;
+      return;
+    }
+
+    const controls = controlsRef.current;
+    const camera = controls?.object;
+    const nextHiddenSurface = resolveAutoHiddenSurface(camera, controls);
+
+    if (autoHiddenSurfaceRef.current === nextHiddenSurface) return;
+
+    autoHiddenSurfaceRef.current = nextHiddenSurface;
+    onAutoHideRoomSurface?.(nextHiddenSurface);
+  }, [
+    onAutoHideRoomSurface,
+    resolveAutoHiddenSurface,
+    scenePremiumTools.autoHideWalls,
+    scenePremiumTools.cameraTour,
+  ]);
   useEffect(() => {
     if (!cameraPresetSignal?.preset) return;
     applyCameraPreset(cameraPresetSignal.preset);
   }, [applyCameraPreset, cameraPresetSignal]);
+  useEffect(() => {
+    const controls = controlsRef.current;
+
+    if (!controls || !scenePremiumTools.autoHideWalls) return undefined;
+
+    syncAutoHiddenSurface();
+    controls.addEventListener("change", syncAutoHiddenSurface);
+
+    return () => {
+      controls.removeEventListener("change", syncAutoHiddenSurface);
+    };
+  }, [scenePremiumTools.autoHideWalls, syncAutoHiddenSurface]);
   const isWallDrag = (index) => {
     const item = sceneItems[index];
     const product = catalogMap[item?.catalog_item_id] || {};
@@ -872,6 +927,18 @@ const KitchenScene = ({
           active={allRoomSurfacesVisible}
         >
           <GridViewOutlinedIcon />
+        </SceneSideControl>
+        <SceneSideControl
+          label="Oto"
+          title="Kameraya gore duvar gizle"
+          onClick={onToggleAutoHideWalls}
+          active={scenePremiumTools.autoHideWalls}
+        >
+          {scenePremiumTools.autoHideWalls ? (
+            <VisibilityOutlinedIcon />
+          ) : (
+            <VisibilityOffOutlinedIcon />
+          )}
         </SceneSideControl>
         {[
           ["backWallVisible", "Arka"],

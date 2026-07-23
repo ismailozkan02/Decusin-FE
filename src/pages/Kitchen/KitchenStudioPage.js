@@ -753,6 +753,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     quality: true,
     measurements: true,
     walls: true,
+    autoHideWalls: false,
     topView: false,
     cameraTour: false,
     multiSelect: false,
@@ -2583,6 +2584,33 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 leftWallVisible: !allVisible,
                 rightWallVisible: !allVisible,
                 ceilingVisible: !allVisible,
+              }));
+            }}
+            onToggleAutoHideWalls={() => {
+              setPremiumTools((current) => ({
+                ...current,
+                autoHideWalls: !current.autoHideWalls,
+                walls: true,
+              }));
+              setRoomSurfaces((current) => ({
+                ...current,
+                backWallVisible: true,
+                leftWallVisible: true,
+                rightWallVisible: true,
+                ceilingVisible: true,
+              }));
+            }}
+            onAutoHideRoomSurface={(field) => {
+              setPremiumTools((current) => ({
+                ...current,
+                walls: true,
+              }));
+              setRoomSurfaces((current) => ({
+                ...current,
+                backWallVisible: field !== "backWallVisible",
+                leftWallVisible: field !== "leftWallVisible",
+                rightWallVisible: field !== "rightWallVisible",
+                ceilingVisible: field !== "ceilingVisible",
               }));
             }}
             onToggleRoomSurface={(field) => {
