@@ -1,0 +1,251 @@
+name: Production CI-CD pipeline
+
+on:
+  # schedule:
+  #   - cron: "59 23 * * *"
+
+  workflow_dispatch:
+  # push:
+  #   branches: [ main" ]
+  #   paths:
+  #   - 'src/**'
+  #   - '.github/**'
+
+  push:
+    branches: [ "main" ]
+ 
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "src/**"
+      - ".github/**"
+
+permissions:
+  contents: read
+
+env:
+  EC2_IP: "158.220.111.127"
+  #EC2_SG: "xxx"
+  WORKSPACE: ${{ github.workspace }}
+  #TOKEN_GITHUB: ${{ secrets.TOKEN_GITHUB }}
+
+jobs:
+
+   server-live:
+    # needs: []
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Waiting for backend to start
+        run: |
+          #!/bin/bash
+          host="tasarim.decusin.com"
+          while ! curl -I $host; do
+              sleep 5
+          done
+          echo "curl running!"
+
+          # #!/bin/bash
+          # host="tasarim.decusin.com"
+          # duration=$((30 * 1))  # 30 seconds
+          # end_time=$((SECONDS + duration))
+          # while [ $SECONDS -lt $end_time ]; do
+          #   if curl -I $host >/dev/null 2>&1; then
+          #     echo "curl running!"
+          #     break
+          #   fi
+          #   sleep 5
+          # done
+  
+   build:
+    needs: [server-live]
+    # environment:
+    #   name: 'build'
+    # env:
+    #   working-directory: ./src
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    strategy:
+      matrix:
+        node-version: [24.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      # - name: Install AWS CLI
+      #   run: |
+      #     sudo apt-get update
+      #     # sudo apt-get install -y awscli
+
+      # - name: Configure AWS credentials
+      #   run: |
+      #     aws configure set aws_access_key_id "$AWS_ACCESS_KEY"
+      #     aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS"
+      #     aws configure set region "$AWS_REGION"  # Specify the region of your EC2 instance
+
+      
+      - uses: actions/checkout@v4 
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: Check if .env exists (Optional)
+        run: |
+          ls -la .env
+
+      # - uses: actions/checkout@v4
+      # - name: Download file from S3
+      #   run: |
+      #     aws s3 cp s3://eurolink/test-frontend/.env "$WORKSPACE"
+      #     # sudo mv "$WORKSPACE"/env "$WORKSPACE"/.env
+      #     # aws s3 cp s3://eurolink/test-frontend/public/_redirects "$WORKSPACE"/public/
+      #     # aws s3 cp s3://eurolink/test-frontend/public/robots.txt "$WORKSPACE"/public/
+      #     aws s3 cp s3://eurolink/test-frontend/public/index.html "$WORKSPACE"/
+      #     # aws s3 cp s3://eurolink/test-frontend/public/manifest.json "$WORKSPACE"/public/
+
+      
+      - name: List Contents of Workspace
+        if: ${{ always() }}
+        run: ls -a "$WORKSPACE"
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: ./package-lock.json
+        # env:
+        #     NODE_OPTIONS: "--openssl-legacy-provider"
+      - run: npm ci --force "$WORKSPACE"
+      - run: npx vite build
+      # - run: npm install "$WORKSPACE"
+      # - run: npm run build
+        env:
+          NODE_OPTIONS: "--max_old_space_size=8192"
+
+      - name: Delete Old Artifacts (Keep last 3 days)
+        uses: actions/github-script@v6
+        id: artifact
+        with:
+          script: |
+            // 3 günlük milisaniye hesabı: 3 gün * 24 saat * 60 dakika * 60 saniye * 1000 ms
+            const THREE_DAYS_AGO = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+            const artifacts = await github.paginate(
+              github.rest.actions.listArtifactsForRepo,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              }
+            );
+            console.log(`Checking ${artifacts.length} artifacts...`);
+            for (const artifact of artifacts) {
+              const createdAt = new Date(artifact.created_at);
+        
+              if (createdAt < THREE_DAYS_AGO) {
+                console.log(`Deleting old artifact: ${artifact.name} (Created: ${artifact.created_at})`);
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                repo: context.repo.repo,
+                  artifact_id: artifact.id,
+                });
+              }
+            }
+
+      - name: zip  build
+        run: zip -r frontend-artifact.zip ./dist/**
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-artifact
+          path: frontend-artifact.zip
+          
+   deploy:
+      # permissions:
+      #   packages: read
+      runs-on: ubuntu-latest
+      needs: [build]
+      # environment:
+      #   name: 'deploy'
+      # url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
+
+        - name: Download a Build Artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: frontend-artifact # Eylem tarafından yaratılan artifact ismi
+            path: .
+
+        # - name: Install AWS CLI
+        #   run: |
+        #     sudo apt-get install -y awscli
+
+        # - name: Configure AWS credentials
+        #   run: |
+        #      aws configure set aws_access_key_id "$AWS_ACCESS_KEY"
+        #      aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS"
+        #      aws configure set region "$AWS_REGION"
+           
+
+        - name: Copy file to server
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y sshpass
+            sshpass -p ${{ secrets.CONTOBA_SECRET }} scp -o StrictHostKeyChecking=no -r frontend-artifact.zip root@158.220.111.127:/var/www/decusin/portal-frontend/
+
+
+        - name: Execute SSH commands on remote server
+          uses: appleboy/ssh-action@v0.1.9
+          with:
+            host: ${{ env.EC2_IP }} # apitest.7lms.com
+            username: root
+            password: ${{ secrets.CONTOBA_SECRET }}
+            # port: 22
+            script: |
+              sudo apt install unzip
+              cd /var/www/decusin/portal-frontend/
+              sudo rm -rf dist
+              sudo unzip -o /var/www/decusin/portal-frontend/frontend-artifact.zip -d /var/www/decusin/portal-frontend/
+              # sudo rm -rf /var/www/decusin/portal-frontend/dist/assets/*
+              # sudo cp -r /var/www/decusin/portal-frontend/dist/* /var/www/decusin/portal-frontend/dist/*
+              sudo rm -rf frontend-artifact.zip
+              # cd /var/www/decusin/portal-frontend/
+              # sudo npm install
+              # pm2 start build --name api-linkeuro
+              # pm2 save
+              # pm2 restart api-linkeuro  #  && pm2 monit
+              sudo service nginx restart
+
+      # - name: Wait
+      #   run: |
+      #      echo "wait x minute"
+      #      sleep 600  # wait 10 minute
+
+   backend-live:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Waiting for backend to start
+        run: |
+          #!/bin/bash
+          host="tasarim.decusin.com"
+          duration=$((30 * 1))  # 30 seconds
+          end_time=$((SECONDS + duration))
+          while [ $SECONDS -lt $end_time ]; do
+            if curl -I $host >/dev/null 2>&1; then
+              echo "curl running!"
+              break
+            fi
+            sleep 5
+          done
+
+  #         # #!/bin/bash
+  #         # host="tasarim.decusin.com"
+  #         # while ! curl -I $host; do
+  #         #     sleep 5
+  #         # done
+  #         # echo "curl running!"
