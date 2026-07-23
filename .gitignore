@@ -20,7 +20,7 @@
 /dist
 /public/*
 !/public/index.html
-/index.html
+!/index.html
 
 # misc
 .DS_Store

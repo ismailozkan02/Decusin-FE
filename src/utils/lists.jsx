@@ -22,11 +22,11 @@ import { useTheme } from "@mui/material/styles";
 export const APP_VERSION = "1.0.1";
 
 export const COMPANY_INFORMATION = {
-  title: "EuroLink Portal",
-  project_name: "EuroLink Portal",
-  email: "info@eurolink.de",
+  title: "Decusin Portal",
+  project_name: "Decusin Portal",
+  email: "info@decusin.com",
   represent: "Nazım ....",
-  represent_email: "info@eurolink.de",
+  represent_email: "info@decusin.com",
   phone: "(+46) 000 0000000",
   address: "Aaaaa, 00000 Aaaaa, Germany",
   website: "https://linkeuro.de/",

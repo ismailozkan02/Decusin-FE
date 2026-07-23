@@ -417,7 +417,7 @@ const Login = () => {
                   <TextField
                     fullWidth
                     autoComplete="email"
-                    placeholder="admin@decusin.com"
+                    placeholder="Email adresinizi girin"
                     {...register("email")}
                     error={!!errors.email}
                     helperText={errors.email?.message}
@@ -440,7 +440,7 @@ const Login = () => {
                     fullWidth
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
-                    placeholder="Decusin123."
+                    placeholder="Sifrenizi girin"
                     {...register("password")}
                     error={!!errors.password}
                     helperText={errors.password?.message}

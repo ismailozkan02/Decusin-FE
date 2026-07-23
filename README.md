@@ -18,4 +18,4 @@ If you are developing a production application, we recommend using TypeScript wi
 ## Versions
 
 **v.1.0.1**
-- EuroLink Portal is in Live.
+- Decusin Portal is in Live.
