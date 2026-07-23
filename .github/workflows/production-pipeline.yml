@@ -10,21 +10,20 @@ on:
   #   paths:
   #   - 'src/**'
   #   - '.github/**'
+
+  push:
+    branches: [ "main" ]
  
-  pull_request:
-    branches: ["main"]
-    paths:
-      - "src/**"
-      - ".github/**"
+  # pull_request:
+  #   branches: ["main"]
+  #   paths:
+  #     - "src/**"
+  #     - ".github/**"
 
 permissions:
   contents: read
 
 env:
-  # AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  # AWS_SECRET_ACCESS: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  # AWS_REGION: ${{ secrets.AWS_REGION }}
-  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY_TEST }}
   EC2_IP: "158.220.111.127"
   #EC2_SG: "xxx"
   WORKSPACE: ${{ github.workspace }}
@@ -206,10 +205,11 @@ jobs:
             script: |
               sudo apt install unzip
               cd /var/www/decusin/portal-frontend/
+              sudo rm -rf dist
               sudo unzip -o /var/www/decusin/portal-frontend/frontend-artifact.zip -d /var/www/decusin/portal-frontend/
-              sudo rm -rf ./assets/*
-              sudo cp -r /var/www/decusin/portal-frontend/* /var/www/decusin/portal-frontend/
-              sudo rm -rf frontend-artifact.zip build
+              # sudo rm -rf /var/www/decusin/portal-frontend/dist/assets/*
+              # sudo cp -r /var/www/decusin/portal-frontend/dist/* /var/www/decusin/portal-frontend/dist/*
+              sudo rm -rf frontend-artifact.zip
               # cd /var/www/decusin/portal-frontend/
               # sudo npm install
               # pm2 start build --name api-linkeuro
