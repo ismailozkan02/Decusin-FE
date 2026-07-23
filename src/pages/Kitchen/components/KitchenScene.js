@@ -1924,6 +1924,57 @@ const createParquetTexture = (pattern = "oakHerringbone") => {
   return texture;
 };
 
+const createRoomWallGradientTexture = () => {
+  if (typeof document === "undefined") return null;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const context = canvas.getContext("2d");
+
+  if (!context) return null;
+
+  const base = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+  base.addColorStop(0, "#C2C3BC");
+  base.addColorStop(0.18, "#D0D1CA");
+  base.addColorStop(0.48, "#DEDFD8");
+  base.addColorStop(1, "#C8C9C2");
+  context.fillStyle = base;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const topShadow = context.createLinearGradient(0, 0, 0, canvas.height);
+  topShadow.addColorStop(0, "rgba(64,66,62,0.42)");
+  topShadow.addColorStop(0.18, "rgba(64,66,62,0.2)");
+  topShadow.addColorStop(0.38, "rgba(64,66,62,0)");
+  context.fillStyle = topShadow;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const leftCorner = context.createRadialGradient(0, 0, 8, 0, 0, 220);
+  leftCorner.addColorStop(0, "rgba(58,60,56,0.46)");
+  leftCorner.addColorStop(0.44, "rgba(58,60,56,0.18)");
+  leftCorner.addColorStop(1, "rgba(80,82,78,0)");
+  context.fillStyle = leftCorner;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const rightCorner = context.createRadialGradient(
+    canvas.width,
+    0,
+    8,
+    canvas.width,
+    0,
+    220,
+  );
+  rightCorner.addColorStop(0, "rgba(58,60,56,0.46)");
+  rightCorner.addColorStop(0.44, "rgba(58,60,56,0.18)");
+  rightCorner.addColorStop(1, "rgba(80,82,78,0)");
+  context.fillStyle = rightCorner;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const texture = new CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+};
+
 const seededRandom = (seed) => {
   const value = Math.sin(seed * 12.9898) * 43758.5453;
   return value - Math.floor(value);
@@ -2125,12 +2176,14 @@ const RoomShell = ({
   const depth = cmToUnit(roomDimensions?.depth || 240);
   const wallThickness = 0.075;
   const trimColor = "#D0D0CA";
+  const ikeaWallColor = "#E3E3DD";
+  const ikeaCeilingColor = "#B2B3AE";
   const surfaces = {
     floor: "#DDBF86",
     floorPattern: "oakHerringbone",
-    backWall: "#E8E6DE",
-    sideWall: "#E1DED5",
-    ceiling: "#D4CDC0",
+    backWall: ikeaWallColor,
+    sideWall: ikeaWallColor,
+    ceiling: ikeaCeilingColor,
     trim: "#D1D1CA",
     backWallVisible: true,
     leftWallVisible: true,
@@ -2161,6 +2214,7 @@ const RoomShell = ({
     }
     return texture;
   }, [depth, surfaces.floorPattern, width]);
+  const wallGradientTexture = useMemo(() => createRoomWallGradientTexture(), []);
   const cameraTourMode = premiumTools?.cameraTour === true;
   const wallsVisible = premiumTools?.walls !== false || cameraTourMode;
   const ceilingVisible =
@@ -2168,7 +2222,13 @@ const RoomShell = ({
     premiumTools?.topView !== true &&
     surfaces.ceilingVisible !== false;
 
-  useEffect(() => () => floorTexture?.dispose(), [floorTexture]);
+  useEffect(
+    () => () => {
+      floorTexture?.dispose();
+      wallGradientTexture?.dispose();
+    },
+    [floorTexture, wallGradientTexture],
+  );
 
   const handleEmptyClick = (event) => {
     event.stopPropagation();
@@ -2212,8 +2272,9 @@ const RoomShell = ({
               args={[width + wallThickness * 2, height, wallThickness]}
             />
             <meshStandardMaterial
-              color={surfaceColor(surfaces.backWall, "#E8E6DE")}
-              roughness={0.88}
+              color={lightsOn ? "#FFFFFF" : "#F1F2ED"}
+              map={wallGradientTexture}
+              roughness={0.94}
               metalness={0}
             />
           </mesh>
@@ -2238,8 +2299,9 @@ const RoomShell = ({
           >
             <boxGeometry args={[wallThickness, height, depth]} />
             <meshStandardMaterial
-              color={surfaceColor(surfaces.sideWall, "#E1DED5")}
-              roughness={0.92}
+              color={lightsOn ? "#FFFFFF" : "#F1F2ED"}
+              map={wallGradientTexture}
+              roughness={0.94}
               metalness={0}
             />
           </mesh>
@@ -2257,8 +2319,9 @@ const RoomShell = ({
           >
             <boxGeometry args={[wallThickness, height, depth]} />
             <meshStandardMaterial
-              color={surfaceColor(surfaces.sideWall, "#E1DED5")}
-              roughness={0.92}
+              color={lightsOn ? "#FFFFFF" : "#F1F2ED"}
+              map={wallGradientTexture}
+              roughness={0.94}
               metalness={0}
             />
           </mesh>
@@ -2279,8 +2342,8 @@ const RoomShell = ({
             ]}
           />
           <meshStandardMaterial
-            color={surfaceColor(surfaces.ceiling, "#D4CDC0")}
-            roughness={0.9}
+            color={lightsOn ? "#C0C1BC" : ikeaCeilingColor}
+            roughness={0.92}
             metalness={0}
           />
         </mesh>
