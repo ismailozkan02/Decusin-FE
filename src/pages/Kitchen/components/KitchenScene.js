@@ -15,19 +15,19 @@ import {
   Typography,
 } from "@mui/material";
 import CameraAltOutlinedIcon from "@mui/icons-material/CameraAltOutlined";
+import AlignHorizontalCenterOutlinedIcon from "@mui/icons-material/AlignHorizontalCenterOutlined";
+import CompareArrowsOutlinedIcon from "@mui/icons-material/CompareArrowsOutlined";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DeleteSweepOutlinedIcon from "@mui/icons-material/DeleteSweepOutlined";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import OpenInFullOutlinedIcon from "@mui/icons-material/OpenInFullOutlined";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
+import RedoOutlinedIcon from "@mui/icons-material/RedoOutlined";
 import RestartAltOutlinedIcon from "@mui/icons-material/RestartAltOutlined";
-import RotateLeftIcon from "@mui/icons-material/RotateLeft";
-import RotateRightIcon from "@mui/icons-material/RotateRight";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import StraightenOutlinedIcon from "@mui/icons-material/StraightenOutlined";
+import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -225,15 +225,11 @@ const ProductModelCanvas = ({ product, rotation, materialPalette }) => {
 };
 
 const sceneToolPanelSx = {
-  position: "absolute",
-  left: { xs: 12, md: 18 },
-  top: { xs: 12, md: 18 },
-  zIndex: 1200,
-  p: 0.65,
+  p: 0.55,
   borderRadius: 1.5,
   bgcolor: "rgba(255,255,255,0.96)",
   border: "1px solid rgba(226,232,240,0.95)",
-  boxShadow: "0 14px 30px rgba(15,23,42,0.14)",
+  boxShadow: "0 6px 14px rgba(15,23,42,0.055)",
 };
 
 const sceneIconButtonSx = (color) => ({
@@ -264,16 +260,16 @@ const sceneSideControlButtonSx = (active, muted = false) => ({
   outline: "none",
   appearance: "none",
   font: "inherit",
-  color: muted ? "#94A3B8" : active ? "#F59E0B" : "#1976D2",
-  bgcolor: muted ? "#F8FAFC" : active ? "#FFFBEB" : "#FFFFFF",
+  color: muted ? "#CBD5E1" : active ? "#1976D2" : "#64748B",
+  bgcolor: muted ? "#F8FAFC" : active ? "#EFF6FF" : "#FFFFFF",
   border: active
-    ? "1px solid rgba(245,158,11,0.5)"
-    : "1px solid rgba(147,197,253,0.78)",
+    ? "1px solid rgba(37,99,235,0.48)"
+    : "1px solid rgba(148,163,184,0.42)",
   opacity: muted ? 0.58 : 1,
   boxShadow: active
-    ? "0 10px 22px rgba(245,158,11,0.14)"
+    ? "0 10px 22px rgba(37,99,235,0.14)"
     : "0 8px 18px rgba(15,23,42,0.08)",
-  "&:hover": { bgcolor: muted ? "#EFF6FF" : active ? "#FEF3C7" : "#EFF6FF" },
+  "&:hover": { bgcolor: muted ? "#F8FAFC" : active ? "#DBEAFE" : "#F1F5F9" },
   "& .MuiSvgIcon-root": { fontSize: 18 },
 });
 
@@ -329,7 +325,6 @@ const KitchenScene = ({
   onCopyItem,
   onDeleteItem,
   onOpenCustomizer,
-  onRotateItem,
   onNewProject,
   onSaveProject,
   onClearItems,
@@ -340,6 +335,15 @@ const KitchenScene = ({
   onToggleAutoHideWalls,
   onAutoHideRoomSurface,
   onToggleRoomSurface,
+  onToggleMeasurements,
+  onToggleClearanceMeasurements,
+  onAutoAlignItems,
+  onAlignUpperCabinets,
+  onAlignLowerCabinets,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
   premiumTools,
   cameraPresetSignal,
 }) => {
@@ -360,6 +364,7 @@ const KitchenScene = ({
     measurements: true,
     walls: true,
     autoHideWalls: true,
+    clearanceMeasurements: false,
     topView: false,
   };
   const highQualityScene = scenePremiumTools.quality;
@@ -755,8 +760,9 @@ const KitchenScene = ({
         bgcolor: "#FFFFFF",
         boxShadow: "0 8px 24px rgba(15,23,42,0.04)",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        flexDirection: "column",
+        alignItems: "stretch",
+        justifyContent: "flex-start",
         position: "relative",
         minHeight: layoutReady ? fittedHeight + 104 : placeholderHeight + 72,
         p: { xs: 1, md: 2 },
@@ -785,10 +791,13 @@ const KitchenScene = ({
       )}
       <Stack
         data-kitchen-scene-controls="true"
-        direction="column"
-        spacing={0.45}
-        sx={sceneToolPanelSx}
+        direction="row"
+        alignItems="flex-start"
+        justifyContent="center"
+        spacing={1}
+        sx={{ width: "100%", mb: 1.2, px: 0.25, flexWrap: "wrap" }}
       >
+        <Stack direction="row" spacing={0.45} sx={sceneToolPanelSx}>
         <IconButton
           aria-label="Yeni proje"
           onClick={onNewProject}
@@ -826,84 +835,50 @@ const KitchenScene = ({
         >
           <DeleteSweepOutlinedIcon />
         </IconButton>
-      </Stack>
-      {selectedSceneIndex !== null && (
-        <Stack
-          data-kitchen-scene-controls="true"
-          direction="column"
-          spacing={0.45}
-          sx={{
-            ...sceneToolPanelSx,
-            top: { xs: 240, md: 246 },
-          }}
-        >
-          <IconButton
-            aria-label="Secili urun ayarlari"
-            onClick={onOpenCustomizer}
-            sx={sceneIconButtonSx("#111827")}
-          >
-            <SettingsOutlinedIcon />
-          </IconButton>
-          <IconButton
-            aria-label="Secili urunu kopyala"
-            onClick={() => onCopyItem?.(selectedSceneIndex)}
-            sx={sceneIconButtonSx("#2563EB")}
-          >
-            <ContentCopyIcon />
-          </IconButton>
-          <IconButton
-            aria-label="Secili urunu sil"
-            onClick={() => onDeleteItem?.(selectedSceneIndex)}
-            sx={sceneIconButtonSx("#EF4444")}
-          >
-            <DeleteOutlineIcon />
-          </IconButton>
-          <IconButton
-            aria-label="Secili urunu sola dondur"
-            onClick={() => onRotateItem?.(selectedSceneIndex, "y", -10)}
-            sx={sceneIconButtonSx("#64748B")}
-          >
-            <RotateLeftIcon />
-          </IconButton>
-          <IconButton
-            aria-label="Secili urunu yukari dondur"
-            onClick={() => onRotateItem?.(selectedSceneIndex, "x", -10)}
-            sx={sceneIconButtonSx("#64748B")}
-          >
-            <KeyboardArrowUpIcon />
-          </IconButton>
-          <IconButton
-            aria-label="Secili urunu asagi dondur"
-            onClick={() => onRotateItem?.(selectedSceneIndex, "x", 10)}
-            sx={sceneIconButtonSx("#64748B")}
-          >
-            <KeyboardArrowDownIcon />
-          </IconButton>
-          <IconButton
-            aria-label="Secili urunu saga dondur"
-            onClick={() => onRotateItem?.(selectedSceneIndex, "y", 10)}
-            sx={sceneIconButtonSx("#64748B")}
-          >
-            <RotateRightIcon />
-          </IconButton>
         </Stack>
-      )}
-      <Stack
-        data-kitchen-scene-controls="true"
-        direction="column"
-        spacing={0.35}
-        sx={{
-          position: "absolute",
-          right: { xs: 12, md: 18 },
-          top: { xs: 12, md: 18 },
-          zIndex: 1200,
-          p: 0.5,
-          borderRadius: 1.5,
-          bgcolor: "rgba(255,255,255,0.96)",
-          border: "1px solid rgba(226,232,240,0.95)",
-          boxShadow: "0 14px 30px rgba(15,23,42,0.14)",
-        }}
-      >
+        <Stack direction="row" spacing={0.35} sx={sceneToolPanelSx}>
+          <SceneSideControl
+            label="Olcu"
+            title="Olculeri goster/gizle"
+            onClick={onToggleMeasurements}
+            active={scenePremiumTools.measurements}
+          >
+            <StraightenOutlinedIcon />
+          </SceneSideControl>
+          <SceneSideControl
+            label="Bosluk"
+            title="Sag-sol bosluklari goster/gizle"
+            onClick={onToggleClearanceMeasurements}
+            active={scenePremiumTools.clearanceMeasurements}
+          >
+            <CompareArrowsOutlinedIcon />
+          </SceneSideControl>
+          <SceneSideControl
+            label="Hizala"
+            title="Urunleri hizala"
+            onClick={onAutoAlignItems}
+            active={false}
+          >
+            <AlignHorizontalCenterOutlinedIcon />
+          </SceneSideControl>
+          <SceneSideControl
+            label="Üst Hiza"
+            title="Üst dolaplari hizala"
+            onClick={onAlignUpperCabinets}
+            active={false}
+          >
+            <AlignHorizontalCenterOutlinedIcon />
+          </SceneSideControl>
+          <SceneSideControl
+            label="Alt Hiza"
+            title="Alt dolaplari hizala"
+            onClick={onAlignLowerCabinets}
+            active={false}
+          >
+            <AlignHorizontalCenterOutlinedIcon />
+          </SceneSideControl>
+        </Stack>
+        <Stack direction="row" spacing={0.35} sx={sceneToolPanelSx}>
         <SceneSideControl
           label="On"
           title="On gorunum"
@@ -963,6 +938,25 @@ const KitchenScene = ({
             </SceneSideControl>
           );
         })}
+        <SceneSideControl
+          label="Geri"
+          title="Geri al"
+          onClick={canUndo ? onUndo : undefined}
+          active={false}
+          muted={!canUndo}
+        >
+          <UndoOutlinedIcon />
+        </SceneSideControl>
+        <SceneSideControl
+          label="Ileri"
+          title="Ileri al"
+          onClick={canRedo ? onRedo : undefined}
+          active={false}
+          muted={!canRedo}
+        >
+          <RedoOutlinedIcon />
+        </SceneSideControl>
+        </Stack>
       </Stack>
       <Box
         ref={sceneRef}
@@ -975,6 +969,7 @@ const KitchenScene = ({
         sx={{
           width: layoutReady ? fittedWidth : "100%",
           height: layoutReady ? fittedHeight : placeholderHeight,
+          alignSelf: "center",
           minWidth: 320,
           maxWidth: "100%",
           position: "relative",
@@ -1125,6 +1120,9 @@ const KitchenScene = ({
                     selectedCounter={selectedCounter}
                     selected={selected}
                     showMeasurements={scenePremiumTools.measurements}
+                    showGapMeasurements={
+                      scenePremiumTools.clearanceMeasurements
+                    }
                     sceneItems={sceneItems}
                     catalogMap={catalogMap}
                     roomDimensions={roomDimensions}
@@ -1491,6 +1489,75 @@ const getItemFootprintCm = (item, product, cmToPx) => {
   };
 };
 
+const getSceneItemSideGaps = ({
+  item,
+  index,
+  product,
+  sceneItems,
+  catalogMap,
+  roomDimensions,
+  cmToPx,
+}) => {
+  const roomWidthCm = Math.max(Number(roomDimensions?.width || 450), 1);
+  const dimensions = getSceneItemDimensions(product, item);
+  const wallMode = isWallMountedItem(item, product, dimensions);
+  const x = Number(item.position?.x || 0) / cmToPx;
+  const y = Number(item.position?.y || 0) / cmToPx;
+  const z = Number(item.position?.z || 0);
+  const width = Math.max(Number(dimensions.width || 60), 1);
+  const height = Math.max(Number(dimensions.height || 72), 1);
+  const depth = Math.max(Number(dimensions.depth || 56), 1);
+  let leftBoundary = 0;
+  let rightBoundary = roomWidthCm;
+
+  sceneItems.forEach((otherItem, otherIndex) => {
+    if (otherIndex === index) return;
+
+    const otherProduct = catalogMap[otherItem.catalog_item_id] || {};
+    const otherDimensions = getSceneItemDimensions(otherProduct, otherItem);
+    if (
+      isWallMountedItem(otherItem, otherProduct, otherDimensions) !== wallMode
+    )
+      return;
+
+    const otherX = Number(otherItem.position?.x || 0) / cmToPx;
+    const otherWidth = Math.max(Number(otherDimensions.width || 60), 1);
+    const otherStart = otherX;
+    const otherEnd = otherX + otherWidth;
+    const overlapsReference = wallMode
+      ? rangesOverlap(
+          y,
+          height,
+          Number(otherItem.position?.y || 0) / cmToPx,
+          Math.max(Number(otherDimensions.height || 72), 1),
+        )
+      : rangesOverlap(
+          z,
+          depth,
+          Number(otherItem.position?.z || 0),
+          Math.max(Number(otherDimensions.depth || 56), 1),
+        );
+
+    if (!overlapsReference) return;
+
+    if (otherEnd <= x && otherEnd > leftBoundary) {
+      leftBoundary = otherEnd;
+    }
+
+    if (otherStart >= x + width && otherStart < rightBoundary) {
+      rightBoundary = otherStart;
+    }
+  });
+
+  const left = Math.max(x - leftBoundary, 0);
+  const right = Math.max(rightBoundary - (x + width), 0);
+
+  return {
+    left: left > 0.5 ? left : 0,
+    right: right > 0.5 ? right : 0,
+  };
+};
+
 const getBaseSupportTopCm = ({
   sceneItems,
   catalogMap,
@@ -1752,7 +1819,7 @@ const getItem3DTransform = ({
   const z =
     product.category === "room"
       ? 0
-      : -roomDepth / 2 + cmToUnit(zCm) + depth / 2 + 0.08;
+      : -roomDepth / 2 + cmToUnit(zCm) + depth / 2;
 
   return {
     position: [x, y, z],
@@ -1762,6 +1829,12 @@ const getItem3DTransform = ({
 };
 
 const floorPatternPalettes = {
+  mosaicOak: {
+    base: "#B77A42",
+    colors: ["#8E5E38", "#C58A4E", "#DDA45E", "#754E34", "#B9783E", "#E0B36C"],
+    mode: "mosaic",
+    sheen: 0.08,
+  },
   oakHerringbone: {
     base: "#E7C37C",
     colors: ["#F2D99C", "#D9AE65", "#E9C782", "#C9964F", "#F6E0AB"],
@@ -1839,6 +1912,77 @@ const floorPatternPalettes = {
     sheen: 0.04,
     dark: true,
   },
+  whiteOak: {
+    base: "#F1E0B8",
+    colors: ["#F8EED1", "#E4CF9B", "#FFF6DC", "#D5B878", "#F0DEB1"],
+    mode: "plank",
+    sheen: 0.18,
+  },
+  sandOak: {
+    base: "#D7B878",
+    colors: ["#D7B878", "#EBCF91", "#B99758", "#F0DCA3", "#C9A867"],
+    mode: "plank",
+    sheen: 0.12,
+  },
+  honeyHerringbone: {
+    base: "#D79843",
+    colors: ["#C98431", "#F0BE62", "#A86522", "#D99B3F", "#F2CD81"],
+    mode: "herringbone",
+    sheen: 0.1,
+  },
+  amberChevron: {
+    base: "#B8752D",
+    colors: ["#B8752D", "#E3A94D", "#80511F", "#C7893D", "#F0C16A"],
+    mode: "chevron",
+    sheen: 0.08,
+  },
+  espresso: {
+    base: "#21140E",
+    colors: ["#21140E", "#4A2A19", "#120B08", "#342017", "#5C3826"],
+    mode: "plank",
+    sheen: 0.025,
+    dark: true,
+  },
+  charcoalOak: {
+    base: "#303236",
+    colors: ["#303236", "#565A5D", "#1C1E21", "#42464A", "#686C70"],
+    mode: "plank",
+    sheen: 0.035,
+    dark: true,
+  },
+  silverAsh: {
+    base: "#C9CBC6",
+    colors: ["#C9CBC6", "#ECEAE2", "#9C9F99", "#D7D8D0", "#B4B7B0"],
+    mode: "plank",
+    sheen: 0.13,
+  },
+  smokeChevron: {
+    base: "#74736A",
+    colors: ["#74736A", "#A9A79B", "#4F504B", "#8C8A80", "#C0BDB0"],
+    mode: "chevron",
+    sheen: 0.06,
+    dark: true,
+  },
+  copperPlank: {
+    base: "#8E4C20",
+    colors: ["#8E4C20", "#C77933", "#633115", "#A9602A", "#D89142"],
+    mode: "plank",
+    sheen: 0.05,
+    dark: true,
+  },
+  mapleLight: {
+    base: "#F3DDA9",
+    colors: ["#F3DDA9", "#FFECC3", "#DDBD7D", "#F8E7BB", "#CFAE70"],
+    mode: "plank",
+    sheen: 0.16,
+  },
+  graphitePlank: {
+    base: "#20242A",
+    colors: ["#20242A", "#3E4650", "#11151A", "#2C333B", "#545D68"],
+    mode: "plank",
+    sheen: 0.025,
+    dark: true,
+  },
 };
 
 const drawWoodGrain = (
@@ -1896,7 +2040,7 @@ const paintWoodTile = (
   drawWoodGrain(context, x, y, width, height, seed, dark);
 };
 
-const createParquetTexture = (pattern = "oakHerringbone") => {
+const createParquetTexture = (pattern = "mosaicOak") => {
   if (typeof document === "undefined") return null;
 
   const palette =
@@ -1911,7 +2055,31 @@ const createParquetTexture = (pattern = "oakHerringbone") => {
   context.fillStyle = palette.base;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  if (palette.mode === "herringbone" || palette.mode === "chevron") {
+  if (palette.mode === "mosaic") {
+    const tile = 48;
+
+    for (let y = 0; y < canvas.height; y += tile) {
+      for (let x = 0; x < canvas.width; x += tile) {
+        const seed = Math.round(x * 17 + y * 31);
+        const color = palette.colors[
+          (Math.floor(x / tile) * 3 + Math.floor(y / tile) * 5) %
+            palette.colors.length
+        ];
+        const wide = (Math.floor(x / tile) + Math.floor(y / tile)) % 3 === 0;
+
+        paintWoodTile(
+          context,
+          x,
+          y,
+          wide ? tile * 1.5 : tile,
+          tile,
+          color,
+          seed,
+          palette.dark,
+        );
+      }
+    }
+  } else if (palette.mode === "herringbone" || palette.mode === "chevron") {
     const tile = 96;
 
     for (let y = -tile; y < canvas.height + tile; y += tile) {
@@ -2242,12 +2410,11 @@ const RoomShell = ({
   const height = cmToUnit(roomDimensions?.height || 250);
   const depth = cmToUnit(roomDimensions?.depth || 240);
   const wallThickness = 0.075;
-  const trimColor = "#D0D0CA";
   const ikeaWallColor = "#E3E3DD";
   const ikeaCeilingColor = "#B2B3AE";
   const surfaces = {
     floor: "#DDBF86",
-    floorPattern: "oakHerringbone",
+    floorPattern: "rusticBrown",
     backWall: ikeaWallColor,
     sideWall: ikeaWallColor,
     ceiling: ikeaCeilingColor,
@@ -2270,7 +2437,6 @@ const RoomShell = ({
 
     return color;
   };
-  const trimMaterialColor = surfaceColor(trimColor, "#D0D0CA");
   const floorTexture = useMemo(() => {
     if (!floorPatternPalettes[surfaces.floorPattern])
       return null;
@@ -2345,13 +2511,6 @@ const RoomShell = ({
               metalness={0}
             />
           </mesh>
-          <mesh
-            position={[0, height - 0.025, -depth / 2 + 0.035]}
-            raycast={() => null}
-          >
-            <boxGeometry args={[width + 0.02, 0.035, 0.035]} />
-            <meshStandardMaterial color={trimMaterialColor} roughness={0.82} />
-          </mesh>
         </>
       )}
       {wallsVisible &&
@@ -2415,30 +2574,6 @@ const RoomShell = ({
           />
         </mesh>
       )}
-      {wallsVisible &&
-        !cameraTourMode &&
-        surfaces.backWallVisible !== false &&
-        surfaces.leftWallVisible !== false && (
-          <mesh
-            position={[-width / 2 + 0.018, height / 2, -depth / 2 + 0.018]}
-            raycast={() => null}
-          >
-            <boxGeometry args={[0.028, height, 0.028]} />
-            <meshStandardMaterial color={trimMaterialColor} roughness={0.88} />
-          </mesh>
-        )}
-      {wallsVisible &&
-        !cameraTourMode &&
-        surfaces.backWallVisible !== false &&
-        surfaces.rightWallVisible !== false && (
-          <mesh
-            position={[width / 2 - 0.018, height / 2, -depth / 2 + 0.018]}
-            raycast={() => null}
-          >
-            <boxGeometry args={[0.028, height, 0.028]} />
-            <meshStandardMaterial color={trimMaterialColor} roughness={0.88} />
-          </mesh>
-        )}
     </group>
   );
 };
@@ -2718,6 +2853,48 @@ const SceneItemDimensionGuides = ({ size, dimensions }) => {
   );
 };
 
+const SceneItemGapGuides = ({ size, gaps }) => {
+  const [width, height, depth] = size;
+  const frontZ = depth / 2 + 0.085;
+  const topY = height / 2 + 0.26;
+  const capSize = [0.01, 0.045, 0.01];
+  const renderGap = (side, distanceCm) => {
+    if (!distanceCm) return null;
+
+    const gapWidth = cmToUnit(distanceCm);
+    const isLeft = side === "left";
+    const startX = isLeft ? -width / 2 - gapWidth : width / 2;
+    const centerX = isLeft
+      ? -width / 2 - gapWidth / 2
+      : width / 2 + gapWidth / 2;
+    const endX = isLeft ? -width / 2 : width / 2 + gapWidth;
+
+    return (
+      <group key={side}>
+        <DimensionLine position={[centerX, topY, frontZ]} size={[gapWidth, 0.008, 0.008]} />
+        <mesh position={[startX, topY, frontZ]} raycast={() => null}>
+          <boxGeometry args={capSize} />
+          <meshBasicMaterial color="#4B5563" />
+        </mesh>
+        <mesh position={[endX, topY, frontZ]} raycast={() => null}>
+          <boxGeometry args={capSize} />
+          <meshBasicMaterial color="#4B5563" />
+        </mesh>
+        <DimensionLabel position={[centerX, topY + 0.075, frontZ]}>
+          {formatDimensionValue(distanceCm)}
+        </DimensionLabel>
+      </group>
+    );
+  };
+
+  return (
+    <group>
+      {renderGap("left", gaps?.left)}
+      {renderGap("right", gaps?.right)}
+    </group>
+  );
+};
+
 const SceneItemActionBar = ({ size, onCopy, onDelete }) => {
   const [, height, depth] = size;
   const bottomOffset = -height / 2 + 0.08;
@@ -2831,6 +3008,7 @@ const SceneItem3D = ({
   selectedCounter,
   selected,
   showMeasurements,
+  showGapMeasurements,
   roomDimensions,
   roomSurfaces,
   cmToPx,
@@ -2865,6 +3043,19 @@ const SceneItem3D = ({
     glass: itemGlass?.color_hex || "#BAE6FD",
     countertop: itemCounter?.color_hex || "#E5E7EB",
   };
+  const sideGaps = useMemo(
+    () =>
+      getSceneItemSideGaps({
+        item,
+        index,
+        product,
+        sceneItems,
+        catalogMap,
+        roomDimensions,
+        cmToPx,
+      }),
+    [catalogMap, cmToPx, index, item, product, roomDimensions, sceneItems],
+  );
 
   useFrame(() => {
     const nextOverlayHidden =
@@ -2952,6 +3143,9 @@ const SceneItem3D = ({
             size={transform.size}
             dimensions={transform.dimensions}
           />
+          {showGapMeasurements && (
+            <SceneItemGapGuides size={transform.size} gaps={sideGaps} />
+          )}
         </>
       )}
       {selected && !overlayHidden && showMeasurements && (

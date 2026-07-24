@@ -33,10 +33,18 @@ import StraightenOutlinedIcon from "@mui/icons-material/StraightenOutlined";
 import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
+import CompareArrowsOutlinedIcon from "@mui/icons-material/CompareArrowsOutlined";
 import Page from "components/Page";
 import { SERVER } from "routes/paths";
 import { getData, postData } from "utils/axiosForPhyton";
 import AlignHorizontalCenterOutlinedIcon from "@mui/icons-material/AlignHorizontalCenterOutlined";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import RotateLeftIcon from "@mui/icons-material/RotateLeft";
+import RotateRightIcon from "@mui/icons-material/RotateRight";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import KitchenCatalogManager from "./components/KitchenCatalogManager";
 import KitchenCustomizer from "./components/KitchenCustomizer";
 import KitchenPaletteDrawer from "./components/KitchenPaletteDrawer";
@@ -122,7 +130,7 @@ const PROJECT_CACHE_KEY = "decusinKitchenProjects";
 
 const defaultRoomSurfaces = {
   floor: "#DDBF86",
-  floorPattern: "oakHerringbone",
+  floorPattern: "rusticBrown",
   backWall: "#E8E6DE",
   sideWall: "#E1DED5",
   ceiling: "#D4CDC0",
@@ -138,6 +146,12 @@ const defaultRoomSurfaces = {
 };
 
 const floorPatternOptions = [
+  {
+    value: "mosaicOak",
+    label: "Kare meÅŸe parke",
+    preview:
+      "linear-gradient(90deg, #9D693E 0 16px, #D39A58 16px 32px, #7D5636 32px 48px, #E0AF68 48px 64px)",
+  },
   {
     value: "oakHerringbone",
     label: "Açık balıksırtı",
@@ -210,7 +224,120 @@ const floorPatternOptions = [
     preview:
       "repeating-linear-gradient(90deg, #70421F 0 16px, #A66B34 16px 32px, #4A2C18 32px 48px)",
   },
+  {
+    value: "whiteOak",
+    label: "Beyaz meşe",
+    preview:
+      "repeating-linear-gradient(90deg, #F8EED1 0 15px, #E4CF9B 15px 30px, #FFF6DC 30px 45px)",
+  },
+  {
+    value: "sandOak",
+    label: "Kum meşe",
+    preview:
+      "repeating-linear-gradient(90deg, #D7B878 0 14px, #EBCF91 14px 28px, #B99758 28px 42px)",
+  },
+  {
+    value: "honeyHerringbone",
+    label: "Bal balıksırtı",
+    preview:
+      "repeating-linear-gradient(45deg, #C98431 0 8px, #F0BE62 8px 16px, #A86522 16px 24px)",
+  },
+  {
+    value: "amberChevron",
+    label: "Amber chevron",
+    preview:
+      "repeating-linear-gradient(135deg, #B8752D 0 8px, #E3A94D 8px 16px, #80511F 16px 24px)",
+  },
+  {
+    value: "espresso",
+    label: "Espresso",
+    preview:
+      "repeating-linear-gradient(90deg, #21140E 0 16px, #4A2A19 16px 32px, #120B08 32px 48px)",
+  },
+  {
+    value: "charcoalOak",
+    label: "Antrasit meşe",
+    preview:
+      "repeating-linear-gradient(90deg, #303236 0 16px, #565A5D 16px 32px, #1C1E21 32px 48px)",
+  },
+  {
+    value: "silverAsh",
+    label: "Gümüş dişbudak",
+    preview:
+      "repeating-linear-gradient(90deg, #C9CBC6 0 16px, #ECEAE2 16px 32px, #9C9F99 32px 48px)",
+  },
+  {
+    value: "smokeChevron",
+    label: "Duman chevron",
+    preview:
+      "repeating-linear-gradient(135deg, #74736A 0 8px, #A9A79B 8px 16px, #4F504B 16px 24px)",
+  },
+  {
+    value: "copperPlank",
+    label: "Bakır",
+    preview:
+      "repeating-linear-gradient(90deg, #8E4C20 0 14px, #C77933 14px 28px, #633115 28px 42px)",
+  },
+  {
+    value: "mapleLight",
+    label: "Akçaağaç",
+    preview:
+      "repeating-linear-gradient(90deg, #F3DDA9 0 16px, #FFECC3 16px 32px, #DDBD7D 32px 48px)",
+  },
+  {
+    value: "graphitePlank",
+    label: "Grafit",
+    preview:
+      "repeating-linear-gradient(90deg, #20242A 0 16px, #3E4650 16px 32px, #11151A 32px 48px)",
+  },
 ];
+
+const floorPatternLabels = {
+  mosaicOak: "Kare meşe parke",
+  oakHerringbone: "Açık balıksırtı",
+  warmPlank: "Sıcak meşe",
+  naturalChevron: "Doğal chevron",
+  paleOak: "Soluk meşe",
+  classicOak: "Klasik meşe",
+  goldenChevron: "Altın chevron",
+  walnutPlank: "Ceviz",
+  darkWalnut: "Koyu ceviz",
+  smokedOak: "Füme meşe",
+  blackChevron: "Siyah chevron",
+  grayAsh: "Gri dişbudak",
+  rusticBrown: "Rustik Parke",
+};
+
+const getFloorPatternLabel = (option) => {
+  const labels = {
+    mosaicOak: "Kare meşe",
+    oakHerringbone: "Açık balık",
+    warmPlank: "Sıcak meşe",
+    naturalChevron: "Doğal",
+    paleOak: "Soluk meşe",
+    classicOak: "Klasik meşe",
+    goldenChevron: "Altın",
+    walnutPlank: "Ceviz",
+    darkWalnut: "Koyu ceviz",
+    smokedOak: "Füme meşe",
+    blackChevron: "Siyah",
+    grayAsh: "Gri",
+    rusticBrown: "Rustik",
+    whiteOak: "Beyaz",
+    sandOak: "Kum meşe",
+    honeyHerringbone: "Bal",
+    amberChevron: "Amber",
+    espresso: "Espresso",
+    charcoalOak: "Antrasit",
+    silverAsh: "Gümüş",
+    smokeChevron: "Duman",
+    copperPlank: "Bakır",
+    mapleLight: "Akçaağ.",
+    graphitePlank: "Grafit",
+  };
+
+  return labels[option?.value] || floorPatternLabels[option?.value] || "Parke";
+};
 
 const isCountertopMountedProduct = (product) => {
   const name =
@@ -432,6 +559,8 @@ const ToolbarSceneToggleControl = ({
   inactiveTitle,
   activeIcon,
   inactiveIcon,
+  iconColor,
+  activeIconColor,
   disabled = false,
   onToggle,
 }) => (
@@ -466,8 +595,11 @@ const ToolbarSceneToggleControl = ({
         border: active
           ? "1px solid rgba(37,99,235,0.34)"
           : "1px solid rgba(148,163,184,0.42)",
-        color: active ? "#F59E0B" : "#334155",
-        bgcolor: active ? "#FFFBEB" : "#F8FAFC",
+        color: active ? activeIconColor || "#1976D2" : iconColor || "#64748B",
+        bgcolor: active ? "#EFF6FF" : "#F8FAFC",
+        boxShadow: active
+          ? "inset 0 0 0 1px rgba(25,118,210,0.1)"
+          : "none",
       }}
     >
       {active ? activeIcon : inactiveIcon}
@@ -479,6 +611,7 @@ const ToolbarFloorPatternControl = ({ value, onChange }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const selectedOption =
     floorPatternOptions.find((option) => option.value === value) ||
+    floorPatternOptions.find((option) => option.value === "rusticBrown") ||
     floorPatternOptions[0];
   const open = Boolean(anchorEl);
 
@@ -535,6 +668,17 @@ const ToolbarFloorPatternControl = ({ value, onChange }) => {
         >
           Parke Seç
         </Typography>
+        <Typography
+          sx={{
+            display: "none",
+            mb: 0.8,
+            fontSize: 12,
+            fontWeight: 900,
+            color: "#334155",
+          }}
+        >
+          Parke Seç
+        </Typography>
         <Box
           sx={{
             display: "grid",
@@ -542,13 +686,16 @@ const ToolbarFloorPatternControl = ({ value, onChange }) => {
             gap: 0.8,
           }}
         >
-          {floorPatternOptions.map((option) => (
-            <Box
+          {floorPatternOptions.map((option) => {
+            const optionLabel = getFloorPatternLabel(option);
+
+            return (
+              <Box
               key={option.value}
               component="button"
               type="button"
-              title={option.label}
-              aria-label={option.label}
+              title={optionLabel}
+              aria-label={optionLabel}
               onClick={() => {
                 onChange(option.value);
                 setAnchorEl(null);
@@ -577,21 +724,28 @@ const ToolbarFloorPatternControl = ({ value, onChange }) => {
               <Typography
                 sx={{
                   mt: 0.35,
-                  fontSize: 9.5,
+                  fontSize: 9,
                   fontWeight: 900,
                   color: "#334155",
                   lineHeight: 1.1,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "100%",
                 }}
               >
-                {option.label}
+                {optionLabel}
               </Typography>
-            </Box>
-          ))}
+              </Box>
+            );
+          })}
         </Box>
       </Popover>
     </>
   );
 };
+
+const showLegacyScenePrecisionControls = () => false;
 
 const cloneProjectData = (value) => {
   if (typeof structuredClone === "function") {
@@ -754,6 +908,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     measurements: true,
     walls: true,
     autoHideWalls: true,
+    clearanceMeasurements: false,
     topView: false,
     cameraTour: false,
     multiSelect: false,
@@ -1618,6 +1773,31 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     );
   }, [catalogMap, getSceneMetrics]);
 
+  const alignLowerCabinets = useCallback(() => {
+    setSceneItems((current) =>
+      current.map((item) => {
+        const product = catalogMap[item.catalog_item_id] || {};
+        const dimensions = normalizeProductDimensions(product, item.dimensions);
+        if (
+          isWallMountedProduct(product, dimensions) ||
+          product.category === "countertop" ||
+          isCountertopMountedProduct(product)
+        )
+          return item;
+
+        return {
+          ...item,
+          position: {
+            ...(item.position || {}),
+            z: 0,
+            elevation: 0,
+          },
+          placement: "floor",
+        };
+      }),
+    );
+  }, [catalogMap]);
+
   useEffect(() => {
     const handleKeyDown = (event) => {
       const activeTag = document.activeElement?.tagName?.toLowerCase();
@@ -2346,6 +2526,149 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 }))
               }
             />
+            <Stack
+              direction="row"
+              spacing={0.4}
+              aria-hidden={selectedSceneIndex === null}
+              sx={{
+                p: 0.35,
+                borderRadius: 1.25,
+                bgcolor: "rgba(255,255,255,0.96)",
+                border: "1px solid rgba(37,99,235,0.5)",
+                boxShadow:
+                  "0 10px 24px rgba(37,99,235,0.16), inset 0 1px 0 rgba(255,255,255,0.86)",
+                flexShrink: 0,
+                visibility: selectedSceneIndex !== null ? "visible" : "hidden",
+                pointerEvents: selectedSceneIndex !== null ? "auto" : "none",
+              }}
+            >
+                <ToolbarSceneToggleControl
+                  label="Kilit"
+                  active={Boolean(
+                    selectedSceneIndex !== null &&
+                      sceneItems[selectedSceneIndex]?.locked
+                  )}
+                  activeTitle="Secili urun kilitli"
+                  inactiveTitle="Secili urunu kilitle"
+                  disabled={selectedSceneIndex === null || selectedItemCount === 0}
+                  activeIcon={<LockOutlinedIcon sx={{ fontSize: 17 }} />}
+                  inactiveIcon={<LockOpenOutlinedIcon sx={{ fontSize: 17 }} />}
+                  iconColor="#F97316"
+                  activeIconColor="#F97316"
+                  onToggle={() => {
+                    if (selectedSceneIndex !== null) {
+                      toggleSelectedItemLock();
+                    }
+                  }}
+                />
+                <ToolbarSceneToggleControl
+                  label="Ayar"
+                  active={false}
+                  activeTitle="Secili urun ayarlari"
+                  inactiveTitle="Secili urun ayarlari"
+                  disabled={selectedSceneIndex === null}
+                  activeIcon={<SettingsOutlinedIcon sx={{ fontSize: 17 }} />}
+                  inactiveIcon={<SettingsOutlinedIcon sx={{ fontSize: 17 }} />}
+                  iconColor="#7C3AED"
+                  onToggle={() => {
+                    if (selectedSceneIndex !== null) {
+                      setCustomizerOpen(true);
+                    }
+                  }}
+                />
+                <ToolbarSceneToggleControl
+                  label="Kopya"
+                  active={false}
+                  activeTitle="Secili urunu kopyala"
+                  inactiveTitle="Secili urunu kopyala"
+                  disabled={selectedSceneIndex === null}
+                  activeIcon={<ContentCopyIcon sx={{ fontSize: 17 }} />}
+                  inactiveIcon={<ContentCopyIcon sx={{ fontSize: 17 }} />}
+                  iconColor="#2563EB"
+                  onToggle={() => {
+                    if (selectedSceneIndex !== null) {
+                      duplicateSceneItem(selectedSceneIndex);
+                    }
+                  }}
+                />
+                <ToolbarSceneToggleControl
+                  label="Sil"
+                  active={false}
+                  activeTitle="Secili urunu sil"
+                  inactiveTitle="Secili urunu sil"
+                  disabled={selectedSceneIndex === null}
+                  activeIcon={<DeleteOutlineIcon sx={{ fontSize: 17 }} />}
+                  inactiveIcon={<DeleteOutlineIcon sx={{ fontSize: 17 }} />}
+                  iconColor="#EF4444"
+                  onToggle={() => {
+                    if (selectedSceneIndex !== null) {
+                      removeSceneItem(selectedSceneIndex);
+                    }
+                  }}
+                />
+                <ToolbarSceneToggleControl
+                  label="Sol"
+                  active={false}
+                  activeTitle="Sola dondur"
+                  inactiveTitle="Sola dondur"
+                  disabled={selectedSceneIndex === null}
+                  activeIcon={<RotateLeftIcon sx={{ fontSize: 17 }} />}
+                  inactiveIcon={<RotateLeftIcon sx={{ fontSize: 17 }} />}
+                  iconColor="#64748B"
+                  onToggle={() => {
+                    if (selectedSceneIndex !== null) {
+                      rotateSceneItem(selectedSceneIndex, "y", -10);
+                    }
+                  }}
+                />
+                <ToolbarSceneToggleControl
+                  label="Yukarı"
+                  active={false}
+                  activeTitle="Yukari dondur"
+                  inactiveTitle="Yukari dondur"
+                  disabled={selectedSceneIndex === null}
+                  activeIcon={<KeyboardArrowUpIcon sx={{ fontSize: 17 }} />}
+                  inactiveIcon={<KeyboardArrowUpIcon sx={{ fontSize: 17 }} />}
+                  iconColor="#64748B"
+                  onToggle={() => {
+                    if (selectedSceneIndex !== null) {
+                      rotateSceneItem(selectedSceneIndex, "x", -10);
+                    }
+                  }}
+                />
+                <ToolbarSceneToggleControl
+                  label="Asagi"
+                  active={false}
+                  activeTitle="Asagi dondur"
+                  inactiveTitle="Asagi dondur"
+                  disabled={selectedSceneIndex === null}
+                  activeIcon={<KeyboardArrowDownIcon sx={{ fontSize: 17 }} />}
+                  inactiveIcon={<KeyboardArrowDownIcon sx={{ fontSize: 17 }} />}
+                  iconColor="#64748B"
+                  onToggle={() => {
+                    if (selectedSceneIndex !== null) {
+                      rotateSceneItem(selectedSceneIndex, "x", 10);
+                    }
+                  }}
+                />
+                <ToolbarSceneToggleControl
+                  label="Sag"
+                  active={false}
+                  activeTitle="Saga dondur"
+                  inactiveTitle="Saga dondur"
+                  disabled={selectedSceneIndex === null}
+                  activeIcon={<RotateRightIcon sx={{ fontSize: 17 }} />}
+                  inactiveIcon={<RotateRightIcon sx={{ fontSize: 17 }} />}
+                  iconColor="#64748B"
+                  onToggle={() => {
+                    if (selectedSceneIndex !== null) {
+                      rotateSceneItem(selectedSceneIndex, "y", 10);
+                    }
+                  }}
+                />
+            </Stack>
+            {showLegacyScenePrecisionControls() && (
+              <>
             <ToolbarSceneToggleControl
               label="Ölçü"
               active={premiumTools.measurements}
@@ -2357,6 +2680,20 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 setPremiumTools((current) => ({
                   ...current,
                   measurements: !current.measurements,
+                }))
+              }
+            />
+            <ToolbarSceneToggleControl
+              label="Bosluk"
+              active={premiumTools.clearanceMeasurements}
+              activeTitle="Sag-sol bosluklari gorunur"
+              inactiveTitle="Sag-sol bosluklari gizli"
+              activeIcon={<CompareArrowsOutlinedIcon sx={{ fontSize: 17 }} />}
+              inactiveIcon={<CompareArrowsOutlinedIcon sx={{ fontSize: 17 }} />}
+              onToggle={() =>
+                setPremiumTools((current) => ({
+                  ...current,
+                  clearanceMeasurements: !current.clearanceMeasurements,
                 }))
               }
             />
@@ -2386,6 +2723,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               }
               onToggle={alignUpperCabinets}
             />
+              </>
+            )}
+            {showLegacyScenePrecisionControls() && (
+              <>
             <ToolbarSceneToggleControl
               label="Kilit"
               active={
@@ -2419,6 +2760,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               inactiveIcon={<RedoOutlinedIcon sx={{ fontSize: 17 }} />}
               onToggle={redoSceneChange}
             />
+              </>
+            )}
             </Stack>
             <Stack
               direction="row"
@@ -2635,6 +2978,31 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 [field]: current[field] === false,
               }));
             }}
+            onToggleMeasurements={() =>
+              setPremiumTools((current) => ({
+                ...current,
+                measurements: !current.measurements,
+              }))
+            }
+            onToggleClearanceMeasurements={() =>
+              setPremiumTools((current) => ({
+                ...current,
+                clearanceMeasurements: !current.clearanceMeasurements,
+              }))
+            }
+            onAutoAlignItems={autoAlignSceneItems}
+            onAlignUpperCabinets={alignUpperCabinets}
+            onAlignLowerCabinets={alignLowerCabinets}
+            onToggleSelectedItemLock={toggleSelectedItemLock}
+            selectedItemLocked={
+              selectedSceneIndex !== null &&
+              sceneItems[selectedSceneIndex]?.locked
+            }
+            selectedItemCount={selectedItemCount}
+            onUndo={undoSceneChange}
+            onRedo={redoSceneChange}
+            canUndo={Boolean(undoStack.length)}
+            canRedo={Boolean(redoStack.length)}
           />
         </Grid>
       </Grid>
