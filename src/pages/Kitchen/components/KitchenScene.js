@@ -217,7 +217,7 @@ const ProductModelCanvas = ({ product, rotation, materialPalette }) => {
             rotation={rotation}
             palette={materialPalette}
           />
-          <Environment preset="city" />
+          <Environment files="/hdri/lebombo_1k.hdr" />
         </Suspense>
       </Canvas>
     </Box>
@@ -1173,7 +1173,7 @@ const KitchenScene = ({
                 applyView={applyDefaultCameraView}
                 onReady={handleSceneReady}
               />
-              <Environment preset="apartment" />
+              <Environment files="/hdri/lebombo_1k.hdr" />
             </Canvas>
           )}
         </Box>

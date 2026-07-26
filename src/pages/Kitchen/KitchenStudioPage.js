@@ -3,6 +3,7 @@ import {
   Autocomplete,
   Box,
   Button,
+  CircularProgress,
   Grid,
   InputAdornment,
   Paper,
@@ -33,7 +34,12 @@ import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
 import CompareArrowsOutlinedIcon from "@mui/icons-material/CompareArrowsOutlined";
 import Page from "components/Page";
 import { SERVER } from "routes/paths";
-import { deleteData, getData, postData, putData } from "utils/axiosForPhyton";
+import axiosInstance, {
+  deleteData,
+  getData,
+  postData,
+  putData,
+} from "utils/axiosForPhyton";
 import AlignHorizontalCenterOutlinedIcon from "@mui/icons-material/AlignHorizontalCenterOutlined";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -50,9 +56,6 @@ import KitchenScene from "./components/KitchenScene";
 import KitchenSceneItemsDrawer from "./components/KitchenSceneItemsDrawer";
 import {
   TABS,
-  fallbackCatalog,
-  catalogGroups as fallbackCatalogGroups,
-  fallbackMaterials,
 } from "./kitchenData";
 import { money } from "./kitchenUtils";
 
@@ -208,7 +211,7 @@ const defaultRoomSurfaces = {
 const floorPatternOptions = [
   {
     value: "mosaicOak",
-    label: "Kare meÅŸe parke",
+    label: "Kare meşe parke",
     preview:
       "linear-gradient(90deg, #9D693E 0 16px, #D39A58 16px 32px, #7D5636 32px 48px, #E0AF68 48px 64px)",
   },
@@ -872,28 +875,30 @@ const mergeProjectsById = (...projectLists) => {
   );
 };
 
-const mergeCatalogItemsById = (...catalogLists) => {
-  const catalogMap = new Map();
-
-  catalogLists.flat().forEach((product) => {
-    if (!product?.id) return;
-    catalogMap.set(product.id, {
-      ...(catalogMap.get(product.id) || {}),
-      ...product,
-    });
-  });
-
-  return Array.from(catalogMap.values());
+const extractApiList = (result) => {
+  if (Array.isArray(result)) return result;
+  if (Array.isArray(result?.data)) return result.data;
+  if (Array.isArray(result?.payload?.data)) return result.payload.data;
+  if (Array.isArray(result?.payload)) return result.payload;
+  return [];
 };
 
-const isSeedCatalogProduct = (product) =>
-  /^product-\d{3}-/.test(String(product?.id || ""));
-
-const mergeRuntimeCatalogItems = (serverItems = []) =>
-  mergeCatalogItemsById(
-    serverItems.filter((product) => !isSeedCatalogProduct(product)),
-    fallbackCatalog,
-  );
+const buildCatalogItemPayload = (product) => ({
+  sku: product.sku,
+  name: product.name,
+  category: product.category,
+  subcategory: product.subcategory || "",
+  dimensions: product.dimensions || { width: 60, height: 72, depth: 56, unit: "cm" },
+  constraints: product.constraints || null,
+  base_price: Number(product.base_price || 0),
+  image_url: product.image_url || "",
+  model_url: product.model_url || "",
+  thumbnail_url: product.thumbnail_url || "",
+  original_file_name: product.original_file_name || "",
+  configurable_options: product.configurable_options || {},
+  is_active: product.is_active !== false,
+  is_manual: Boolean(product.is_manual),
+});
 
 const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const navigate = useNavigate();
@@ -912,10 +917,19 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     const project = consumePendingProject(initialTab);
     return project ? normalizeProjectSnapshot(project) : null;
   });
-  const [catalogItems, setCatalogItems] = useState(fallbackCatalog);
-  const [catalogGroups, setCatalogGroups] = useState(fallbackCatalogGroups);
-  const [materials, setMaterials] = useState(fallbackMaterials);
+  const [activeProject, setActiveProject] = useState(pendingProject);
+  const [catalogItems, setCatalogItems] = useState([]);
+  const [catalogGroups, setCatalogGroups] = useState([]);
+  const [materialGroups, setMaterialGroups] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [catalogStats, setCatalogStats] = useState(null);
+  const [catalogLoading, setCatalogLoading] = useState(() =>
+    ["designer", "catalog"].includes(initialTab),
+  );
   const [projects, setProjects] = useState(() => readProjectCache());
+  const [projectsLoading, setProjectsLoading] = useState(
+    () => initialTab === "projects" && readProjectCache().length === 0,
+  );
   const [selectedDoorMaterial] = useState("mat-door-lake-white");
   const [selectedGlassMaterial] = useState("mat-glass-smoked");
   const [selectedCounterMaterial] = useState("mat-counter-quartz");
@@ -931,10 +945,14 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const [projectSaving, setProjectSaving] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
   const [customers, setCustomers] = useState([]);
+  const [customersLoading, setCustomersLoading] = useState(
+    initialTab === "customers",
+  );
   const [customerForm, setCustomerForm] = useState(emptyCustomerForm);
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [customerSaving, setCustomerSaving] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
   const [sceneItems, setSceneItems] = useState(
     () => pendingProject?.items || [],
   );
@@ -1262,36 +1280,69 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     if (
       !shouldLoadCatalog ||
       (loadedKitchenDataRef.current.catalog &&
-        loadedKitchenDataRef.current.materials)
+        catalogItems.length &&
+        catalogGroups.length)
     ) {
       return undefined;
     }
 
     let mounted = true;
     loadedKitchenDataRef.current.catalog = true;
-    loadedKitchenDataRef.current.materials = true;
+    setCatalogLoading(true);
 
     Promise.allSettled([
       getData(SERVER.kitchen.catalogItems),
-      getData(SERVER.kitchen.materials),
+      getData(SERVER.kitchen.catalogCategories, { scope: "product" }),
+      getData(SERVER.kitchen.catalogStats),
     ]).then((results) => {
       if (!mounted) return;
 
-      const [catalogResult, materialResult] = results;
+      const [
+        catalogResult,
+        productCategoryResult,
+        statsResult,
+      ] = results;
       if (catalogResult.status === "fulfilled") {
-        setCatalogItems(
-          mergeRuntimeCatalogItems(catalogResult.value?.data || []),
-        );
+        const serverCatalogItems = extractApiList(catalogResult.value);
+        setCatalogItems(serverCatalogItems);
+        if (catalogResult.value?.stats) {
+          setCatalogStats(catalogResult.value.stats);
+        }
       }
-      if (materialResult.status === "fulfilled") {
-        setMaterials(materialResult.value?.data || fallbackMaterials);
+      if (productCategoryResult.status === "fulfilled") {
+        const productGroups = extractApiList(productCategoryResult.value);
+        setCatalogGroups(productGroups);
       }
+      if (statsResult.status === "fulfilled") {
+        setCatalogStats(statsResult.value?.payload || statsResult.value || null);
+      }
+      setCatalogLoading(false);
     });
 
     return () => {
       mounted = false;
     };
-  }, [initialTab]);
+  }, [initialTab, catalogItems.length, catalogGroups.length]);
+
+  const ensureMaterialCatalog = useCallback(() => {
+    if (loadedKitchenDataRef.current.materials) {
+      return Promise.resolve();
+    }
+
+    loadedKitchenDataRef.current.materials = true;
+    return Promise.allSettled([
+      getData(SERVER.kitchen.materials),
+      getData(SERVER.kitchen.catalogCategories, { scope: "material" }),
+    ]).then((results) => {
+      const [materialResult, materialCategoryResult] = results;
+      if (materialResult.status === "fulfilled") {
+        setMaterials(extractApiList(materialResult.value));
+      }
+      if (materialCategoryResult.status === "fulfilled") {
+        setMaterialGroups(extractApiList(materialCategoryResult.value));
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (initialTab !== "projects" || loadedKitchenDataRef.current.projects) {
@@ -1307,14 +1358,17 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         setProjects((current) => {
           const mergedProjects = mergeProjectsById(
             current,
-            result?.data || [],
+            extractApiList(result),
             readProjectCache(),
           );
           writeProjectCache(mergedProjects);
           return mergedProjects;
         });
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (mounted) setProjectsLoading(false);
+      });
 
     return () => {
       mounted = false;
@@ -1323,7 +1377,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
 
   useEffect(() => {
     const shouldLoadCustomers = initialTab === "customers" || projectSaveOpen;
-    if (!shouldLoadCustomers || loadedKitchenDataRef.current.customers) {
+    if (
+      !shouldLoadCustomers ||
+      (initialTab !== "customers" && loadedKitchenDataRef.current.customers)
+    ) {
       return undefined;
     }
 
@@ -1335,7 +1392,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         if (!mounted) return;
         setCustomers(getPayloadList(result).map(normalizeCustomer));
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (mounted && initialTab === "customers") setCustomersLoading(false);
+      });
 
     return () => {
       mounted = false;
@@ -2238,8 +2298,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setProjectSaving(true);
     ensureProjectCustomer()
       .then((projectCustomer) => {
+        const isUpdate = Boolean(activeProject?.id);
         const payload = normalizeProjectSnapshot({
-          id: `project-${Date.now()}`,
+          id: activeProject?.id || `project-${Date.now()}`,
           name: projectForm.name || "Yeni mutfak projesi",
           customer_id: projectCustomer?.id || projectForm.customer_id || null,
           customer_name:
@@ -2254,18 +2315,25 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           shipping_fee: shippingFee,
           quote: cloneProjectData(quote),
           notes: projectForm.notes || "FE uzerinden kaydedilen proje.",
-          created_at: new Date().toISOString(),
+          created_at: activeProject?.created_at || new Date().toISOString(),
         });
 
         setProjects((current) => {
-          const mergedProjects = mergeProjectsById([payload], current);
+          const mergedProjects = isUpdate
+            ? current.map((item) => (item.id === payload.id ? payload : item))
+            : mergeProjectsById([payload], current);
           writeProjectCache(mergedProjects);
           return mergedProjects;
         });
+        setActiveProject(payload);
         setProjectSaveOpen(false);
         setProjectForm({ name: "", customer_id: null, customer_name: "", notes: "" });
 
-        return postData(SERVER.kitchen.projects, payload).then((project) => {
+        const request = isUpdate
+          ? putData(SERVER.kitchen.project(payload.id), payload)
+          : postData(SERVER.kitchen.projects, payload);
+
+        return request.then((project) => {
           if (!project?.id) return;
           const savedProject = normalizeProjectSnapshot({
             ...payload,
@@ -2274,13 +2342,16 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             items:
               Array.isArray(project.items) && project.items.length
                 ? project.items
-                : payload.items,
+              : payload.items,
             quote: project.quote || payload.quote,
           });
+          setActiveProject(savedProject);
           setProjects((current) => {
-            const mergedProjects = current.map((item) =>
-              item.id === payload.id ? savedProject : item,
-            );
+            const mergedProjects = current.some((item) => item.id === payload.id)
+              ? current.map((item) =>
+                  item.id === payload.id ? savedProject : item,
+                )
+              : mergeProjectsById([savedProject], current);
             writeProjectCache(mergedProjects);
             return mergedProjects;
           });
@@ -2297,7 +2368,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setPaletteOpen(false);
     setSceneItemsOpen(false);
     setProjectSaveOpen(false);
-    setProjectForm({ name: "", customer_name: "", notes: "" });
+    setActiveProject(null);
+    setProjectForm({ name: "", customer_id: null, customer_name: "", notes: "" });
     setInstallationFee(0);
     setShippingFee(0);
     setDragState(null);
@@ -2404,6 +2476,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const inspectProject = (project) => {
     const snapshot = normalizeProjectSnapshot(project);
 
+    setActiveProject(snapshot);
     setSceneItems(cloneProjectData(snapshot.items));
     setRoomDimensions(snapshot.room_dimensions);
     setRoomSurfaces(snapshot.room_surfaces);
@@ -2427,6 +2500,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   };
 
   const removeProject = (project) => {
+    if (activeProject?.id === project.id) {
+      setActiveProject(null);
+    }
+
     setProjects((current) => {
       const nextProjects = current.filter((item) => item.id !== project.id);
       writeProjectCache(nextProjects);
@@ -2434,6 +2511,26 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     });
 
     deleteData(SERVER.kitchen.project(project.id)).catch(() => undefined);
+  };
+
+  const requestProjectDelete = (project) => {
+    setDeleteConfirmation({
+      type: "project",
+      item: project,
+      title: "Projeyi Sil",
+      message: `"${project.name || "Secili proje"}" kalici olarak silinsin mi?`,
+      detail: "Bu islem geri alinamaz.",
+    });
+  };
+
+  const openProjectSaveDialog = () => {
+    setProjectForm({
+      name: activeProject?.name || "",
+      customer_id: activeProject?.customer_id || null,
+      customer_name: activeProject?.customer_name || "",
+      notes: activeProject?.notes || "",
+    });
+    setProjectSaveOpen(true);
   };
 
   const openCreateCustomerDialog = () => {
@@ -2490,6 +2587,23 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
 
           return [savedCustomer, ...current];
         });
+        if (editingCustomer) {
+          const savedCustomerName = getCustomerDisplayName(savedCustomer);
+          setProjects((current) => {
+            const nextProjects = current.map((project) =>
+              project.customer_id === savedCustomer.id
+                ? { ...project, customer_name: savedCustomerName }
+                : project,
+            );
+            writeProjectCache(nextProjects);
+            return nextProjects;
+          });
+          setActiveProject((current) =>
+            current?.customer_id === savedCustomer.id
+              ? { ...current, customer_name: savedCustomerName }
+              : current,
+          );
+        }
         setCustomerDialogOpen(false);
         setEditingCustomer(null);
         setCustomerForm(emptyCustomerForm);
@@ -2498,14 +2612,170 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       .finally(() => setCustomerSaving(false));
   };
 
+  const removeCustomer = (customer) => {
+    setCustomers((current) => current.filter((item) => item.id !== customer.id));
+    setProjects((current) => {
+      const nextProjects = current.filter(
+        (project) => project.customer_id !== customer.id,
+      );
+      writeProjectCache(nextProjects);
+      return nextProjects;
+    });
+    if (activeProject?.customer_id === customer.id) {
+      setActiveProject(null);
+    }
+    deleteData(SERVER.kitchen.customer(customer.id)).catch(() => undefined);
+  };
+
+  const requestCustomerDelete = (customer) => {
+    const customerName = getCustomerDisplayName(customer) || "Secili musteri";
+    setDeleteConfirmation({
+      type: "customer",
+      item: customer,
+      title: "Musteriyi Sil",
+      message: `"${customerName}" kalici olarak silinsin mi?`,
+      detail: "Bu musteriye ait projeler de kalici olarak silinecek.",
+    });
+  };
+
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation(null);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteConfirmation) return;
+
+    if (deleteConfirmation.type === "project") {
+      removeProject(deleteConfirmation.item);
+    }
+
+    if (deleteConfirmation.type === "customer") {
+      removeCustomer(deleteConfirmation.item);
+    }
+
+    setDeleteConfirmation(null);
+  };
+
+  const buildMaterialPayload = (material) => ({
+    code: material.code,
+    name: material.name,
+    type: material.type,
+    subcategory: material.subcategory || "",
+    color_hex: material.color_hex || "",
+    texture_url: material.texture_url || "",
+    preview_model_url: material.preview_model_url || "",
+    price_modifier: Number(material.price_modifier || 0),
+    modifier_type: material.modifier_type || "fixed",
+    is_active: material.is_active !== false,
+  });
+
+  const uploadKitchenFile = (type, file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return axiosInstance()
+      .post(SERVER.kitchen.upload(type), formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then(({ data }) => {
+        if (!data.success) throw new Error(data.error?.message || "Upload failed");
+        const apiBaseUrl = axiosInstance().defaults.baseURL || "";
+        const uploadOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
+        return {
+          ...data.payload,
+          url:
+            data.payload?.url?.startsWith("http")
+              ? data.payload.url
+              : `${uploadOrigin}${data.payload?.url || ""}`,
+        };
+      });
+  };
+
   const addCatalogItem = (product) => {
     setCatalogItems((current) => [product, ...current]);
     setSelectedCatalogProductId(product.id);
     setSelectedMaterialId(null);
+    postData(SERVER.kitchen.catalogItems, buildCatalogItemPayload(product))
+      .then((savedProduct) => {
+        if (!savedProduct?.id) return;
+        setCatalogItems((current) =>
+          current.map((item) => (item.id === product.id ? savedProduct : item)),
+        );
+        setSelectedCatalogProductId(savedProduct.id);
+      })
+      .catch(() => undefined);
   };
 
+  const selectCatalogProduct = (product) => {
+    setSelectedMaterialId(null);
+    setSelectedCatalogProductId(product.id);
+    getData(SERVER.kitchen.catalogItem(product.id))
+      .then((result) => {
+        const productDetail = result?.data || result;
+        if (!productDetail?.id) return;
+        setCatalogItems((current) =>
+          current.map((item) =>
+            item.id === productDetail.id ? { ...item, ...productDetail } : item,
+          ),
+        );
+        setSelectedCatalogProductId(productDetail.id);
+      })
+      .catch(() => undefined);
+  };
+
+  const addMaterial = (material) => {
+    setMaterials((current) => [material, ...current]);
+    setSelectedMaterialId(material.id);
+    setSelectedCatalogProductId(null);
+    postData(SERVER.kitchen.materials, buildMaterialPayload(material))
+      .then((savedMaterial) => {
+        if (!savedMaterial?.id) return;
+        setMaterials((current) =>
+          current.map((item) => (item.id === material.id ? savedMaterial : item)),
+        );
+        setSelectedMaterialId(savedMaterial.id);
+      })
+      .catch(() => undefined);
+  };
+
+  const selectMaterial = (material) => {
+    setSelectedCatalogProductId(null);
+    setSelectedMaterialId(material.id);
+    getData(SERVER.kitchen.material(material.id))
+      .then((result) => {
+        const materialDetail = result?.data || result;
+        if (!materialDetail?.id) return;
+        setMaterials((current) =>
+          current.map((item) =>
+            item.id === materialDetail.id
+              ? { ...item, ...materialDetail }
+              : item,
+          ),
+        );
+        setSelectedMaterialId(materialDetail.id);
+      })
+      .catch(() => undefined);
+  };
+
+  const loadCatalogItemsBySubcategory = (category, subcategory, subcategoryId) =>
+    getData(SERVER.kitchen.catalogItems, {
+      category,
+      subcategory: subcategory === "standard" ? undefined : subcategory,
+      subcategory_id: subcategoryId,
+    }).then(extractApiList);
+
+  const loadMaterialsBySubcategory = (type, subcategory, subcategoryId) =>
+    getData(SERVER.kitchen.materials, {
+      type,
+      subcategory: subcategory === "standard" ? undefined : subcategory,
+      subcategory_id: subcategoryId,
+    }).then(extractApiList);
+
   const addCatalogGroup = (group) => {
-    setCatalogGroups((current) => {
+    const scope = group.scope || "product";
+    const targetSetter = scope === "material" ? setMaterialGroups : setCatalogGroups;
+
+    targetSetter((current) => {
       if (group.parentKey) {
         return current.map((item) => {
           if (item.key !== group.parentKey) return item;
@@ -2516,7 +2786,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             ...item,
             subcategories: [
               ...(item.subcategories || []),
-              { key: group.key, title: group.title },
+              { id: group.id, key: group.key, title: group.title },
             ],
           };
         });
@@ -2528,22 +2798,163 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         { ...group, subcategories: group.subcategories || [] },
       ];
     });
+
+    postData(SERVER.kitchen.catalogCategories, {
+      scope,
+      key: group.key,
+      title: group.title,
+      parent_key: group.parentKey || null,
+    })
+      .then((savedCategory) => {
+        const savedGroup = {
+          id: savedCategory.id,
+          key: savedCategory.key,
+          title: savedCategory.title,
+          parentKey: savedCategory.parent_key,
+          scope: savedCategory.scope,
+        };
+        const setter =
+          savedCategory.scope === "material" ? setMaterialGroups : setCatalogGroups;
+        setter((current) => {
+          if (savedCategory.parent_key) {
+            return current.map((item) =>
+              item.key === group.parentKey
+                ? {
+                    ...item,
+                    subcategories: (item.subcategories || []).map((sub) =>
+                      sub.key === group.key
+                        ? { id: savedGroup.id, key: savedGroup.key, title: savedGroup.title }
+                        : sub,
+                    ),
+                  }
+                : item,
+            );
+          }
+          return current.map((item) =>
+            item.key === group.key
+              ? {
+                  ...item,
+                  id: savedGroup.id,
+                  key: savedGroup.key,
+                  title: savedGroup.title,
+                }
+              : item,
+          );
+        });
+      })
+      .catch(() => undefined);
+  };
+
+  const removeCatalogGroup = (group, scope = "product") => {
+    const setter = scope === "material" ? setMaterialGroups : setCatalogGroups;
+    setter((current) =>
+      group.parent_key || group.parentKey
+        ? current.map((item) => ({
+            ...item,
+            subcategories: (item.subcategories || []).filter(
+              (sub) => sub.key !== group.key,
+            ),
+          }))
+        : current.filter((item) => item.key !== group.key),
+    );
+    if (scope === "product") {
+      setCatalogItems((current) =>
+        group.parent_key || group.parentKey
+          ? current.filter((item) => item.subcategory !== group.key)
+          : current.filter((item) => item.category !== group.key),
+      );
+    } else {
+      setMaterials((current) =>
+        group.parent_key || group.parentKey
+          ? current.filter((item) => item.subcategory !== group.key)
+          : current.filter((item) => item.type !== group.key),
+      );
+    }
+    if (group.id) {
+      deleteData(SERVER.kitchen.catalogCategory(group.id)).catch(() => undefined);
+    }
+  };
+
+  const updateCatalogGroup = (group, updates, scope = "product") => {
+    const setter = scope === "material" ? setMaterialGroups : setCatalogGroups;
+    const nextGroup = { ...group, ...updates };
+    setter((current) =>
+      group.parent_key || group.parentKey
+        ? current.map((item) => ({
+            ...item,
+            subcategories: (item.subcategories || []).map((sub) =>
+              sub.key === group.key ? { ...sub, ...updates } : sub,
+            ),
+          }))
+        : current.map((item) => (item.key === group.key ? nextGroup : item)),
+    );
+    if (group.id) {
+      putData(SERVER.kitchen.catalogCategory(group.id), {
+        scope,
+        key: nextGroup.key,
+        title: nextGroup.title,
+        parent_key: nextGroup.parent_key || nextGroup.parentKey || null,
+      }).catch(() => undefined);
+    }
   };
 
   const updateCatalogItem = (productId, updater) => {
     setCatalogItems((current) =>
-      current.map((product) =>
-        product.id === productId ? updater(product) : product,
-      ),
+      current.map((product) => {
+        if (product.id !== productId) return product;
+        return updater(product);
+      }),
     );
   };
 
+  const saveCatalogItem = (product) =>
+    putData(
+      SERVER.kitchen.catalogItem(product.id),
+      buildCatalogItemPayload(product),
+    ).then((savedProduct) => {
+      const nextProduct = savedProduct?.data || savedProduct;
+      if (!nextProduct?.id) return product;
+      setCatalogItems((current) =>
+        current.map((item) =>
+          item.id === nextProduct.id ? { ...item, ...nextProduct } : item,
+        ),
+      );
+      return nextProduct;
+    });
+
   const updateMaterial = (materialId, updater) => {
+    let nextMaterial = null;
     setMaterials((current) =>
-      current.map((material) =>
-        material.id === materialId ? updater(material) : material,
-      ),
+      current.map((material) => {
+        if (material.id !== materialId) return material;
+        nextMaterial = updater(material);
+        return nextMaterial;
+      }),
     );
+    if (nextMaterial) {
+      putData(
+        SERVER.kitchen.material(materialId),
+        buildMaterialPayload(nextMaterial),
+      ).catch(() => undefined);
+    }
+  };
+
+  const removeCatalogItem = (product) => {
+    setCatalogItems((current) => current.filter((item) => item.id !== product.id));
+    if (selectedCatalogProductId === product.id) {
+      setSelectedCatalogProductId(null);
+    }
+    return deleteData(SERVER.kitchen.catalogItem(product.id)).catch(
+      () => undefined,
+    );
+  };
+
+  const removeMaterial = (material) => {
+    setMaterials((current) => current.filter((item) => item.id !== material.id));
+    if (selectedMaterialId === material.id) {
+      setSelectedMaterialId(null);
+    }
+    deleteData(SERVER.kitchen.material(material.id)).catch(() => undefined);
   };
 
   const renderDesigner = () => (
@@ -2553,6 +2964,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         onClose={() => setPaletteOpen(false)}
         catalogGroups={catalogGroups}
         catalogItems={catalogItems}
+        loading={catalogLoading}
+        onLoadCatalogItems={loadCatalogItemsBySubcategory}
         onPaletteDragStart={handlePaletteDragStart}
         onPaletteProductClick={handlePaletteProductClick}
         selectedDoor={selectedDoor}
@@ -3112,7 +3525,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             }}
             onRotateItem={rotateSceneItem}
             onNewProject={startNewProject}
-            onSaveProject={() => setProjectSaveOpen(true)}
+            onSaveProject={openProjectSaveDialog}
             onClearItems={clearSceneItems}
             onChangeRoomDimension={updateRoomDimension}
             onChangeRoomSurface={(field, value) =>
@@ -3254,7 +3667,11 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           if (!projectSaving) setProjectSaveOpen(false);
         }}
         closeDisabled={projectSaving}
-        title="Musteriye Ozel Proje Kaydet"
+        title={
+          activeProject
+            ? "Musteriye Ozel Proje Guncelle"
+            : "Musteriye Ozel Proje Kaydet"
+        }
         subtitle="Projeyi mevcut bir musteriye baglayin ya da yeni musteri olarak kaydedin."
         actions={
           <Button
@@ -3271,7 +3688,13 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               fontWeight: 900,
             }}
           >
-            {projectSaving ? "Kaydediliyor..." : "Kaydet"}
+            {projectSaving
+              ? activeProject
+                ? "Guncelleniyor..."
+                : "Kaydediliyor..."
+              : activeProject
+                ? "Guncelle"
+                : "Kaydet"}
           </Button>
         }
       >
@@ -3366,23 +3789,30 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     <KitchenCatalogManager
       catalogItems={catalogItems}
       catalogGroups={catalogGroups}
+      materialGroups={materialGroups}
       materials={materials}
+      catalogStats={catalogStats}
       selectedProduct={selectedCatalogProduct}
       selectedMaterial={selectedMaterial}
-      onSelectProduct={(product) => {
-        setSelectedMaterialId(null);
-        setSelectedCatalogProductId(product.id);
-      }}
+      onSelectProduct={selectCatalogProduct}
       onCloseProduct={() => setSelectedCatalogProductId(null)}
       onUpdateProduct={updateCatalogItem}
+      onSaveProduct={saveCatalogItem}
+      onDeleteProduct={removeCatalogItem}
       onAddProduct={addCatalogItem}
+      loading={catalogLoading}
+      onLoadCatalogItems={loadCatalogItemsBySubcategory}
+      onUploadFile={uploadKitchenFile}
       onAddCatalogGroup={addCatalogGroup}
-      onSelectMaterial={(material) => {
-        setSelectedCatalogProductId(null);
-        setSelectedMaterialId(material.id);
-      }}
+      onUpdateCatalogGroup={updateCatalogGroup}
+      onDeleteCatalogGroup={removeCatalogGroup}
+      onSelectMaterial={selectMaterial}
       onCloseMaterial={() => setSelectedMaterialId(null)}
       onUpdateMaterial={updateMaterial}
+      onAddMaterial={addMaterial}
+      onDeleteMaterial={removeMaterial}
+      onLoadMaterials={loadMaterialsBySubcategory}
+      onEnsureMaterialCatalog={ensureMaterialCatalog}
     />
   );
 
@@ -3444,6 +3874,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         getActions: ({ row }) => [
           <GridActionsCellItem
             key="inspect"
+            className="grid-action-edit"
             icon={<VisibilityOutlinedIcon fontSize="small" />}
             label="Incele"
             onClick={() => inspectProject(row)}
@@ -3451,9 +3882,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           />,
           <GridActionsCellItem
             key="delete"
+            className="grid-action-delete"
             icon={<DeleteOutlineIcon fontSize="small" />}
             label="Sil"
-            onClick={() => removeProject(row)}
+            onClick={() => requestProjectDelete(row)}
             showInMenu={false}
           />,
         ],
@@ -3533,6 +3965,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             <DataGrid
               rows={filteredProjects}
               columns={projectColumns}
+              loading={projectsLoading}
               pageSize={10}
               rowsPerPageOptions={[10]}
               disableSelectionOnClick
@@ -3546,6 +3979,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               }
               localeText={{
                 noRowsLabel: "Henuz proje eklenmedi.",
+                noResultsOverlayLabel: "Henuz proje eklenmedi.",
                 footerRowSelected: (count) => `${count} satir secildi`,
               }}
               sx={{
@@ -3626,26 +4060,35 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                   width: 34,
                   height: 34,
                   borderRadius: 1,
-                  color: "#4E6E97",
                   border: "1px solid transparent",
                   transition:
                     "color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease",
-                  "&:hover": {
+                  "&.grid-action-edit": {
+                    color: "#38A8FF",
+                    bgcolor: "#EDF8FF",
+                    borderColor: "#C7E8FF",
+                  },
+                  "&.grid-action-edit:hover": {
                     color: "#0F5ED7",
                     bgcolor: "#EAF3FF",
                     borderColor: "#BBD6F6",
                     boxShadow: "0 8px 18px rgba(25,118,210,0.16)",
                   },
+                  "&.grid-action-delete": {
+                    color: "#DC2626",
+                    bgcolor: "#FEF2F2",
+                    borderColor: "#FECACA",
+                  },
+                  "&.grid-action-delete:hover": {
+                    color: "#B91C1C",
+                    bgcolor: "#FEE2E2",
+                    borderColor: "#FCA5A5",
+                    boxShadow: "0 8px 18px rgba(220,38,38,0.14)",
+                  },
                   "&:focus, &:focus-visible": {
                     outline: "none",
                     boxShadow: "none",
                   },
-                },
-                "& .MuiDataGrid-actionsCell .MuiIconButton-root:last-of-type:hover": {
-                  color: "#DC2626",
-                  bgcolor: "#FEF2F2",
-                  borderColor: "#FECACA",
-                  boxShadow: "0 8px 18px rgba(220,38,38,0.14)",
                 },
                 "& .MuiDataGrid-footerContainer": {
                   borderTop: "1px solid #CFE0F5",
@@ -3691,16 +4134,25 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         field: "actions",
         type: "actions",
         headerName: "Islem",
-        width: 96,
+        width: 124,
         sortable: false,
         filterable: false,
         disableColumnMenu: true,
         getActions: ({ row }) => [
           <GridActionsCellItem
             key="edit"
+            className="grid-action-edit"
             icon={<EditOutlinedIcon fontSize="small" />}
             label="Duzenle"
             onClick={() => openEditCustomerDialog(row)}
+            showInMenu={false}
+          />,
+          <GridActionsCellItem
+            key="delete"
+            className="grid-action-delete"
+            icon={<DeleteOutlineIcon fontSize="small" />}
+            label="Sil"
+            onClick={() => requestCustomerDelete(row)}
             showInMenu={false}
           />,
         ],
@@ -3772,6 +4224,19 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               boxShadow: "0 16px 38px rgba(25,118,210,0.08)",
             }}
           >
+            {customersLoading ? (
+              <Stack
+                alignItems="center"
+                justifyContent="center"
+                spacing={1.2}
+                sx={{ width: "100%", height: 620 }}
+              >
+                <CircularProgress color="info" />
+                <Typography sx={{ color: "#41698F", fontWeight: 900 }}>
+                  Müşteriler yükleniyor
+                </Typography>
+              </Stack>
+            ) : (
             <Box sx={{ width: "100%", height: 620 }}>
               <DataGrid
                 rows={customers}
@@ -3789,6 +4254,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 }
                 localeText={{
                   noRowsLabel: "Henuz musteri eklenmedi.",
+                  noResultsOverlayLabel: "Henuz musteri eklenmedi.",
                   footerRowSelected: (count) => `${count} satir secildi`,
                 }}
                 sx={{
@@ -3871,15 +4337,30 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                     width: 34,
                     height: 34,
                     borderRadius: 1,
-                    color: "#4E6E97",
                     border: "1px solid transparent",
                     transition:
                       "color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease",
-                    "&:hover": {
+                    "&.grid-action-edit": {
+                      color: "#38A8FF",
+                      bgcolor: "#EDF8FF",
+                      borderColor: "#C7E8FF",
+                    },
+                    "&.grid-action-edit:hover": {
                       color: "#0F5ED7",
                       bgcolor: "#EAF3FF",
                       borderColor: "#BBD6F6",
                       boxShadow: "0 8px 18px rgba(25,118,210,0.16)",
+                    },
+                    "&.grid-action-delete": {
+                      color: "#DC2626",
+                      bgcolor: "#FEF2F2",
+                      borderColor: "#FECACA",
+                    },
+                    "&.grid-action-delete:hover": {
+                      color: "#B91C1C",
+                      bgcolor: "#FEE2E2",
+                      borderColor: "#FCA5A5",
+                      boxShadow: "0 8px 18px rgba(220,38,38,0.14)",
                     },
                     "&:focus, &:focus-visible": {
                       outline: "none",
@@ -3893,6 +4374,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 }}
               />
             </Box>
+            )}
           </Paper>
         </Stack>
 
@@ -4061,6 +4543,39 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         {tab === 3 && renderProjects()}
         {tab === 4 && renderCustomers()}
       </Stack>
+      <PremiumDialog
+        open={Boolean(deleteConfirmation)}
+        onClose={closeDeleteConfirmation}
+        title={deleteConfirmation?.title || "Silme Onayi"}
+        subtitle="Lutfen silme islemini onaylayin."
+        maxWidth="xs"
+        actions={
+          <Button
+            variant="contained"
+            color="error"
+            onClick={confirmDelete}
+            sx={{
+              minWidth: 112,
+              height: 42,
+              mt: 1,
+              borderRadius: 1,
+              textTransform: "none",
+              fontWeight: 900,
+            }}
+          >
+            Sil
+          </Button>
+        }
+      >
+        <Stack spacing={1.25} sx={{ mt: "10px" }}>
+          <Typography sx={{ color: "#173B63", fontWeight: 800 }}>
+            {deleteConfirmation?.message}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#5F7897" }}>
+            {deleteConfirmation?.detail}
+          </Typography>
+        </Stack>
+      </PremiumDialog>
     </Page>
   );
 };

@@ -1,10 +1,11 @@
-﻿import {
+import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Box,
   Chip,
   ClickAwayListener,
+  CircularProgress,
   Drawer,
   IconButton,
   Paper,
@@ -96,8 +97,10 @@ const KitchenPaletteDrawer = ({
   catalogItems,
   onPaletteDragStart,
   onPaletteProductClick,
+  onLoadCatalogItems,
   selectedDoor,
   selectedCounter,
+  loading = false,
 }) => {
   const orderedGroups = [
     ...catalogGroups.filter((group) => group.key === "room"),
@@ -105,6 +108,8 @@ const KitchenPaletteDrawer = ({
   ];
   const [expanded, setExpanded] = useState("room");
   const [selectedSubcategories, setSelectedSubcategories] = useState({});
+  const [loadingSubcategories, setLoadingSubcategories] = useState({});
+  const [queriedItemsByGroup, setQueriedItemsByGroup] = useState({});
   const toggle = (panel) => (_, nextExpanded) => {
     setExpanded(nextExpanded ? panel : false);
   };
@@ -112,6 +117,39 @@ const KitchenPaletteDrawer = ({
     group.subcategories?.length
       ? group.subcategories
       : [{ key: "standard", title: group.title, hideTitle: true }];
+  const handleSubcategoryChange = (group, subcategory) => {
+    setSelectedSubcategories((current) => ({
+      ...current,
+      [group.key]: subcategory.key,
+    }));
+
+    if (!onLoadCatalogItems) return;
+
+    setQueriedItemsByGroup((current) => ({
+      ...current,
+      [group.key]: { subcategory: subcategory.key, items: [] },
+    }));
+    setLoadingSubcategories((current) => ({ ...current, [group.key]: true }));
+    onLoadCatalogItems(group.key, subcategory.key, subcategory.id)
+      .then((items) => {
+        setQueriedItemsByGroup((current) => ({
+          ...current,
+          [group.key]: { subcategory: subcategory.key, items },
+        }));
+      })
+      .catch(() => {
+        setQueriedItemsByGroup((current) => ({
+          ...current,
+          [group.key]: { subcategory: subcategory.key, items: [] },
+        }));
+      })
+      .finally(() => {
+        setLoadingSubcategories((current) => ({
+          ...current,
+          [group.key]: false,
+        }));
+      });
+  };
   const handleWheelScroll = (event) => {
     const target = event.target;
     const scrollArea =
@@ -235,7 +273,20 @@ const KitchenPaletteDrawer = ({
               },
             }}
           >
-            {orderedGroups.map((group) => {
+            {loading ? (
+              <Stack
+                alignItems="center"
+                justifyContent="center"
+                spacing={1.2}
+                sx={{ minHeight: 320 }}
+              >
+                <CircularProgress color="info" />
+                <Typography sx={{ color: "#41698F", fontWeight: 900 }}>
+                  Katalog yükleniyor
+                </Typography>
+              </Stack>
+            ) : null}
+            {!loading && orderedGroups.map((group) => {
               const groupItems = catalogItems.filter(
                 (item) => item.category === group.key,
               );
@@ -244,11 +295,16 @@ const KitchenPaletteDrawer = ({
               const activeSubcategory =
                 selectedSubcategories[group.key] || subcategories[0]?.key;
               const visibleItems = group.subcategories?.length
-                ? groupItems.filter(
-                    (product) =>
-                      getProductSubcategory(product) === activeSubcategory,
-                  )
+                ? queriedItemsByGroup[group.key]?.subcategory === activeSubcategory
+                  ? queriedItemsByGroup[group.key].items
+                  : groupItems.filter(
+                      (product) =>
+                        getProductSubcategory(product) === activeSubcategory,
+                    )
                 : groupItems;
+              const subcategoryLoading = Boolean(
+                loadingSubcategories[group.key],
+              );
 
               return (
                 <Accordion
@@ -357,12 +413,15 @@ const KitchenPaletteDrawer = ({
                         <Box
                           component="select"
                           value={activeSubcategory}
-                          onChange={(event) =>
-                            setSelectedSubcategories((current) => ({
-                              ...current,
-                              [group.key]: event.target.value,
-                            }))
-                          }
+                          onChange={(event) => {
+                            const nextSubcategory = subcategories.find(
+                              (subcategory) =>
+                                subcategory.key === event.target.value,
+                            );
+                            if (nextSubcategory) {
+                              handleSubcategoryChange(group, nextSubcategory);
+                            }
+                          }}
                           sx={{
                             width: "100%",
                             height: 38,
@@ -399,13 +458,26 @@ const KitchenPaletteDrawer = ({
                       </Box>
                     ) : null}
 
-                    <Stack
-                      spacing={0.9}
-                      sx={{
-                        pr: 0.4,
-                      }}
-                    >
-                      {visibleItems.map((product) => (
+                    {subcategoryLoading ? (
+                      <Stack
+                        alignItems="center"
+                        justifyContent="center"
+                        spacing={1}
+                        sx={{ minHeight: 180 }}
+                      >
+                        <CircularProgress color="info" size={30} />
+                        <Typography sx={{ color: "#41698F", fontWeight: 900 }}>
+                          Ürünler yükleniyor
+                        </Typography>
+                      </Stack>
+                    ) : (
+                      <Stack
+                        spacing={0.9}
+                        sx={{
+                          pr: 0.4,
+                        }}
+                      >
+                        {visibleItems.map((product) => (
                         <Paper
                           key={product.id}
                           draggable
@@ -505,8 +577,9 @@ const KitchenPaletteDrawer = ({
                             </Box>
                           </Stack>
                         </Paper>
-                      ))}
-                    </Stack>
+                        ))}
+                      </Stack>
+                    )}
                   </AccordionDetails>
                 </Accordion>
               );
