@@ -23,6 +23,7 @@ import EyeOffOutline from "mdi-material-ui/EyeOffOutline";
 import useAuth from "hooks/useAuth";
 import useMounted from "hooks/useMounted";
 import useLocale from "hooks/useLocale";
+import { DASHBOARD } from "routes/paths";
 
 const slideImages = [
   "/login.png",
@@ -76,7 +77,7 @@ const Login = () => {
         password: data.password,
       });
 
-      navigate(searchParams.get("next") || "/overview", { replace: true });
+      navigate(searchParams.get("next") || DASHBOARD.kitchenDesigner, { replace: true });
     } catch (e) {
       if (mounted()) {
         setError("afterSubmit", {

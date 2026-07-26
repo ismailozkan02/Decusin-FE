@@ -1,22 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Autocomplete,
   Box,
   Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
   InputAdornment,
-  Pagination,
   Paper,
   Popover,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import FlareOutlinedIcon from "@mui/icons-material/FlareOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
@@ -36,7 +33,7 @@ import ViewInArOutlinedIcon from "@mui/icons-material/ViewInArOutlined";
 import CompareArrowsOutlinedIcon from "@mui/icons-material/CompareArrowsOutlined";
 import Page from "components/Page";
 import { SERVER } from "routes/paths";
-import { getData, postData } from "utils/axiosForPhyton";
+import { deleteData, getData, postData, putData } from "utils/axiosForPhyton";
 import AlignHorizontalCenterOutlinedIcon from "@mui/icons-material/AlignHorizontalCenterOutlined";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -48,6 +45,7 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import KitchenCatalogManager from "./components/KitchenCatalogManager";
 import KitchenCustomizer from "./components/KitchenCustomizer";
 import KitchenPaletteDrawer from "./components/KitchenPaletteDrawer";
+import PremiumDialog from "./components/PremiumDialog";
 import KitchenScene from "./components/KitchenScene";
 import KitchenSceneItemsDrawer from "./components/KitchenSceneItemsDrawer";
 import {
@@ -127,6 +125,68 @@ const consumePendingProject = (initialTab) => {
 };
 
 const PROJECT_CACHE_KEY = "decusinKitchenProjects";
+
+const emptyCustomerForm = {
+  first_name: "",
+  last_name: "",
+  address: "",
+  phone: "",
+};
+
+const getPayloadList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.items)) return payload.items;
+  return [];
+};
+
+const normalizeCustomer = (customer = {}) => ({
+  id: customer.id || customer._id || `customer-${Date.now()}`,
+  first_name: customer.first_name || customer.firstName || "",
+  last_name: customer.last_name || customer.lastName || "",
+  phone: customer.phone || "",
+  address: customer.address || "",
+  created_at: customer.created_at || customer.createdAt || "",
+  ...customer,
+});
+
+const buildCustomerPayload = (form) => ({
+  first_name: form.first_name.trim(),
+  last_name: form.last_name.trim(),
+  phone: form.phone.trim(),
+  address: form.address.trim(),
+});
+
+const getCustomerDisplayName = (customer = {}) =>
+  `${customer.first_name || ""} ${customer.last_name || ""}`.trim();
+
+const normalizeSearchText = (value = "") =>
+  value.trim().toLocaleLowerCase("tr-TR");
+
+const buildCustomerFromName = (name) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return {
+    first_name: parts[0] || name.trim(),
+    last_name: parts.slice(1).join(" "),
+    phone: "",
+    address: "",
+  };
+};
+
+const formatProjectDate = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleDateString("tr-TR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const getProjectTotal = (project) =>
+  Number(project?.quote?.total || project?.total || 0);
 
 const defaultRoomSurfaces = {
   floor: "#DDBF86",
@@ -597,9 +657,7 @@ const ToolbarSceneToggleControl = ({
           : "1px solid rgba(148,163,184,0.42)",
         color: active ? activeIconColor || "#1976D2" : iconColor || "#64748B",
         bgcolor: active ? "#EFF6FF" : "#F8FAFC",
-        boxShadow: active
-          ? "inset 0 0 0 1px rgba(25,118,210,0.1)"
-          : "none",
+        boxShadow: active ? "inset 0 0 0 1px rgba(25,118,210,0.1)" : "none",
       }}
     >
       {active ? activeIcon : inactiveIcon}
@@ -691,51 +749,51 @@ const ToolbarFloorPatternControl = ({ value, onChange }) => {
 
             return (
               <Box
-              key={option.value}
-              component="button"
-              type="button"
-              title={optionLabel}
-              aria-label={optionLabel}
-              onClick={() => {
-                onChange(option.value);
-                setAnchorEl(null);
-              }}
-              sx={{
-                p: 0.45,
-                borderRadius: 1,
-                cursor: "pointer",
-                border:
-                  value === option.value
-                    ? "2px solid #1976D2"
-                    : "1px solid rgba(148,163,184,0.38)",
-                bgcolor: "#FFFFFF",
-                outline: "none",
-                textAlign: "left",
-              }}
-            >
-              <Box
-                sx={{
-                  height: 38,
-                  borderRadius: 0.8,
-                  background: option.preview,
-                  boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.34)",
+                key={option.value}
+                component="button"
+                type="button"
+                title={optionLabel}
+                aria-label={optionLabel}
+                onClick={() => {
+                  onChange(option.value);
+                  setAnchorEl(null);
                 }}
-              />
-              <Typography
                 sx={{
-                  mt: 0.35,
-                  fontSize: 9,
-                  fontWeight: 900,
-                  color: "#334155",
-                  lineHeight: 1.1,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  maxWidth: "100%",
+                  p: 0.45,
+                  borderRadius: 1,
+                  cursor: "pointer",
+                  border:
+                    value === option.value
+                      ? "2px solid #1976D2"
+                      : "1px solid rgba(148,163,184,0.38)",
+                  bgcolor: "#FFFFFF",
+                  outline: "none",
+                  textAlign: "left",
                 }}
               >
-                {optionLabel}
-              </Typography>
+                <Box
+                  sx={{
+                    height: 38,
+                    borderRadius: 0.8,
+                    background: option.preview,
+                    boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.34)",
+                  }}
+                />
+                <Typography
+                  sx={{
+                    mt: 0.35,
+                    fontSize: 9,
+                    fontWeight: 900,
+                    color: "#334155",
+                    lineHeight: 1.1,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    maxWidth: "100%",
+                  }}
+                >
+                  {optionLabel}
+                </Typography>
               </Box>
             );
           })}
@@ -843,6 +901,12 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const copiedSceneItemRef = useRef(null);
   const skipSceneHistoryRef = useRef(false);
   const lastSceneItemsSnapshotRef = useRef(null);
+  const loadedKitchenDataRef = useRef({
+    catalog: false,
+    customers: false,
+    materials: false,
+    projects: false,
+  });
   const tab = TABS[initialTab] || 0;
   const [pendingProject] = useState(() => {
     const project = consumePendingProject(initialTab);
@@ -860,18 +924,17 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const [projectSaveOpen, setProjectSaveOpen] = useState(false);
   const [projectForm, setProjectForm] = useState({
     name: "",
+    customer_id: null,
     customer_name: "",
     notes: "",
   });
+  const [projectSaving, setProjectSaving] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
-  const [projectPage, setProjectPage] = useState(1);
   const [customers, setCustomers] = useState([]);
-  const [customerForm, setCustomerForm] = useState({
-    first_name: "",
-    last_name: "",
-    address: "",
-    phone: "",
-  });
+  const [customerForm, setCustomerForm] = useState(emptyCustomerForm);
+  const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [customerSaving, setCustomerSaving] = useState(false);
   const [sceneItems, setSceneItems] = useState(
     () => pendingProject?.items || [],
   );
@@ -1005,12 +1068,6 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         .includes(query),
     );
   }, [projectSearch, projects]);
-  const projectPageCount = Math.max(Math.ceil(filteredProjects.length / 10), 1);
-  const pagedProjects = filteredProjects.slice(
-    (projectPage - 1) * 10,
-    projectPage * 10,
-  );
-
   const getSceneMetrics = useCallback(
     (dimensions = roomDimensions) => {
       const rect = sceneRef.current?.getBoundingClientRect();
@@ -1201,16 +1258,26 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   );
 
   useEffect(() => {
+    const shouldLoadCatalog = ["designer", "catalog"].includes(initialTab);
+    if (
+      !shouldLoadCatalog ||
+      (loadedKitchenDataRef.current.catalog &&
+        loadedKitchenDataRef.current.materials)
+    ) {
+      return undefined;
+    }
+
     let mounted = true;
+    loadedKitchenDataRef.current.catalog = true;
+    loadedKitchenDataRef.current.materials = true;
 
     Promise.allSettled([
       getData(SERVER.kitchen.catalogItems),
       getData(SERVER.kitchen.materials),
-      getData(SERVER.kitchen.projects),
     ]).then((results) => {
       if (!mounted) return;
 
-      const [catalogResult, materialResult, projectResult] = results;
+      const [catalogResult, materialResult] = results;
       if (catalogResult.status === "fulfilled") {
         setCatalogItems(
           mergeRuntimeCatalogItems(catalogResult.value?.data || []),
@@ -1219,25 +1286,65 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       if (materialResult.status === "fulfilled") {
         setMaterials(materialResult.value?.data || fallbackMaterials);
       }
-      if (projectResult.status === "fulfilled") {
-        setProjects((current) => {
-          const mergedProjects = mergeProjectsById(
-            current,
-            projectResult.value?.data || [],
-            readProjectCache(),
-          );
-          writeProjectCache(mergedProjects);
-          return mergedProjects;
-        });
-      }
     });
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [initialTab]);
 
   useEffect(() => {
+    if (initialTab !== "projects" || loadedKitchenDataRef.current.projects) {
+      return undefined;
+    }
+
+    let mounted = true;
+    loadedKitchenDataRef.current.projects = true;
+
+    getData(SERVER.kitchen.projects)
+      .then((result) => {
+        if (!mounted) return;
+        setProjects((current) => {
+          const mergedProjects = mergeProjectsById(
+            current,
+            result?.data || [],
+            readProjectCache(),
+          );
+          writeProjectCache(mergedProjects);
+          return mergedProjects;
+        });
+      })
+      .catch(() => undefined);
+
+    return () => {
+      mounted = false;
+    };
+  }, [initialTab]);
+
+  useEffect(() => {
+    const shouldLoadCustomers = initialTab === "customers" || projectSaveOpen;
+    if (!shouldLoadCustomers || loadedKitchenDataRef.current.customers) {
+      return undefined;
+    }
+
+    let mounted = true;
+    loadedKitchenDataRef.current.customers = true;
+
+    getData(SERVER.kitchen.customers)
+      .then((result) => {
+        if (!mounted) return;
+        setCustomers(getPayloadList(result).map(normalizeCustomer));
+      })
+      .catch(() => undefined);
+
+    return () => {
+      mounted = false;
+    };
+  }, [initialTab, projectSaveOpen]);
+
+  useEffect(() => {
+    if (initialTab !== "designer") return;
+
     postData(SERVER.kitchen.quote, {
       items: sceneItems,
       include_installation: true,
@@ -1246,7 +1353,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     })
       .then(() => undefined)
       .catch(() => undefined);
-  }, [installationFee, sceneItems, shippingFee]);
+  }, [initialTab, installationFee, sceneItems, shippingFee]);
 
   useEffect(() => {
     const updateQuoteFees = (event) => {
@@ -1641,10 +1748,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
 
       const previous = current[current.length - 1];
       skipSceneHistoryRef.current = true;
-      setRedoStack((redoCurrent) => [
-        cloneProjectData(sceneItems),
-        ...redoCurrent,
-      ].slice(0, 40));
+      setRedoStack((redoCurrent) =>
+        [cloneProjectData(sceneItems), ...redoCurrent].slice(0, 40),
+      );
       setSceneItems(cloneProjectData(previous));
       setSelectedSceneIndex(null);
       setSelectedSceneIndices([]);
@@ -1659,10 +1765,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
 
       const next = current[0];
       skipSceneHistoryRef.current = true;
-      setUndoStack((undoCurrent) => [
-        ...undoCurrent,
-        cloneProjectData(sceneItems),
-      ].slice(-40));
+      setUndoStack((undoCurrent) =>
+        [...undoCurrent, cloneProjectData(sceneItems)].slice(-40),
+      );
       setSceneItems(cloneProjectData(next));
       setSelectedSceneIndex(null);
       setSelectedSceneIndices([]);
@@ -1737,7 +1842,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           return;
 
         const dimensions = normalizeProductDimensions(product, item.dimensions);
-        const placement = item.placement || getProductPlacement(product, dimensions);
+        const placement =
+          item.placement || getProductPlacement(product, dimensions);
 
         if (placement === "wall") wallIndices.push(index);
         else floorIndices.push(index);
@@ -2101,52 +2207,87 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     );
   };
 
+  const ensureProjectCustomer = () => {
+    const customerName = projectForm.customer_name.trim();
+    if (!customerName) return Promise.resolve(null);
+
+    const selectedCustomer = customers.find(
+      (customer) => customer.id === projectForm.customer_id,
+    );
+    if (selectedCustomer) return Promise.resolve(selectedCustomer);
+
+    const matchedCustomer = customers.find(
+      (customer) =>
+        normalizeSearchText(getCustomerDisplayName(customer)) ===
+        normalizeSearchText(customerName),
+    );
+    if (matchedCustomer) return Promise.resolve(matchedCustomer);
+
+    return postData(SERVER.kitchen.customers, buildCustomerFromName(customerName)).then(
+      (result) => {
+        const savedCustomer = normalizeCustomer(result?.data || result);
+        setCustomers((current) => [savedCustomer, ...current]);
+        return savedCustomer;
+      },
+    );
+  };
+
   const saveProject = () => {
-    const payload = normalizeProjectSnapshot({
-      id: `project-${Date.now()}`,
-      name: projectForm.name || "Yeni mutfak projesi",
-      customer_name: projectForm.customer_name || "Musteri",
-      template_id: "",
-      room_dimensions: cloneProjectData(roomDimensions),
-      room_surfaces: cloneProjectData(roomSurfaces),
-      items: cloneProjectData(sceneItems),
-      installation_fee: installationFee,
-      shipping_fee: shippingFee,
-      quote: cloneProjectData(quote),
-      notes: projectForm.notes || "FE uzerinden kaydedilen proje.",
-      created_at: new Date().toISOString(),
-    });
+    if (projectSaving) return;
 
-    setProjects((current) => {
-      const mergedProjects = mergeProjectsById([payload], current);
-      writeProjectCache(mergedProjects);
-      return mergedProjects;
-    });
-    setProjectSaveOpen(false);
-    setProjectForm({ name: "", customer_name: "", notes: "" });
-
-    postData(SERVER.kitchen.projects, payload)
-      .then((project) => {
-        if (!project?.id) return;
-        const savedProject = normalizeProjectSnapshot({
-          ...payload,
-          ...project,
-          room_dimensions: project.room_dimensions || payload.room_dimensions,
-          items:
-            Array.isArray(project.items) && project.items.length
-              ? project.items
-              : payload.items,
-          quote: project.quote || payload.quote,
+    setProjectSaving(true);
+    ensureProjectCustomer()
+      .then((projectCustomer) => {
+        const payload = normalizeProjectSnapshot({
+          id: `project-${Date.now()}`,
+          name: projectForm.name || "Yeni mutfak projesi",
+          customer_id: projectCustomer?.id || projectForm.customer_id || null,
+          customer_name:
+            getCustomerDisplayName(projectCustomer) ||
+            projectForm.customer_name ||
+            "Musteri",
+          template_id: "",
+          room_dimensions: cloneProjectData(roomDimensions),
+          room_surfaces: cloneProjectData(roomSurfaces),
+          items: cloneProjectData(sceneItems),
+          installation_fee: installationFee,
+          shipping_fee: shippingFee,
+          quote: cloneProjectData(quote),
+          notes: projectForm.notes || "FE uzerinden kaydedilen proje.",
+          created_at: new Date().toISOString(),
         });
+
         setProjects((current) => {
-          const mergedProjects = current.map((item) =>
-            item.id === payload.id ? savedProject : item,
-          );
+          const mergedProjects = mergeProjectsById([payload], current);
           writeProjectCache(mergedProjects);
           return mergedProjects;
         });
+        setProjectSaveOpen(false);
+        setProjectForm({ name: "", customer_id: null, customer_name: "", notes: "" });
+
+        return postData(SERVER.kitchen.projects, payload).then((project) => {
+          if (!project?.id) return;
+          const savedProject = normalizeProjectSnapshot({
+            ...payload,
+            ...project,
+            room_dimensions: project.room_dimensions || payload.room_dimensions,
+            items:
+              Array.isArray(project.items) && project.items.length
+                ? project.items
+                : payload.items,
+            quote: project.quote || payload.quote,
+          });
+          setProjects((current) => {
+            const mergedProjects = current.map((item) =>
+              item.id === payload.id ? savedProject : item,
+            );
+            writeProjectCache(mergedProjects);
+            return mergedProjects;
+          });
+        });
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => setProjectSaving(false));
   };
 
   const startNewProject = useCallback(() => {
@@ -2285,22 +2426,76 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     }
   };
 
-  const addCustomer = () => {
-    const firstName = customerForm.first_name.trim();
-    const lastName = customerForm.last_name.trim();
-    if (!firstName && !lastName) return;
+  const removeProject = (project) => {
+    setProjects((current) => {
+      const nextProjects = current.filter((item) => item.id !== project.id);
+      writeProjectCache(nextProjects);
+      return nextProjects;
+    });
 
-    setCustomers((current) => [
-      {
-        id: `customer-${Date.now()}`,
-        ...customerForm,
-        first_name: firstName,
-        last_name: lastName,
-        created_at: new Date().toISOString(),
-      },
-      ...current,
-    ]);
-    setCustomerForm({ first_name: "", last_name: "", address: "", phone: "" });
+    deleteData(SERVER.kitchen.project(project.id)).catch(() => undefined);
+  };
+
+  const openCreateCustomerDialog = () => {
+    setEditingCustomer(null);
+    setCustomerForm(emptyCustomerForm);
+    setCustomerDialogOpen(true);
+  };
+
+  const openEditCustomerDialog = (customer) => {
+    const normalizedCustomer = normalizeCustomer(customer);
+    setEditingCustomer(normalizedCustomer);
+    setCustomerForm({
+      first_name: normalizedCustomer.first_name,
+      last_name: normalizedCustomer.last_name,
+      phone: normalizedCustomer.phone,
+      address: normalizedCustomer.address,
+    });
+    setCustomerDialogOpen(true);
+  };
+
+  const closeCustomerDialog = () => {
+    if (customerSaving) return;
+    setCustomerDialogOpen(false);
+    setEditingCustomer(null);
+    setCustomerForm(emptyCustomerForm);
+  };
+
+  const saveCustomer = () => {
+    const payload = buildCustomerPayload(customerForm);
+    if (!payload.first_name && !payload.last_name) return;
+
+    setCustomerSaving(true);
+    const request = editingCustomer
+      ? putData(SERVER.kitchen.customer(editingCustomer.id), payload)
+      : postData(SERVER.kitchen.customers, payload);
+
+    request
+      .then((result) => {
+        const savedCustomer = normalizeCustomer(
+          result?.data ||
+            result || {
+              ...editingCustomer,
+              ...payload,
+              id: editingCustomer?.id || `customer-${Date.now()}`,
+            },
+        );
+
+        setCustomers((current) => {
+          if (editingCustomer) {
+            return current.map((customer) =>
+              customer.id === editingCustomer.id ? savedCustomer : customer,
+            );
+          }
+
+          return [savedCustomer, ...current];
+        });
+        setCustomerDialogOpen(false);
+        setEditingCustomer(null);
+        setCustomerForm(emptyCustomerForm);
+      })
+      .catch(() => undefined)
+      .finally(() => setCustomerSaving(false));
   };
 
   const addCatalogItem = (product) => {
@@ -2328,7 +2523,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       }
 
       if (current.some((item) => item.key === group.key)) return current;
-      return [...current, { ...group, subcategories: group.subcategories || [] }];
+      return [
+        ...current,
+        { ...group, subcategories: group.subcategories || [] },
+      ];
     });
   };
 
@@ -2438,119 +2636,124 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               spacing={0.75}
               sx={{ flexWrap: "wrap", minWidth: 0 }}
             >
-            <Button
-              variant="contained"
-              startIcon={<Inventory2OutlinedIcon />}
-              onClick={() => {
-                setSelectedSceneIndex(null);
-                setSceneItemsOpen(false);
-                setPaletteOpen(true);
-              }}
-              sx={toolbarPrimaryButtonSx(true)}
-            >
-              Sahneye Ürün Ekle
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<LayersOutlinedIcon />}
-              onClick={() => {
-                setPaletteOpen(false);
-                setSceneItemsOpen(true);
-              }}
-              sx={toolbarPrimaryButtonSx(false)}
-            >
-              Ekli Ürünler
-            </Button>
-            <ToolbarSceneToggleControl
-              label="Mod"
-              active={roomSurfaces.sceneMode === "night"}
-              activeTitle="Gece modunda"
-              inactiveTitle="Gunduz modunda"
-              activeIcon={<NightsStayOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<LightModeOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={() =>
-                setRoomSurfaces((current) => ({
-                  ...current,
-                  sceneMode: current.sceneMode === "night" ? "day" : "night",
-                }))
-              }
-            />
-            <ToolbarSceneToggleControl
-              label="Lamba"
-              active={roomSurfaces.lampVisible === true}
-              activeTitle="Lamba gorunur"
-              inactiveTitle="Lamba gizli"
-              activeIcon={<LightbulbOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<LightbulbOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={() =>
-                setRoomSurfaces((current) => {
-                  const nextVisible = current.lampVisible !== true;
-
-                  return {
+              <Button
+                variant="contained"
+                startIcon={<Inventory2OutlinedIcon />}
+                onClick={() => {
+                  setSelectedSceneIndex(null);
+                  setSceneItemsOpen(false);
+                  setPaletteOpen(true);
+                }}
+                sx={toolbarPrimaryButtonSx(true)}
+              >
+                Sahneye Ürün Ekle
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<LayersOutlinedIcon />}
+                onClick={() => {
+                  setPaletteOpen(false);
+                  setSceneItemsOpen(true);
+                }}
+                sx={toolbarPrimaryButtonSx(false)}
+              >
+                Ekli Ürünler
+              </Button>
+              <ToolbarSceneToggleControl
+                label="Mod"
+                active={roomSurfaces.sceneMode === "night"}
+                activeTitle="Gece modunda"
+                inactiveTitle="Gunduz modunda"
+                activeIcon={<NightsStayOutlinedIcon sx={{ fontSize: 17 }} />}
+                inactiveIcon={<LightModeOutlinedIcon sx={{ fontSize: 17 }} />}
+                onToggle={() =>
+                  setRoomSurfaces((current) => ({
                     ...current,
-                    lampVisible: nextVisible,
-                    lightsOn: nextVisible ? current.lightsOn === true : false,
-                  };
-                })
-              }
-            />
-            <ToolbarSceneToggleControl
-              label="Isik"
-              active={
-                roomSurfaces.lampVisible === true &&
-                roomSurfaces.lightsOn === true
-              }
-              activeTitle="Aydinlatma acik"
-              inactiveTitle="Aydinlatma kapali"
-              activeIcon={<FlareOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<FlareOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={() =>
-                setRoomSurfaces((current) => ({
-                  ...current,
-                  lampVisible: true,
-                  lightsOn: current.lightsOn !== true,
-                }))
-              }
-            />
-            <ToolbarSceneToggleControl
-              label="Tur"
-              active={premiumTools.cameraTour}
-              activeTitle="Kamera animasyonu acik"
-              inactiveTitle="Kamera animasyonu baslat"
-              activeIcon={<MovieCreationOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<MovieCreationOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={() =>
-                setPremiumTools((current) => ({
-                  ...current,
-                  cameraTour: !current.cameraTour,
-                }))
-              }
-            />
-            <Stack
-              direction="row"
-              spacing={0.4}
-              aria-hidden={selectedSceneIndex === null}
-              sx={{
-                p: 0.35,
-                borderRadius: 1.25,
-                bgcolor: "rgba(255,255,255,0.96)",
-                border: "1px solid rgba(37,99,235,0.5)",
-                boxShadow:
-                  "0 10px 24px rgba(37,99,235,0.16), inset 0 1px 0 rgba(255,255,255,0.86)",
-                flexShrink: 0,
-                visibility: selectedSceneIndex !== null ? "visible" : "hidden",
-                pointerEvents: selectedSceneIndex !== null ? "auto" : "none",
-              }}
-            >
+                    sceneMode: current.sceneMode === "night" ? "day" : "night",
+                  }))
+                }
+              />
+              <ToolbarSceneToggleControl
+                label="Lamba"
+                active={roomSurfaces.lampVisible === true}
+                activeTitle="Lamba gorunur"
+                inactiveTitle="Lamba gizli"
+                activeIcon={<LightbulbOutlinedIcon sx={{ fontSize: 17 }} />}
+                inactiveIcon={<LightbulbOutlinedIcon sx={{ fontSize: 17 }} />}
+                onToggle={() =>
+                  setRoomSurfaces((current) => {
+                    const nextVisible = current.lampVisible !== true;
+
+                    return {
+                      ...current,
+                      lampVisible: nextVisible,
+                      lightsOn: nextVisible ? current.lightsOn === true : false,
+                    };
+                  })
+                }
+              />
+              <ToolbarSceneToggleControl
+                label="Isik"
+                active={
+                  roomSurfaces.lampVisible === true &&
+                  roomSurfaces.lightsOn === true
+                }
+                activeTitle="Aydinlatma acik"
+                inactiveTitle="Aydinlatma kapali"
+                activeIcon={<FlareOutlinedIcon sx={{ fontSize: 17 }} />}
+                inactiveIcon={<FlareOutlinedIcon sx={{ fontSize: 17 }} />}
+                onToggle={() =>
+                  setRoomSurfaces((current) => ({
+                    ...current,
+                    lampVisible: true,
+                    lightsOn: current.lightsOn !== true,
+                  }))
+                }
+              />
+              <ToolbarSceneToggleControl
+                label="Tur"
+                active={premiumTools.cameraTour}
+                activeTitle="Kamera animasyonu acik"
+                inactiveTitle="Kamera animasyonu baslat"
+                activeIcon={<MovieCreationOutlinedIcon sx={{ fontSize: 17 }} />}
+                inactiveIcon={
+                  <MovieCreationOutlinedIcon sx={{ fontSize: 17 }} />
+                }
+                onToggle={() =>
+                  setPremiumTools((current) => ({
+                    ...current,
+                    cameraTour: !current.cameraTour,
+                  }))
+                }
+              />
+              <Stack
+                direction="row"
+                spacing={0.4}
+                aria-hidden={selectedSceneIndex === null}
+                sx={{
+                  p: 0.35,
+                  borderRadius: 1.25,
+                  bgcolor: "rgba(255,255,255,0.96)",
+                  border: "1px solid rgba(37,99,235,0.5)",
+                  boxShadow:
+                    "0 10px 24px rgba(37,99,235,0.16), inset 0 1px 0 rgba(255,255,255,0.86)",
+                  flexShrink: 0,
+                  visibility:
+                    selectedSceneIndex !== null ? "visible" : "hidden",
+                  pointerEvents: selectedSceneIndex !== null ? "auto" : "none",
+                }}
+              >
                 <ToolbarSceneToggleControl
                   label="Kilit"
                   active={Boolean(
                     selectedSceneIndex !== null &&
-                      sceneItems[selectedSceneIndex]?.locked
+                    sceneItems[selectedSceneIndex]?.locked,
                   )}
                   activeTitle="Secili urun kilitli"
                   inactiveTitle="Secili urunu kilitle"
-                  disabled={selectedSceneIndex === null || selectedItemCount === 0}
+                  disabled={
+                    selectedSceneIndex === null || selectedItemCount === 0
+                  }
                   activeIcon={<LockOutlinedIcon sx={{ fontSize: 17 }} />}
                   inactiveIcon={<LockOpenOutlinedIcon sx={{ fontSize: 17 }} />}
                   iconColor="#F97316"
@@ -2666,102 +2869,120 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                     }
                   }}
                 />
-            </Stack>
-            {showLegacyScenePrecisionControls() && (
-              <>
-            <ToolbarSceneToggleControl
-              label="Ölçü"
-              active={premiumTools.measurements}
-              activeTitle="Ölçüler görünür"
-              inactiveTitle="Ölçüler gizli"
-              activeIcon={<StraightenOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<StraightenOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={() =>
-                setPremiumTools((current) => ({
-                  ...current,
-                  measurements: !current.measurements,
-                }))
-              }
-            />
-            <ToolbarSceneToggleControl
-              label="Bosluk"
-              active={premiumTools.clearanceMeasurements}
-              activeTitle="Sag-sol bosluklari gorunur"
-              inactiveTitle="Sag-sol bosluklari gizli"
-              activeIcon={<CompareArrowsOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<CompareArrowsOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={() =>
-                setPremiumTools((current) => ({
-                  ...current,
-                  clearanceMeasurements: !current.clearanceMeasurements,
-                }))
-              }
-            />
-            <ToolbarSceneToggleControl
-              label="Hizala"
-              active={false}
-              activeTitle="Ürünleri hizala"
-              inactiveTitle="Ürünleri hizala"
-              activeIcon={
-                <AlignHorizontalCenterOutlinedIcon sx={{ fontSize: 17 }} />
-              }
-              inactiveIcon={
-                <AlignHorizontalCenterOutlinedIcon sx={{ fontSize: 17 }} />
-              }
-              onToggle={autoAlignSceneItems}
-            />
-            <ToolbarSceneToggleControl
-              label="Üst Hiz"
-              active={false}
-              activeTitle="Üst dolapları hizala"
-              inactiveTitle="Üst dolapları hizala"
-              activeIcon={
-                <AlignHorizontalCenterOutlinedIcon sx={{ fontSize: 17 }} />
-              }
-              inactiveIcon={
-                <AlignHorizontalCenterOutlinedIcon sx={{ fontSize: 17 }} />
-              }
-              onToggle={alignUpperCabinets}
-            />
-              </>
-            )}
-            {showLegacyScenePrecisionControls() && (
-              <>
-            <ToolbarSceneToggleControl
-              label="Kilit"
-              active={
-                selectedSceneIndex !== null &&
-                sceneItems[selectedSceneIndex]?.locked
-              }
-              activeTitle="Secili urun kilitli"
-              inactiveTitle="Secili urunu kilitle"
-              disabled={selectedItemCount === 0}
-              activeIcon={<LockOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<LockOpenOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={toggleSelectedItemLock}
-            />
-            <ToolbarSceneToggleControl
-              label="Geri"
-              active={false}
-              activeTitle="Geri al"
-              inactiveTitle="Geri al"
-              disabled={!undoStack.length}
-              activeIcon={<UndoOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<UndoOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={undoSceneChange}
-            />
-            <ToolbarSceneToggleControl
-              label="Ileri"
-              active={false}
-              activeTitle="Ileri al"
-              inactiveTitle="Ileri al"
-              disabled={!redoStack.length}
-              activeIcon={<RedoOutlinedIcon sx={{ fontSize: 17 }} />}
-              inactiveIcon={<RedoOutlinedIcon sx={{ fontSize: 17 }} />}
-              onToggle={redoSceneChange}
-            />
-              </>
-            )}
+              </Stack>
+              {showLegacyScenePrecisionControls() && (
+                <>
+                  <ToolbarSceneToggleControl
+                    label="Ölçü"
+                    active={premiumTools.measurements}
+                    activeTitle="Ölçüler görünür"
+                    inactiveTitle="Ölçüler gizli"
+                    activeIcon={
+                      <StraightenOutlinedIcon sx={{ fontSize: 17 }} />
+                    }
+                    inactiveIcon={
+                      <StraightenOutlinedIcon sx={{ fontSize: 17 }} />
+                    }
+                    onToggle={() =>
+                      setPremiumTools((current) => ({
+                        ...current,
+                        measurements: !current.measurements,
+                      }))
+                    }
+                  />
+                  <ToolbarSceneToggleControl
+                    label="Bosluk"
+                    active={premiumTools.clearanceMeasurements}
+                    activeTitle="Sag-sol bosluklari gorunur"
+                    inactiveTitle="Sag-sol bosluklari gizli"
+                    activeIcon={
+                      <CompareArrowsOutlinedIcon sx={{ fontSize: 17 }} />
+                    }
+                    inactiveIcon={
+                      <CompareArrowsOutlinedIcon sx={{ fontSize: 17 }} />
+                    }
+                    onToggle={() =>
+                      setPremiumTools((current) => ({
+                        ...current,
+                        clearanceMeasurements: !current.clearanceMeasurements,
+                      }))
+                    }
+                  />
+                  <ToolbarSceneToggleControl
+                    label="Hizala"
+                    active={false}
+                    activeTitle="Ürünleri hizala"
+                    inactiveTitle="Ürünleri hizala"
+                    activeIcon={
+                      <AlignHorizontalCenterOutlinedIcon
+                        sx={{ fontSize: 17 }}
+                      />
+                    }
+                    inactiveIcon={
+                      <AlignHorizontalCenterOutlinedIcon
+                        sx={{ fontSize: 17 }}
+                      />
+                    }
+                    onToggle={autoAlignSceneItems}
+                  />
+                  <ToolbarSceneToggleControl
+                    label="Üst Hiz"
+                    active={false}
+                    activeTitle="Üst dolapları hizala"
+                    inactiveTitle="Üst dolapları hizala"
+                    activeIcon={
+                      <AlignHorizontalCenterOutlinedIcon
+                        sx={{ fontSize: 17 }}
+                      />
+                    }
+                    inactiveIcon={
+                      <AlignHorizontalCenterOutlinedIcon
+                        sx={{ fontSize: 17 }}
+                      />
+                    }
+                    onToggle={alignUpperCabinets}
+                  />
+                </>
+              )}
+              {showLegacyScenePrecisionControls() && (
+                <>
+                  <ToolbarSceneToggleControl
+                    label="Kilit"
+                    active={
+                      selectedSceneIndex !== null &&
+                      sceneItems[selectedSceneIndex]?.locked
+                    }
+                    activeTitle="Secili urun kilitli"
+                    inactiveTitle="Secili urunu kilitle"
+                    disabled={selectedItemCount === 0}
+                    activeIcon={<LockOutlinedIcon sx={{ fontSize: 17 }} />}
+                    inactiveIcon={
+                      <LockOpenOutlinedIcon sx={{ fontSize: 17 }} />
+                    }
+                    onToggle={toggleSelectedItemLock}
+                  />
+                  <ToolbarSceneToggleControl
+                    label="Geri"
+                    active={false}
+                    activeTitle="Geri al"
+                    inactiveTitle="Geri al"
+                    disabled={!undoStack.length}
+                    activeIcon={<UndoOutlinedIcon sx={{ fontSize: 17 }} />}
+                    inactiveIcon={<UndoOutlinedIcon sx={{ fontSize: 17 }} />}
+                    onToggle={undoSceneChange}
+                  />
+                  <ToolbarSceneToggleControl
+                    label="Ileri"
+                    active={false}
+                    activeTitle="Ileri al"
+                    inactiveTitle="Ileri al"
+                    disabled={!redoStack.length}
+                    activeIcon={<RedoOutlinedIcon sx={{ fontSize: 17 }} />}
+                    inactiveIcon={<RedoOutlinedIcon sx={{ fontSize: 17 }} />}
+                    onToggle={redoSceneChange}
+                  />
+                </>
+              )}
             </Stack>
             <Stack
               direction="row"
@@ -2770,84 +2991,84 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               spacing={0.55}
               sx={{ flexWrap: "wrap", minWidth: 0 }}
             >
-            <ToolbarNumberControl
-              label="Genislik"
-              value={roomDimensions.width}
-              onChange={(value) => updateRoomDimension("width", value)}
-            />
-            <ToolbarNumberControl
-              label="Yukseklik"
-              value={roomDimensions.height}
-              onChange={(value) => updateRoomDimension("height", value)}
-            />
-            <ToolbarFloorPatternControl
-              value={roomSurfaces.floorPattern}
-              onChange={(floorPattern) =>
-                setRoomSurfaces((current) => ({
-                  ...current,
-                  floorPattern,
-                }))
-              }
-            />
-            {[
-              ["backWall", "Arka"],
-              ["sideWall", "Yan"],
-              ["ceiling", "Tavan"],
-            ].map(([field, label]) => (
-              <ToolbarColorControl
-                key={field}
-                label={label}
-                value={roomSurfaces[field]}
-                onChange={(value) =>
+              <ToolbarNumberControl
+                label="Genislik"
+                value={roomDimensions.width}
+                onChange={(value) => updateRoomDimension("width", value)}
+              />
+              <ToolbarNumberControl
+                label="Yukseklik"
+                value={roomDimensions.height}
+                onChange={(value) => updateRoomDimension("height", value)}
+              />
+              <ToolbarFloorPatternControl
+                value={roomSurfaces.floorPattern}
+                onChange={(floorPattern) =>
                   setRoomSurfaces((current) => ({
                     ...current,
-                    [field]: value,
+                    floorPattern,
                   }))
                 }
               />
-            ))}
-            <Paper
-              elevation={0}
-              sx={{
-                display: "none",
-                px: 1.2,
-                py: 0.8,
-                border: "1px solid #D7E3F1",
-                borderRadius: 1.5,
-                bgcolor: "rgba(255,255,255,0.92)",
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Typography
-                  sx={{ fontWeight: 900, whiteSpace: "nowrap", p: 2 }}
-                >
-                  Mutfak Ölçüleri
-                </Typography>
-                <TextField
-                  label="Genislik"
-                  type="number"
-                  size="small"
-                  value={roomDimensions.width}
-                  onChange={(event) =>
-                    updateRoomDimension("width", event.target.value)
+              {[
+                ["backWall", "Arka"],
+                ["sideWall", "Yan"],
+                ["ceiling", "Tavan"],
+              ].map(([field, label]) => (
+                <ToolbarColorControl
+                  key={field}
+                  label={label}
+                  value={roomSurfaces[field]}
+                  onChange={(value) =>
+                    setRoomSurfaces((current) => ({
+                      ...current,
+                      [field]: value,
+                    }))
                   }
-                  sx={{ width: 106 }}
                 />
-                <TextField
-                  label="Yukseklik"
-                  type="number"
-                  size="small"
-                  value={roomDimensions.height}
-                  onChange={(event) =>
-                    updateRoomDimension("height", event.target.value)
-                  }
-                  sx={{ width: 106 }}
-                />
-                <Typography variant="caption" color="text.secondary">
-                  cm
-                </Typography>
-              </Stack>
-            </Paper>
+              ))}
+              <Paper
+                elevation={0}
+                sx={{
+                  display: "none",
+                  px: 1.2,
+                  py: 0.8,
+                  border: "1px solid #D7E3F1",
+                  borderRadius: 1.5,
+                  bgcolor: "rgba(255,255,255,0.92)",
+                }}
+              >
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Typography
+                    sx={{ fontWeight: 900, whiteSpace: "nowrap", p: 2 }}
+                  >
+                    Mutfak Ölçüleri
+                  </Typography>
+                  <TextField
+                    label="Genislik"
+                    type="number"
+                    size="small"
+                    value={roomDimensions.width}
+                    onChange={(event) =>
+                      updateRoomDimension("width", event.target.value)
+                    }
+                    sx={{ width: 106 }}
+                  />
+                  <TextField
+                    label="Yukseklik"
+                    type="number"
+                    size="small"
+                    value={roomDimensions.height}
+                    onChange={(event) =>
+                      updateRoomDimension("height", event.target.value)
+                    }
+                    sx={{ width: 106 }}
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    cm
+                  </Typography>
+                </Stack>
+              </Paper>
             </Stack>
           </Stack>
         </Stack>
@@ -3027,83 +3248,117 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         quote={quote}
         selectedLineQuote={selectedLineQuote}
       />
-      <Dialog
+      <PremiumDialog
         open={projectSaveOpen}
-        onClose={() => setProjectSaveOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle sx={{ fontWeight: 900 }}>
-          Musteriye Ozel Proje Kaydet
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Proje adi"
-              size="small"
-              value={projectForm.name}
-              onChange={(event) =>
-                setProjectForm((current) => ({
-                  ...current,
-                  name: event.target.value,
-                }))
-              }
-              placeholder="Orn: Yilmaz ailesi mutfak tasarimi"
-            />
-            <TextField
-              label="Musteri adi"
-              size="small"
-              value={projectForm.customer_name}
-              onChange={(event) =>
-                setProjectForm((current) => ({
-                  ...current,
-                  customer_name: event.target.value,
-                }))
-              }
-              placeholder="Musteri / firma adi"
-            />
-            <TextField
-              label="Not"
-              size="small"
-              multiline
-              minRows={3}
-              value={projectForm.notes}
-              onChange={(event) =>
-                setProjectForm((current) => ({
-                  ...current,
-                  notes: event.target.value,
-                }))
-              }
-            />
-            <Paper
-              elevation={0}
-              sx={{ border: "1px solid #E2E8F0", borderRadius: 1.5, p: 1.5 }}
-            >
-              <Typography sx={{ fontWeight: 900 }}>
-                {sceneItems.length} ürün kaydedilecek
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Toplam teklif: {money(quote.total)}
-              </Typography>
-            </Paper>
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setProjectSaveOpen(false)}
-            sx={{ textTransform: "none" }}
-          >
-            Vazgeç
-          </Button>
+        onClose={() => {
+          if (!projectSaving) setProjectSaveOpen(false);
+        }}
+        closeDisabled={projectSaving}
+        title="Musteriye Ozel Proje Kaydet"
+        subtitle="Projeyi mevcut bir musteriye baglayin ya da yeni musteri olarak kaydedin."
+        actions={
           <Button
             variant="contained"
+            color="info"
             onClick={saveProject}
-            sx={{ textTransform: "none", fontWeight: 900 }}
+            disabled={projectSaving}
+            sx={{
+              minWidth: 132,
+              height: 42,
+              mt: 1,
+              borderRadius: 1,
+              textTransform: "none",
+              fontWeight: 900,
+            }}
           >
-            Kaydet
+            {projectSaving ? "Kaydediliyor..." : "Kaydet"}
           </Button>
-        </DialogActions>
-      </Dialog>
+        }
+      >
+        <Stack spacing={2.1} sx={{ mt: "10px" }}>
+          <TextField
+            label="Proje adi"
+            size="small"
+            value={projectForm.name}
+            onChange={(event) =>
+              setProjectForm((current) => ({
+                ...current,
+                name: event.target.value,
+              }))
+            }
+            placeholder="Orn: Yilmaz ailesi mutfak tasarimi"
+          />
+          <Autocomplete
+            freeSolo
+            options={customers}
+            inputValue={projectForm.customer_name}
+            getOptionLabel={(option) =>
+              typeof option === "string" ? option : getCustomerDisplayName(option)
+            }
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            onInputChange={(_, value) =>
+              setProjectForm((current) => ({
+                ...current,
+                customer_id: null,
+                customer_name: value,
+              }))
+            }
+            onChange={(_, value) => {
+              if (typeof value === "string") {
+                setProjectForm((current) => ({
+                  ...current,
+                  customer_id: null,
+                  customer_name: value,
+                }));
+                return;
+              }
+
+              setProjectForm((current) => ({
+                ...current,
+                customer_id: value?.id || null,
+                customer_name: value ? getCustomerDisplayName(value) : "",
+              }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Musteri adi"
+                size="small"
+                placeholder="Musteri ara veya yeni musteri adi yaz"
+              />
+            )}
+          />
+          <TextField
+            label="Not"
+            size="small"
+            multiline
+            minRows={3}
+            value={projectForm.notes}
+            onChange={(event) =>
+              setProjectForm((current) => ({
+                ...current,
+                notes: event.target.value,
+              }))
+            }
+          />
+          <Paper
+            elevation={0}
+            sx={{
+              border: "1px solid #CFE0F5",
+              borderRadius: 1.5,
+              p: 1.5,
+              bgcolor: "#F8FBFF",
+            }}
+          >
+            <Typography sx={{ fontWeight: 900, color: "#173B63" }}>
+              {sceneItems.length} urun kaydedilecek
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#5F7897" }}>
+              Toplam teklif: {money(quote.total)}
+            </Typography>
+          </Paper>
+        </Stack>
+      </PremiumDialog>
     </>
   );
 
@@ -3149,160 +3404,528 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     </Paper>
   );
 
-  const renderProjects = () => (
-    <Stack spacing={1.5}>
-      <Paper
-        elevation={0}
-        sx={{
-          border: "1px solid #E2E8F0",
-          borderRadius: 2,
-          p: 2,
-          bgcolor: "#FFFFFF",
-          boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
-        }}
-      >
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          alignItems={{ xs: "stretch", md: "center" }}
-          justifyContent="flex-start"
-          spacing={1}
-        >
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Kayitli projeler
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Musteri veya proje adina gore ara.
-            </Typography>
-          </Box>
-          <TextField
-            size="small"
-            placeholder="Proje veya musteri ara"
-            value={projectSearch}
-            onChange={(event) => {
-              setProjectSearch(event.target.value);
-              setProjectPage(1);
-            }}
-            sx={{ width: { xs: "100%", md: 360 } }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Stack>
-      </Paper>
+  const renderProjects = () => {
+    const projectColumns = [
+      {
+        field: "created_at",
+        headerName: "Proje Kayit Tarihi",
+        flex: 1,
+        minWidth: 170,
+        valueGetter: ({ row }) => formatProjectDate(row.created_at),
+      },
+      {
+        field: "name",
+        headerName: "Proje Adi",
+        flex: 1.4,
+        minWidth: 220,
+      },
+      {
+        field: "customer_name",
+        headerName: "Musteri Adi",
+        flex: 1.2,
+        minWidth: 190,
+        valueGetter: ({ row }) => row.customer_name || "Musteri yok",
+      },
+      {
+        field: "total",
+        headerName: "Toplam Fiyati",
+        flex: 1,
+        minWidth: 150,
+        valueGetter: ({ row }) => money(getProjectTotal(row)),
+      },
+      {
+        field: "actions",
+        type: "actions",
+        headerName: "Islem",
+        width: 124,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        getActions: ({ row }) => [
+          <GridActionsCellItem
+            key="inspect"
+            icon={<VisibilityOutlinedIcon fontSize="small" />}
+            label="Incele"
+            onClick={() => inspectProject(row)}
+            showInMenu={false}
+          />,
+          <GridActionsCellItem
+            key="delete"
+            icon={<DeleteOutlineIcon fontSize="small" />}
+            label="Sil"
+            onClick={() => removeProject(row)}
+            showInMenu={false}
+          />,
+        ],
+      },
+    ];
 
-      <Paper
-        elevation={0}
-        sx={{
-          border: "1px solid #E2E8F0",
-          borderRadius: 2,
-          p: 1.5,
-          boxShadow: "0 14px 34px rgba(15,23,42,0.05)",
-        }}
-      >
-        <Stack spacing={1}>
-          {pagedProjects.length ? (
-            pagedProjects.map((project) => (
-              <Stack
-                key={project.id}
-                direction={{ xs: "column", md: "row" }}
-                alignItems={{ xs: "stretch", md: "center" }}
-                justifyContent="space-between"
-                spacing={1.5}
-                sx={{
-                  border: "1px solid #E5E7EB",
-                  borderRadius: 1.5,
-                  p: 1.5,
-                  bgcolor: "#FFFFFF",
-                }}
-              >
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 900 }} noWrap>
-                    {project.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {project.customer_name || "Musteri yok"} -{" "}
-                    {project.items?.length || 0} kalem
-                  </Typography>
-                </Box>
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  justifyContent="flex-end"
-                  spacing={1}
-                >
-                  <Chip label={money(project.quote?.total || 0)} />
-                  <Button
-                    variant="outlined"
-                    startIcon={<VisibilityOutlinedIcon />}
-                    onClick={() => inspectProject(project)}
-                    sx={{ textTransform: "none", fontWeight: 900 }}
-                  >
-                    Incele
-                  </Button>
-                </Stack>
-              </Stack>
-            ))
-          ) : (
-            <Typography color="text.secondary" sx={{ p: 2 }}>
-              Aramaya uygun proje bulunamadi.
-            </Typography>
-          )}
-        </Stack>
-        <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1.5 }}>
-          <Pagination
-            page={projectPage}
-            count={projectPageCount}
-            onChange={(_, page) => setProjectPage(page)}
-            color="primary"
-            shape="rounded"
-          />
-        </Stack>
-      </Paper>
-    </Stack>
-  );
-
-  const renderCustomers = () => (
-    <Grid container spacing={2.5}>
-      <Grid item xs={12} md={4}>
+    return (
+      <Stack spacing={1.5}>
         <Paper
           elevation={0}
           sx={{
-            border: "1px solid #E2E8F0",
+            border: "1px solid #CFE0F5",
             borderRadius: 2,
             p: 2,
-            background: "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)",
-            boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
+            bgcolor: "#F8FBFF",
+            background:
+              "linear-gradient(135deg, #FFFFFF 0%, #F4F9FF 58%, #EAF3FF 100%)",
+            boxShadow: "0 14px 34px rgba(25,118,210,0.08)",
           }}
         >
-          <Stack spacing={2}>
-            <Stack direction="row" spacing={1.2} alignItems="center">
-              <Box
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            alignItems={{ xs: "stretch", md: "center" }}
+            justifyContent="space-between"
+            spacing={1.5}
+          >
+            <Box>
+              <Typography
+                variant="h6"
                 sx={{
-                  width: 38,
-                  height: 38,
+                  width: "fit-content",
+                  px: 1.2,
+                  py: 0.35,
                   borderRadius: 1,
-                  display: "grid",
-                  placeItems: "center",
-                  bgcolor: "#0F766E",
+                  fontWeight: 900,
                   color: "#FFFFFF",
+                  bgcolor: "#1976D2",
+                  background:
+                    "linear-gradient(135deg, #1976D2 0%, #1D8BFF 58%, #0B5FC6 100%)",
+                  boxShadow: "0 8px 18px rgba(25,118,210,0.2)",
                 }}
               >
-                <PersonAddAltOutlinedIcon />
-              </Box>
+                Kayitli Projeler
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#4E6E97", mt: 0.6 }}>
+                Proje ve musteri adina gore ara.
+              </Typography>
+            </Box>
+            <TextField
+              size="small"
+              placeholder="Proje veya musteri ara"
+              value={projectSearch}
+              onChange={(event) => setProjectSearch(event.target.value)}
+              sx={{ width: { xs: "100%", md: 360 } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Stack>
+        </Paper>
+
+        <Paper
+          elevation={0}
+          sx={{
+            border: "1px solid #CFE0F5",
+            borderRadius: 2,
+            p: 1.5,
+            bgcolor: "#FFFFFF",
+            boxShadow: "0 16px 38px rgba(25,118,210,0.08)",
+          }}
+        >
+          <Box sx={{ width: "100%", height: 620 }}>
+            <DataGrid
+              rows={filteredProjects}
+              columns={projectColumns}
+              pageSize={10}
+              rowsPerPageOptions={[10]}
+              disableSelectionOnClick
+              disableColumnMenu
+              pagination
+              getRowId={(row) => row.id}
+              getRowClassName={(params) =>
+                params.indexRelativeToCurrentPage % 2 === 0
+                  ? "row-even"
+                  : "row-odd"
+              }
+              localeText={{
+                noRowsLabel: "Henuz proje eklenmedi.",
+                footerRowSelected: (count) => `${count} satir secildi`,
+              }}
+              sx={{
+                border: 0,
+                color: "#173B63",
+                bgcolor: "#FFFFFF",
+                "& .MuiDataGrid-main": {
+                  borderRadius: 1.5,
+                  overflow: "hidden",
+                  bgcolor: "#FFFFFF",
+                },
+                "& .MuiDataGrid-columnHeaders": {
+                  bgcolor: "#EAF3FF",
+                  background:
+                    "linear-gradient(180deg, #F4F9FF 0%, #E6F0FF 100%)",
+                  borderRadius: 1.5,
+                  border: "1px solid #CFE0F5",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.96), 0 10px 22px rgba(25,118,210,0.07)",
+                },
+                "& .MuiDataGrid-columnHeaderTitle": {
+                  fontWeight: 900,
+                  color: "#244A75",
+                  letterSpacing: 0,
+                },
+                "& .MuiDataGrid-columnSeparator": {
+                  color: "#BFD4EE",
+                },
+                "& .MuiDataGrid-row": {
+                  position: "relative",
+                  borderBottom: "1px solid #DCEBFA",
+                  transition:
+                    "background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease",
+                  "&::after": {
+                    content: '""',
+                    position: "absolute",
+                    left: 18,
+                    right: 18,
+                    bottom: -1,
+                    height: 1,
+                    background:
+                      "linear-gradient(90deg, transparent 0%, rgba(25,118,210,0.2) 12%, rgba(96,165,250,0.34) 50%, rgba(25,118,210,0.2) 88%, transparent 100%)",
+                    pointerEvents: "none",
+                  },
+                  "&:hover": {
+                    background:
+                      "linear-gradient(90deg, #FFFFFF 0%, #F5FAFF 48%, #FFFFFF 100%)",
+                    boxShadow: "inset 3px 0 0 #1976D2",
+                  },
+                  "&.Mui-selected, &.Mui-selected:hover": {
+                    bgcolor: "transparent",
+                  },
+                },
+                "& .MuiDataGrid-row.row-even": {
+                  background:
+                    "linear-gradient(90deg, #FFFFFF 0%, #FCFEFF 48%, #FFFFFF 100%)",
+                },
+                "& .MuiDataGrid-row.row-odd": {
+                  background:
+                    "linear-gradient(90deg, #FFFFFF 0%, #F7FBFF 48%, #FFFFFF 100%)",
+                },
+                "& .MuiDataGrid-cell": {
+                  borderBottom: "0 !important",
+                  fontWeight: 650,
+                  color: "#173B63",
+                },
+                "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within, & .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
+                  outline: "none",
+                },
+                "& .MuiDataGrid-cell--withRenderer:focus, & .MuiDataGrid-cell--withRenderer:focus-within": {
+                  outline: "none",
+                  boxShadow: "none",
+                },
+                "& .MuiDataGrid-actionsCell": {
+                  gap: 0.5,
+                },
+                "& .MuiDataGrid-actionsCell .MuiIconButton-root": {
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1,
+                  color: "#4E6E97",
+                  border: "1px solid transparent",
+                  transition:
+                    "color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease",
+                  "&:hover": {
+                    color: "#0F5ED7",
+                    bgcolor: "#EAF3FF",
+                    borderColor: "#BBD6F6",
+                    boxShadow: "0 8px 18px rgba(25,118,210,0.16)",
+                  },
+                  "&:focus, &:focus-visible": {
+                    outline: "none",
+                    boxShadow: "none",
+                  },
+                },
+                "& .MuiDataGrid-actionsCell .MuiIconButton-root:last-of-type:hover": {
+                  color: "#DC2626",
+                  bgcolor: "#FEF2F2",
+                  borderColor: "#FECACA",
+                  boxShadow: "0 8px 18px rgba(220,38,38,0.14)",
+                },
+                "& .MuiDataGrid-footerContainer": {
+                  borderTop: "1px solid #CFE0F5",
+                  bgcolor: "#FFFFFF",
+                },
+              }}
+            />
+          </Box>
+        </Paper>
+      </Stack>
+    );
+  };
+
+  const renderCustomers = () => {
+    const customerColumns = [
+      {
+        field: "first_name",
+        headerName: "Ad",
+        flex: 1,
+        minWidth: 150,
+      },
+      {
+        field: "last_name",
+        headerName: "Soyad",
+        flex: 1,
+        minWidth: 150,
+      },
+      {
+        field: "phone",
+        headerName: "Telefon",
+        flex: 1,
+        minWidth: 150,
+        valueGetter: ({ row }) => row.phone || "-",
+      },
+      {
+        field: "address",
+        headerName: "Adres",
+        flex: 1.6,
+        minWidth: 220,
+        valueGetter: ({ row }) => row.address || "-",
+      },
+      {
+        field: "actions",
+        type: "actions",
+        headerName: "Islem",
+        width: 96,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        getActions: ({ row }) => [
+          <GridActionsCellItem
+            key="edit"
+            icon={<EditOutlinedIcon fontSize="small" />}
+            label="Duzenle"
+            onClick={() => openEditCustomerDialog(row)}
+            showInMenu={false}
+          />,
+        ],
+      },
+    ];
+
+    return (
+      <>
+        <Stack spacing={1.5}>
+          <Paper
+            elevation={0}
+            sx={{
+              border: "1px solid #CFE0F5",
+              borderRadius: 2,
+              p: 2,
+              bgcolor: "#F8FBFF",
+              background:
+                "linear-gradient(135deg, #FFFFFF 0%, #F4F9FF 58%, #EAF3FF 100%)",
+              boxShadow: "0 14px 34px rgba(25,118,210,0.08)",
+            }}
+          >
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              justifyContent="space-between"
+              alignItems={{ xs: "stretch", sm: "center" }}
+              spacing={1.5}
+            >
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                  Kullanici Ekle
+                <Typography
+                  variant="h6"
+                  sx={{
+                    width: "fit-content",
+                    px: 1.2,
+                    py: 0.35,
+                    borderRadius: 1,
+                    fontWeight: 900,
+                    color: "#FFFFFF",
+                    bgcolor: "#1976D2",
+                    background:
+                      "linear-gradient(135deg, #1976D2 0%, #1D8BFF 58%, #0B5FC6 100%)",
+                    boxShadow: "0 8px 18px rgba(25,118,210,0.2)",
+                  }}
+                >
+                  Müşteri Listesi
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Musteri bilgilerini kaydet.
+                <Typography variant="body2" sx={{ color: "#4E6E97" }}>
+                  Müşteri kayıtlarını görüntüle, ekle ve düzenle.
                 </Typography>
               </Box>
+              <Button
+                variant="contained"
+                startIcon={<PersonAddAltOutlinedIcon />}
+                onClick={openCreateCustomerDialog}
+                sx={{ textTransform: "none", fontWeight: 900 }}
+              >
+                Kullanıcı Ekle
+              </Button>
             </Stack>
+          </Paper>
+
+          <Paper
+            elevation={0}
+            sx={{
+              border: "1px solid #CFE0F5",
+              borderRadius: 2,
+              p: 1.5,
+              bgcolor: "#FFFFFF",
+              background: "#FFFFFF",
+              boxShadow: "0 16px 38px rgba(25,118,210,0.08)",
+            }}
+          >
+            <Box sx={{ width: "100%", height: 620 }}>
+              <DataGrid
+                rows={customers}
+                columns={customerColumns}
+                pageSize={10}
+                rowsPerPageOptions={[10]}
+                disableSelectionOnClick
+                disableColumnMenu
+                pagination
+                getRowId={(row) => row.id}
+                getRowClassName={(params) =>
+                  params.indexRelativeToCurrentPage % 2 === 0
+                    ? "row-even"
+                    : "row-odd"
+                }
+                localeText={{
+                  noRowsLabel: "Henuz musteri eklenmedi.",
+                  footerRowSelected: (count) => `${count} satir secildi`,
+                }}
+                sx={{
+                  border: 0,
+                  color: "#173B63",
+                  bgcolor: "#FFFFFF",
+                  "& .MuiDataGrid-main": {
+                    borderRadius: 1.5,
+                    overflow: "hidden",
+                    bgcolor: "#FFFFFF",
+                  },
+                  "& .MuiDataGrid-columnHeaders": {
+                    bgcolor: "#EAF3FF",
+                    background:
+                      "linear-gradient(180deg, #F4F9FF 0%, #E6F0FF 100%)",
+                    borderRadius: 1.5,
+                    border: "1px solid #CFE0F5",
+                    boxShadow:
+                      "inset 0 1px 0 rgba(255,255,255,0.96), 0 10px 22px rgba(25,118,210,0.07)",
+                  },
+                  "& .MuiDataGrid-columnHeaderTitle": {
+                    fontWeight: 900,
+                    color: "#244A75",
+                    letterSpacing: 0,
+                  },
+                  "& .MuiDataGrid-columnSeparator": {
+                    color: "#BFD4EE",
+                  },
+                  "& .MuiDataGrid-row": {
+                    position: "relative",
+                    borderBottom: "1px solid #DCEBFA",
+                    transition:
+                      "background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease",
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      left: 18,
+                      right: 18,
+                      bottom: -1,
+                      height: 1,
+                      background:
+                        "linear-gradient(90deg, transparent 0%, rgba(25,118,210,0.2) 12%, rgba(96,165,250,0.34) 50%, rgba(25,118,210,0.2) 88%, transparent 100%)",
+                      pointerEvents: "none",
+                    },
+                    "&:hover": {
+                      background:
+                        "linear-gradient(90deg, #FFFFFF 0%, #F5FAFF 48%, #FFFFFF 100%)",
+                      boxShadow: "inset 3px 0 0 #1976D2",
+                    },
+                    "&.Mui-selected, &.Mui-selected:hover": {
+                      bgcolor: "transparent",
+                    },
+                  },
+                  "& .MuiDataGrid-row.row-even": {
+                    background:
+                      "linear-gradient(90deg, #FFFFFF 0%, #FCFEFF 48%, #FFFFFF 100%)",
+                  },
+                  "& .MuiDataGrid-row.row-odd": {
+                    background:
+                      "linear-gradient(90deg, #FFFFFF 0%, #F7FBFF 48%, #FFFFFF 100%)",
+                  },
+                  "& .MuiDataGrid-cell": {
+                    borderBottom: "0 !important",
+                    fontWeight: 650,
+                    color: "#173B63",
+                  },
+                  "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within, & .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within":
+                    {
+                      outline: "none",
+                    },
+                  "& .MuiDataGrid-cell--withRenderer:focus, & .MuiDataGrid-cell--withRenderer:focus-within":
+                    {
+                      outline: "none",
+                      boxShadow: "none",
+                    },
+                  "& .MuiDataGrid-actionsCell": {
+                    gap: 0.5,
+                  },
+                  "& .MuiDataGrid-actionsCell .MuiIconButton-root": {
+                    width: 34,
+                    height: 34,
+                    borderRadius: 1,
+                    color: "#4E6E97",
+                    border: "1px solid transparent",
+                    transition:
+                      "color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease",
+                    "&:hover": {
+                      color: "#0F5ED7",
+                      bgcolor: "#EAF3FF",
+                      borderColor: "#BBD6F6",
+                      boxShadow: "0 8px 18px rgba(25,118,210,0.16)",
+                    },
+                    "&:focus, &:focus-visible": {
+                      outline: "none",
+                      boxShadow: "none",
+                    },
+                  },
+                  "& .MuiDataGrid-footerContainer": {
+                    borderTop: "1px solid #CFE0F5",
+                    bgcolor: "#FFFFFF",
+                  },
+                }}
+              />
+            </Box>
+          </Paper>
+        </Stack>
+
+        <PremiumDialog
+          open={customerDialogOpen}
+          onClose={closeCustomerDialog}
+          closeDisabled={customerSaving}
+          title={editingCustomer ? "Musteri Duzenle" : "Yeni Musteri Ekle"}
+          subtitle="Musteri bilgilerini kaydedin ve listeyi guncel tutun."
+          actions={
+            <Button
+              variant="contained"
+              color="info"
+              onClick={saveCustomer}
+              disabled={
+                customerSaving ||
+                (!customerForm.first_name.trim() &&
+                  !customerForm.last_name.trim())
+              }
+              sx={{
+                minWidth: 132,
+                height: 42,
+                mt: 1,
+                borderRadius: 1,
+                textTransform: "none",
+                fontWeight: 900,
+              }}
+            >
+              {customerSaving ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
+          }
+        >
+          <Stack spacing={2.1} sx={{ mt: "10px" }}>
             {[
               ["first_name", "Ad"],
               ["last_name", "Soyad"],
@@ -3322,74 +3945,45 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                     [field]: event.target.value,
                   }))
                 }
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.15,
+                    bgcolor: "#FFFFFF",
+                    boxShadow: "0 8px 18px rgba(15,48,86,0.045)",
+                    "& fieldset": {
+                      borderColor: "#CFE0F5",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#9EC5F2",
+                    },
+                    "&.Mui-focused": {
+                      bgcolor: "#FFFFFF",
+                      boxShadow:
+                        "0 0 0 4px rgba(25,118,210,0.1), 0 10px 22px rgba(25,118,210,0.08)",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#1976D2",
+                    },
+                  },
+                  "& .MuiInputBase-input": {
+                    fontWeight: 700,
+                    color: "#173B63",
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "#5F7897",
+                    fontWeight: 700,
+                  },
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: "#1976D2",
+                  },
+                }}
               />
             ))}
-            <Button
-              variant="contained"
-              startIcon={<PersonAddAltOutlinedIcon />}
-              onClick={addCustomer}
-              disabled={
-                !customerForm.first_name.trim() &&
-                !customerForm.last_name.trim()
-              }
-              sx={{ textTransform: "none", fontWeight: 900 }}
-            >
-              Musteriyi Kaydet
-            </Button>
           </Stack>
-        </Paper>
-      </Grid>
-      <Grid item xs={12} md={8}>
-        <Paper
-          elevation={0}
-          sx={{
-            border: "1px solid #E2E8F0",
-            borderRadius: 2,
-            p: 2,
-            boxShadow: "0 14px 34px rgba(15,23,42,0.05)",
-          }}
-        >
-          <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
-            Musteri Listesi
-          </Typography>
-          <Stack spacing={1}>
-            {customers.length ? (
-              customers.map((customer) => (
-                <Stack
-                  key={customer.id}
-                  direction={{ xs: "column", md: "row" }}
-                  justifyContent="space-between"
-                  spacing={1}
-                  sx={{
-                    border: "1px solid #E5E7EB",
-                    borderRadius: 1.5,
-                    p: 1.5,
-                    bgcolor: "#FFFFFF",
-                  }}
-                >
-                  <Box>
-                    <Typography sx={{ fontWeight: 900 }}>
-                      {customer.first_name} {customer.last_name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {customer.phone || "Telefon yok"}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    {customer.address || "Adres yok"}
-                  </Typography>
-                </Stack>
-              ))
-            ) : (
-              <Typography color="text.secondary">
-                Henuz musteri eklenmedi.
-              </Typography>
-            )}
-          </Stack>
-        </Paper>
-      </Grid>
-    </Grid>
-  );
+        </PremiumDialog>
+      </>
+    );
+  };
 
   return (
     <Page
@@ -3438,7 +4032,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                     borderRadius: 1,
                     display: "grid",
                     placeItems: "center",
-                    bgcolor: "#0F766E",
+                    bgcolor: "#1976D2",
+                    background:
+                      "linear-gradient(135deg, #1976D2 0%, #1D8BFF 58%, #0B5FC6 100%)",
+                    boxShadow: "0 10px 22px rgba(25,118,210,0.22)",
                     color: "#FFFFFF",
                   }}
                 >

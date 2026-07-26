@@ -7,6 +7,7 @@ import GuestGuard from "guards/GuestGuard"; // login olmussa atla
 import BlankLayout from "layouts/Blank";
 import DashboardLayout from "layouts/Dashboard";
 import KitchenStudioPage from "pages/Kitchen/KitchenStudioPage";
+import { DASHBOARD } from "routes/paths";
 
 const Loadable = (Component) => (props) => (
   <Suspense fallback={<LoadingScreen />}>
@@ -70,7 +71,7 @@ const Router = () =>
       ),
 
       children: [
-        { element: <Navigate to={"/overview"} replace />, index: true },
+        { element: <Navigate to={DASHBOARD.kitchenDesigner} replace />, index: true },
 
         { path: "overview", element: <Overview /> },
         { path: "kitchen-designer", element: <KitchenStudioPage initialTab="designer" /> },

@@ -18,6 +18,7 @@
     "@mui/material": "^5.10.7",
     "@mui/system": "^5.10.7",
     "@mui/utils": "^5.10.6",
+    "@mui/x-data-grid": "^5.17.26",
     "@mui/x-date-pickers": "^5.0.3",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.17.10",

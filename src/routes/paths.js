@@ -43,6 +43,9 @@ export const SERVER = {
     catalogItems: path("kitchen", "catalog-items"),
     materials: path("kitchen", "materials"),
     projects: path("kitchen", "projects"),
+    project: (id) => path("kitchen", "projects", id),
+    customers: path("kitchen", "customers"),
+    customer: (id) => path("kitchen", "customers", id),
     quote: path("kitchen", "pricing", "quote"),
   },
 };
