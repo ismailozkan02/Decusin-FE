@@ -32,6 +32,7 @@ const KitchenCustomizer = ({
   selectedOptions,
   selectedElevation,
   materials,
+  materialsLoading = false,
   selectedDoorMaterial,
   selectedGlassMaterial,
   selectedCounterMaterial,
@@ -50,6 +51,11 @@ const KitchenCustomizer = ({
   const minHeight = Number(selectedProduct?.constraints?.min_height || 0);
   const maxHeight = Number(
     selectedProduct?.constraints?.max_height || selectedDimensions?.height || 0,
+  );
+  const doorMaterials = materials.filter((item) => item.type === "door");
+  const glassMaterials = materials.filter((item) => item.type === "glass");
+  const countertopMaterials = materials.filter(
+    (item) => item.type === "countertop",
   );
 
   const commitDimension = (field, value) => {
@@ -255,13 +261,21 @@ const KitchenCustomizer = ({
                   }
                   size="small"
                 >
-                  {materials
-                    .filter((item) => item.type === "door")
-                    .map((material) => (
-                      <MenuItem key={material.id} value={material.id}>
-                        {material.name}
-                      </MenuItem>
-                    ))}
+                  {materialsLoading && (
+                    <MenuItem disabled value="">
+                      Malzemeler yükleniyor
+                    </MenuItem>
+                  )}
+                  {!materialsLoading && !doorMaterials.length && (
+                    <MenuItem disabled value="">
+                      Kapak malzemesi bulunamadı
+                    </MenuItem>
+                  )}
+                  {doorMaterials.map((material) => (
+                    <MenuItem key={material.id} value={material.id}>
+                      {material.name}
+                    </MenuItem>
+                  ))}
                 </TextField>
               )}
 
@@ -281,13 +295,21 @@ const KitchenCustomizer = ({
                   }
                   size="small"
                 >
-                  {materials
-                    .filter((item) => item.type === "glass")
-                    .map((material) => (
-                      <MenuItem key={material.id} value={material.id}>
-                        {material.name}
-                      </MenuItem>
-                    ))}
+                  {materialsLoading && (
+                    <MenuItem disabled value="">
+                      Malzemeler yükleniyor
+                    </MenuItem>
+                  )}
+                  {!materialsLoading && !glassMaterials.length && (
+                    <MenuItem disabled value="">
+                      Cam malzemesi bulunamadı
+                    </MenuItem>
+                  )}
+                  {glassMaterials.map((material) => (
+                    <MenuItem key={material.id} value={material.id}>
+                      {material.name}
+                    </MenuItem>
+                  ))}
                 </TextField>
               )}
 
@@ -308,13 +330,21 @@ const KitchenCustomizer = ({
                   }
                   size="small"
                 >
-                  {materials
-                    .filter((item) => item.type === "countertop")
-                    .map((material) => (
-                      <MenuItem key={material.id} value={material.id}>
-                        {material.name}
-                      </MenuItem>
-                    ))}
+                  {materialsLoading && (
+                    <MenuItem disabled value="">
+                      Malzemeler yükleniyor
+                    </MenuItem>
+                  )}
+                  {!materialsLoading && !countertopMaterials.length && (
+                    <MenuItem disabled value="">
+                      Tezgah malzemesi bulunamadı
+                    </MenuItem>
+                  )}
+                  {countertopMaterials.map((material) => (
+                    <MenuItem key={material.id} value={material.id}>
+                      {material.name}
+                    </MenuItem>
+                  ))}
                 </TextField>
               )}
 

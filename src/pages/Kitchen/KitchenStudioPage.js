@@ -420,6 +420,13 @@ const isWallMountedProduct = (
   product,
   dimensions = product?.dimensions || {},
 ) => {
+  if (
+    product?.category === "countertop" ||
+    isCountertopMountedProduct(product)
+  ) {
+    return false;
+  }
+
   const text =
     `${product?.name || ""} ${product?.sku || ""} ${product?.category || ""}`
       .toLocaleLowerCase("tr-TR")
@@ -922,6 +929,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const [catalogGroups, setCatalogGroups] = useState([]);
   const [materialGroups, setMaterialGroups] = useState([]);
   const [materials, setMaterials] = useState([]);
+  const [materialsLoading, setMaterialsLoading] = useState(false);
   const [catalogStats, setCatalogStats] = useState(null);
   const [catalogLoading, setCatalogLoading] = useState(() =>
     ["designer", "catalog"].includes(initialTab),
@@ -1330,6 +1338,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     }
 
     loadedKitchenDataRef.current.materials = true;
+    setMaterialsLoading(true);
     return Promise.allSettled([
       getData(SERVER.kitchen.materials),
       getData(SERVER.kitchen.catalogCategories, { scope: "material" }),
@@ -1341,8 +1350,14 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       if (materialCategoryResult.status === "fulfilled") {
         setMaterialGroups(extractApiList(materialCategoryResult.value));
       }
-    });
+    }).finally(() => setMaterialsLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!customizerOpen || !selectedSceneItem) return undefined;
+    ensureMaterialCatalog();
+    return undefined;
+  }, [customizerOpen, ensureMaterialCatalog, selectedSceneItem]);
 
   useEffect(() => {
     if (initialTab !== "projects" || loadedKitchenDataRef.current.projects) {
@@ -1520,7 +1535,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   };
 
   const addSceneItemAt = (product, x, y) => {
+    let nextIndex = 0;
     setSceneItems((current) => {
+      nextIndex = current.length;
       const dimensions = getDefaultProductDimensions(product);
       const metrics = getSceneMetrics();
       const wallTopCm = isWallMountedProduct(product, dimensions) ? 28 : null;
@@ -1556,7 +1573,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         },
       ];
     });
-    setSelectedSceneIndex(null);
+    setSelectedSceneIndex(nextIndex);
+    setSelectedSceneIndices([nextIndex]);
     setPaletteOpen(false);
   };
 
@@ -2762,7 +2780,21 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       category,
       subcategory: subcategory === "standard" ? undefined : subcategory,
       subcategory_id: subcategoryId,
-    }).then(extractApiList);
+    }).then((result) => {
+      const items = extractApiList(result);
+      setCatalogItems((current) => {
+        const itemMap = new Map(current.map((item) => [item.id, item]));
+        items.forEach((item) => {
+          if (!item?.id) return;
+          itemMap.set(item.id, {
+            ...(itemMap.get(item.id) || {}),
+            ...item,
+          });
+        });
+        return Array.from(itemMap.values());
+      });
+      return items;
+    });
 
   const loadMaterialsBySubcategory = (type, subcategory, subcategoryId) =>
     getData(SERVER.kitchen.materials, {
@@ -3650,6 +3682,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         selectedOptions={selectedOptions}
         selectedElevation={selectedElevation}
         materials={materials}
+        materialsLoading={materialsLoading}
         selectedDoorMaterial={selectedDoorMaterial}
         selectedGlassMaterial={selectedGlassMaterial}
         selectedCounterMaterial={selectedCounterMaterial}

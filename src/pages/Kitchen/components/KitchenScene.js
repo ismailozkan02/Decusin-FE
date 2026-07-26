@@ -1264,6 +1264,13 @@ const isWallMountedProduct = (
   product,
   dimensions = product?.dimensions || {},
 ) => {
+  if (
+    product?.category === "countertop" ||
+    isCountertopMountedProduct(product)
+  ) {
+    return false;
+  }
+
   const text =
     `${product?.name || ""} ${product?.sku || ""} ${product?.category || ""}`
       .toLocaleLowerCase("tr-TR")
