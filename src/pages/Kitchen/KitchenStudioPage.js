@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Autocomplete,
   Box,
@@ -55,6 +61,8 @@ import PremiumDialog from "./components/PremiumDialog";
 import KitchenScene from "./components/KitchenScene";
 import KitchenSceneItemsDrawer from "./components/KitchenSceneItemsDrawer";
 import {
+  fallbackCatalog,
+  fallbackMaterials,
   TABS,
 } from "./kitchenData";
 import { money } from "./kitchenUtils";
@@ -925,15 +933,17 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     return project ? normalizeProjectSnapshot(project) : null;
   });
   const [activeProject, setActiveProject] = useState(pendingProject);
-  const [catalogItems, setCatalogItems] = useState([]);
+  const [catalogItems, setCatalogItems] = useState(fallbackCatalog);
   const [catalogGroups, setCatalogGroups] = useState([]);
   const [materialGroups, setMaterialGroups] = useState([]);
-  const [materials, setMaterials] = useState([]);
+  const [materials, setMaterials] = useState(fallbackMaterials);
   const [materialsLoading, setMaterialsLoading] = useState(false);
+  const [materialsReady, setMaterialsReady] = useState(false);
   const [catalogStats, setCatalogStats] = useState(null);
   const [catalogLoading, setCatalogLoading] = useState(() =>
     ["designer", "catalog"].includes(initialTab),
   );
+  const [catalogReady, setCatalogReady] = useState(false);
   const [projects, setProjects] = useState(() => readProjectCache());
   const [projectsLoading, setProjectsLoading] = useState(
     () => initialTab === "projects" && readProjectCache().length === 0,
@@ -1074,6 +1084,12 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       ),
     [catalogMap, installationFee, materialMap, sceneItems, shippingFee],
   );
+  const designerDataLoading =
+    initialTab === "designer" &&
+    (catalogLoading ||
+      materialsLoading ||
+      !catalogReady ||
+      !materialsReady);
   const quote = localQuote;
   const selectedLineQuote =
     selectedSceneIndex === null
@@ -1131,6 +1147,112 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       height: Math.max(heightCm * cmToPx, hasModel ? 44 : 12),
     };
   }, []);
+
+  const resolveSceneItemOverlapsForProject = useCallback(
+    (items) => {
+      const cmToPx = 1;
+      const roomWidthCm = Math.max(Number(roomDimensions.width || 450), 1);
+      const roomHeightCm = Math.max(Number(roomDimensions.height || 250), 1);
+      const roomDepthCm = Math.max(Number(roomDimensions.depth || 240), 1);
+      const overlaps = (aStart, aSize, bStart, bSize) =>
+        Math.min(aStart + aSize, bStart + bSize) -
+          Math.max(aStart, bStart) >
+        1;
+      const blockingProduct = (product) =>
+        product?.category &&
+        product.category !== "room" &&
+        product.category !== "countertop" &&
+        !isCountertopMountedProduct(product);
+      const placed = [];
+
+      return items.map((item) => {
+        const product = catalogMap[item.catalog_item_id] || {};
+        const dimensions = normalizeProductDimensions(product, item.dimensions);
+        const placement =
+          item.placement || getProductPlacement(product, dimensions);
+        const width = Math.max(Number(dimensions.width || 60), 1);
+        const height = Math.max(Number(dimensions.height || 72), 1);
+        const depth = Math.max(Number(dimensions.depth || 56), 1);
+        const maxX = Math.max(roomWidthCm - width, 0);
+        const maxY = Math.max(roomHeightCm - height, 0);
+        const maxZ = Math.max(roomDepthCm - depth, 0);
+        const xCm = Number.isFinite(Number(item.position?.x_cm))
+          ? Number(item.position.x_cm)
+          : Number(item.position?.x || 0) / cmToPx;
+        const yCm = Number.isFinite(Number(item.position?.y_cm))
+          ? Number(item.position.y_cm)
+          : Number(item.position?.y || 0) / cmToPx;
+        let candidate = {
+          x: Math.min(Math.max(xCm, 0), maxX),
+          y: Math.min(Math.max(yCm, 0), maxY),
+          z: Math.min(Math.max(Number(item.position?.z || 0), 0), maxZ),
+        };
+
+        if (blockingProduct(product)) {
+          for (let attempt = 0; attempt < 40; attempt += 1) {
+            const blocker = placed.find((other) => {
+              if (other.placement !== placement) return false;
+              if (placement === "wall") {
+                return (
+                  overlaps(candidate.x, width, other.x, other.width) &&
+                  overlaps(candidate.y, height, other.y, other.height)
+                );
+              }
+              return (
+                overlaps(candidate.x, width, other.x, other.width) &&
+                overlaps(candidate.z, depth, other.z, other.depth)
+              );
+            });
+
+            if (!blocker) break;
+
+            const nextX = blocker.x + blocker.width;
+            if (nextX <= maxX) {
+              candidate.x = nextX;
+            } else if (placement === "wall") {
+              candidate.x = 0;
+              candidate.y = Math.min(candidate.y + height, maxY);
+            } else {
+              candidate.x = 0;
+              candidate.z = Math.min(candidate.z + depth, maxZ);
+            }
+          }
+        }
+
+        placed.push({
+          placement,
+          x: candidate.x,
+          y: candidate.y,
+          z: candidate.z,
+          width,
+          height,
+          depth,
+        });
+
+        return {
+          ...item,
+          placement,
+          dimensions,
+          position: {
+            ...(item.position || {}),
+            x: candidate.x * cmToPx,
+            x_cm: candidate.x,
+            ...(placement === "wall"
+              ? { y: candidate.y * cmToPx, y_cm: candidate.y, z: 0 }
+              : { z: candidate.z }),
+          },
+        };
+      });
+    },
+    [catalogMap, roomDimensions],
+  );
+  const sceneItemsForDesigner = useMemo(
+    () =>
+      designerDataLoading || !sceneItems.length
+        ? sceneItems
+        : resolveSceneItemOverlapsForProject(sceneItems),
+    [designerDataLoading, resolveSceneItemOverlapsForProject, sceneItems],
+  );
 
   const clampScenePosition = useCallback((item, product, x, y) => {
     return {
@@ -1297,6 +1419,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     let mounted = true;
     loadedKitchenDataRef.current.catalog = true;
     setCatalogLoading(true);
+    setCatalogReady(false);
 
     Promise.allSettled([
       getData(SERVER.kitchen.catalogItems),
@@ -1324,6 +1447,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       if (statsResult.status === "fulfilled") {
         setCatalogStats(statsResult.value?.payload || statsResult.value || null);
       }
+      setCatalogReady(true);
       setCatalogLoading(false);
     });
 
@@ -1334,11 +1458,13 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
 
   const ensureMaterialCatalog = useCallback(() => {
     if (loadedKitchenDataRef.current.materials) {
+      setMaterialsReady(true);
       return Promise.resolve();
     }
 
     loadedKitchenDataRef.current.materials = true;
     setMaterialsLoading(true);
+    setMaterialsReady(false);
     return Promise.allSettled([
       getData(SERVER.kitchen.materials),
       getData(SERVER.kitchen.catalogCategories, { scope: "material" }),
@@ -1350,7 +1476,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       if (materialCategoryResult.status === "fulfilled") {
         setMaterialGroups(extractApiList(materialCategoryResult.value));
       }
-    }).finally(() => setMaterialsLoading(false));
+    }).finally(() => {
+      setMaterialsReady(true);
+      setMaterialsLoading(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -1358,6 +1487,15 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     ensureMaterialCatalog();
     return undefined;
   }, [customizerOpen, ensureMaterialCatalog, selectedSceneItem]);
+
+  useEffect(() => {
+    if (!["designer", "catalog", "pricing"].includes(initialTab)) {
+      return undefined;
+    }
+
+    ensureMaterialCatalog();
+    return undefined;
+  }, [ensureMaterialCatalog, initialTab]);
 
   useEffect(() => {
     if (initialTab !== "projects" || loadedKitchenDataRef.current.projects) {
@@ -1448,6 +1586,20 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   }, []);
 
   useEffect(() => {
+    window.localStorage.setItem(
+      "decusinQuoteLoading",
+      String(designerDataLoading),
+    );
+    window.dispatchEvent(
+      new CustomEvent("decusin:quote-loading", {
+        detail: { loading: designerDataLoading },
+      }),
+    );
+  }, [designerDataLoading]);
+
+  useEffect(() => {
+    if (designerDataLoading) return;
+
     const total = Number(localQuote?.total || 0);
     window.localStorage.setItem("decusinQuoteTotal", String(total));
     window.localStorage.setItem("decusinQuote", JSON.stringify(localQuote));
@@ -1456,7 +1608,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         detail: { total, quote: localQuote },
       }),
     );
-  }, [localQuote]);
+  }, [designerDataLoading, localQuote]);
 
   useEffect(() => {
     const currentSnapshot = cloneProjectData(sceneItems);
@@ -1874,6 +2026,14 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   const autoAlignSceneItems = useCallback(() => {
     const metrics = getSceneMetrics();
     const cmToPx = metrics.cmToPx || 1;
+    const getItemXCm = (item) =>
+      Number.isFinite(Number(item.position?.x_cm))
+        ? Number(item.position.x_cm)
+        : Number(item.position?.x || 0) / cmToPx;
+    const getItemYCm = (item) =>
+      Number.isFinite(Number(item.position?.y_cm))
+        ? Number(item.position.y_cm)
+        : Number(item.position?.y || 0) / cmToPx;
 
     setSceneItems((current) => {
       const nextItems = current.map((item) => ({
@@ -1886,8 +2046,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         indices
           .sort(
             (first, second) =>
-              Number(current[first].position?.x || 0) -
-              Number(current[second].position?.x || 0),
+              getItemXCm(current[first]) - getItemXCm(current[second]),
           )
           .forEach((itemIndex) => {
             const item = nextItems[itemIndex];
@@ -1899,8 +2058,11 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             const width = Math.max(Number(dimensions.width || 60), 1);
 
             item.position.x = cursor * cmToPx;
+            item.position.x_cm = cursor;
             if (wallMode) {
-              item.position.y = Number(item.position.y || 28 * cmToPx);
+              const yCm = getItemYCm(item) || 28;
+              item.position.y = yCm * cmToPx;
+              item.position.y_cm = yCm;
               item.position.z = 0;
             } else {
               item.position.z = 0;
@@ -1948,7 +2110,11 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           ...item,
           position: {
             ...(item.position || {}),
+            x_cm: Number.isFinite(Number(item.position?.x_cm))
+              ? Number(item.position.x_cm)
+              : Number(item.position?.x || 0) / cmToPx,
             y: 28 * cmToPx,
+            y_cm: 28,
             z: 0,
           },
           placement: "wall",
@@ -1958,6 +2124,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
   }, [catalogMap, getSceneMetrics]);
 
   const alignLowerCabinets = useCallback(() => {
+    const metrics = getSceneMetrics();
+    const cmToPx = metrics.cmToPx || 1;
+
     setSceneItems((current) =>
       current.map((item) => {
         const product = catalogMap[item.catalog_item_id] || {};
@@ -1973,6 +2142,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           ...item,
           position: {
             ...(item.position || {}),
+            x_cm: Number.isFinite(Number(item.position?.x_cm))
+              ? Number(item.position.x_cm)
+              : Number(item.position?.x || 0) / cmToPx,
             z: 0,
             elevation: 0,
           },
@@ -1980,7 +2152,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         };
       }),
     );
-  }, [catalogMap]);
+  }, [catalogMap, getSceneMetrics]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -2317,6 +2489,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     ensureProjectCustomer()
       .then((projectCustomer) => {
         const isUpdate = Boolean(activeProject?.id);
+        const itemsForSave = sceneItemsForDesigner;
         const payload = normalizeProjectSnapshot({
           id: activeProject?.id || `project-${Date.now()}`,
           name: projectForm.name || "Yeni mutfak projesi",
@@ -2328,7 +2501,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           template_id: "",
           room_dimensions: cloneProjectData(roomDimensions),
           room_surfaces: cloneProjectData(roomSurfaces),
-          items: cloneProjectData(sceneItems),
+          items: cloneProjectData(itemsForSave),
           installation_fee: installationFee,
           shipping_fee: shippingFee,
           quote: cloneProjectData(quote),
@@ -2357,11 +2530,8 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             ...payload,
             ...project,
             room_dimensions: project.room_dimensions || payload.room_dimensions,
-            items:
-              Array.isArray(project.items) && project.items.length
-                ? project.items
-              : payload.items,
-            quote: project.quote || payload.quote,
+            items: payload.items,
+            quote: payload.quote,
           });
           setActiveProject(savedProject);
           setProjects((current) => {
@@ -3006,7 +3176,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       <KitchenSceneItemsDrawer
         open={sceneItemsOpen}
         onClose={() => setSceneItemsOpen(false)}
-        sceneItems={sceneItems}
+        sceneItems={sceneItemsForDesigner}
         catalogMap={catalogMap}
         selectedSceneIndex={selectedSceneIndex}
         onSelectItem={(index) => {
@@ -3520,9 +3690,41 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
       </Paper>
       <Grid container spacing={1}>
         <Grid item xs={12}>
+          {designerDataLoading ? (
+            <Paper
+              elevation={0}
+              sx={{
+                minHeight: "calc(100vh - 190px)",
+                border: "1px solid #E2E8F0",
+                borderRadius: 1.5,
+                bgcolor: "#FFFFFF",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 10px 28px rgba(15,23,42,0.04)",
+              }}
+            >
+              <Stack alignItems="center" justifyContent="center" spacing={1.4}>
+                <CircularProgress color="info" size={42} thickness={4.2} />
+                <Typography sx={{ color: "#173B63", fontWeight: 950 }}>
+                  Tasarim yukleniyor
+                </Typography>
+                <Typography
+                  sx={{
+                    color: "#64748B",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    textAlign: "center",
+                  }}
+                >
+                  Urunler ve malzemeler hazirlaniyor
+                </Typography>
+              </Stack>
+            </Paper>
+          ) : (
           <KitchenScene
             sceneRef={sceneRef}
-            sceneItems={sceneItems}
+            sceneItems={sceneItemsForDesigner}
             catalogMap={catalogMap}
             materialMap={materialMap}
             selectedDoor={selectedDoor}
@@ -3670,6 +3872,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             canUndo={Boolean(undoStack.length)}
             canRedo={Boolean(redoStack.length)}
           />
+          )}
         </Grid>
       </Grid>
       <KitchenCustomizer

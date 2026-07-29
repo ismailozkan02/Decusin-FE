@@ -608,12 +608,15 @@ const KitchenScene = ({
         cmToPx,
         nextPosition: {
           x: xCm * cmToPx,
+          x_cm: xCm,
           y: yCm * cmToPx,
+          y_cm: yCm,
           z: 0,
         },
       });
       const nextPosition = {
         ...resolvedPosition,
+        x_cm: Number(resolvedPosition.x || 0) / cmToPx,
         y:
           clampWallCabinetTopCm({
             item,
@@ -627,6 +630,18 @@ const KitchenScene = ({
             nextTopCm: Number(resolvedPosition.y || 0) / cmToPx,
             nextXCm: Number(resolvedPosition.x || 0) / cmToPx,
           }) * cmToPx,
+        y_cm: clampWallCabinetTopCm({
+          item,
+          index,
+          product,
+          dimensions,
+          sceneItems,
+          catalogMap,
+          cmToPx,
+          roomHeightCm,
+          nextTopCm: Number(resolvedPosition.y || 0) / cmToPx,
+          nextXCm: Number(resolvedPosition.x || 0) / cmToPx,
+        }),
       };
 
       onMoveItem3D?.(index, nextPosition);
@@ -646,6 +661,7 @@ const KitchenScene = ({
       cmToPx,
       nextPosition: {
         x: xCm * cmToPx,
+        x_cm: xCm,
         z: zCm,
       },
     });
@@ -1173,6 +1189,13 @@ const KitchenScene = ({
                 applyView={applyDefaultCameraView}
                 onReady={handleSceneReady}
               />
+              <AutoHideWallsController
+                enabled={scenePremiumTools.autoHideWalls}
+                cameraTour={scenePremiumTools.cameraTour}
+                roomDimensions={roomDimensions}
+                controlsRef={controlsRef}
+                onAutoHideRoomSurface={onAutoHideRoomSurface}
+              />
               <Environment files="/hdri/lebombo_1k.hdr" />
             </Canvas>
           )}
@@ -1191,6 +1214,51 @@ const InitialCameraView = ({ controlsRef, applyView, onReady }) => {
     const frameId = requestAnimationFrame(() => onReady());
     return () => cancelAnimationFrame(frameId);
   }, [applyView, camera, controlsRef, onReady]);
+
+  return null;
+};
+
+const AutoHideWallsController = ({
+  enabled,
+  cameraTour,
+  roomDimensions,
+  controlsRef,
+  onAutoHideRoomSurface,
+}) => {
+  const camera = useThree((state) => state.camera);
+  const lastHiddenSurfaceRef = useRef(undefined);
+
+  useEffect(() => {
+    if (enabled && !cameraTour) return;
+
+    lastHiddenSurfaceRef.current = undefined;
+    onAutoHideRoomSurface?.(null);
+  }, [cameraTour, enabled, onAutoHideRoomSurface]);
+
+  useFrame(() => {
+    if (!enabled || cameraTour) return;
+
+    const roomWidth = cmToUnit(roomDimensions?.width || 450);
+    const roomHeight = cmToUnit(roomDimensions?.height || 250);
+    const roomDepth = cmToUnit(roomDimensions?.depth || 240);
+    const target =
+      controlsRef.current?.target || new Vector3(0, roomHeight * 0.5, 0);
+    const offset = camera.position.clone().sub(target);
+    const xRatio = offset.x / Math.max(roomWidth, 0.1);
+    const yRatio = offset.y / Math.max(roomHeight, 0.1);
+    const zRatio = offset.z / Math.max(roomDepth, 0.1);
+    let nextHiddenSurface = null;
+
+    if (yRatio > 0.82) nextHiddenSurface = "ceilingVisible";
+    else if (xRatio > 0.48) nextHiddenSurface = "rightWallVisible";
+    else if (xRatio < -0.48) nextHiddenSurface = "leftWallVisible";
+    else if (zRatio < -0.42) nextHiddenSurface = "backWallVisible";
+
+    if (lastHiddenSurfaceRef.current === nextHiddenSurface) return;
+
+    lastHiddenSurfaceRef.current = nextHiddenSurface;
+    onAutoHideRoomSurface?.(nextHiddenSurface);
+  });
 
   return null;
 };
@@ -1333,6 +1401,16 @@ const getSceneItemDimensions = (product, item = {}) => {
 const rangesOverlap = (startA, sizeA, startB, sizeB) =>
   Math.min(startA + sizeA, startB + sizeB) - Math.max(startA, startB) > 1;
 
+const getPositionXCm = (item, cmToPx) =>
+  Number.isFinite(Number(item?.position?.x_cm))
+    ? Number(item.position.x_cm)
+    : Number(item?.position?.x || 0) / cmToPx;
+
+const getPositionTopCm = (item, cmToPx) =>
+  Number.isFinite(Number(item?.position?.y_cm))
+    ? Number(item.position.y_cm)
+    : Number(item?.position?.y || 0) / cmToPx;
+
 const clampWallCabinetTopCm = ({
   item,
   index,
@@ -1358,7 +1436,7 @@ const clampWallCabinetTopCm = ({
     if (!["base_cabinet", "appliance"].includes(otherProduct.category)) return;
 
     const otherDimensions = getSceneItemDimensions(otherProduct, otherItem);
-    const otherX = Number(otherItem.position?.x || 0) / cmToPx;
+    const otherX = getPositionXCm(otherItem, cmToPx);
     const otherWidth = Math.max(Number(otherDimensions.width || 60), 1);
 
     if (!rangesOverlap(nextXCm, width, otherX, otherWidth)) return;
@@ -1395,13 +1473,17 @@ const resolveDragCollisionCm = ({
   const depth = Math.max(Number(dimensions.depth || 56), 1);
   const wallMode = isWallMountedItem(item, product, dimensions);
   const current = {
-    x: Number(item.position?.x || 0) / cmToPx,
-    y: Number(item.position?.y || 0) / cmToPx,
+    x: getPositionXCm(item, cmToPx),
+    y: getPositionTopCm(item, cmToPx),
     z: Number(item.position?.z || 0),
   };
   const resolved = {
-    x: Number(nextPosition.x ?? item.position?.x ?? 0) / cmToPx,
-    y: Number(nextPosition.y ?? item.position?.y ?? 0) / cmToPx,
+    x: Number.isFinite(Number(nextPosition.x))
+      ? Number(nextPosition.x) / cmToPx
+      : getPositionXCm(item, cmToPx),
+    y: Number.isFinite(Number(nextPosition.y))
+      ? Number(nextPosition.y) / cmToPx
+      : getPositionTopCm(item, cmToPx),
     z: Number(nextPosition.z ?? item.position?.z ?? 0),
   };
   const movement = {
@@ -1423,8 +1505,8 @@ const resolveDragCollisionCm = ({
       return;
 
     const other = {
-      x: Number(otherItem.position?.x || 0) / cmToPx,
-      y: Number(otherItem.position?.y || 0) / cmToPx,
+      x: getPositionXCm(otherItem, cmToPx),
+      y: getPositionTopCm(otherItem, cmToPx),
       z: Number(otherItem.position?.z || 0),
       width: Math.max(Number(otherDimensions.width || 60), 1),
       height: Math.max(Number(otherDimensions.height || 72), 1),
@@ -1479,7 +1561,10 @@ const resolveDragCollisionCm = ({
   return {
     ...nextPosition,
     x: resolved.x * cmToPx,
-    ...(wallMode ? { y: resolved.y * cmToPx, z: 0 } : { z: resolved.z }),
+    x_cm: resolved.x,
+    ...(wallMode
+      ? { y: resolved.y * cmToPx, y_cm: resolved.y, z: 0 }
+      : { z: resolved.z }),
   };
 };
 
@@ -1487,7 +1572,7 @@ const getItemFootprintCm = (item, product, cmToPx) => {
   const dimensions = getSceneItemDimensions(product, item);
 
   return {
-    x: Number(item.position?.x || 0) / cmToPx,
+    x: getPositionXCm(item, cmToPx),
     z: Number(item.position?.z || 0),
     width: Number(dimensions.width || 60),
     depth: Number(dimensions.depth || 56),
@@ -1508,8 +1593,8 @@ const getSceneItemSideGaps = ({
   const roomWidthCm = Math.max(Number(roomDimensions?.width || 450), 1);
   const dimensions = getSceneItemDimensions(product, item);
   const wallMode = isWallMountedItem(item, product, dimensions);
-  const x = Number(item.position?.x || 0) / cmToPx;
-  const y = Number(item.position?.y || 0) / cmToPx;
+  const x = getPositionXCm(item, cmToPx);
+  const y = getPositionTopCm(item, cmToPx);
   const z = Number(item.position?.z || 0);
   const width = Math.max(Number(dimensions.width || 60), 1);
   const height = Math.max(Number(dimensions.height || 72), 1);
@@ -1527,7 +1612,7 @@ const getSceneItemSideGaps = ({
     )
       return;
 
-    const otherX = Number(otherItem.position?.x || 0) / cmToPx;
+    const otherX = getPositionXCm(otherItem, cmToPx);
     const otherWidth = Math.max(Number(otherDimensions.width || 60), 1);
     const otherStart = otherX;
     const otherEnd = otherX + otherWidth;
@@ -1535,7 +1620,7 @@ const getSceneItemSideGaps = ({
       ? rangesOverlap(
           y,
           height,
-          Number(otherItem.position?.y || 0) / cmToPx,
+          getPositionTopCm(otherItem, cmToPx),
           Math.max(Number(otherDimensions.height || 72), 1),
         )
       : rangesOverlap(
@@ -1781,11 +1866,11 @@ const getItem3DTransform = ({
   const heightCm = Math.max(Number(dimensions.height || 72), 1);
   const depthCm = Math.max(Number(dimensions.depth || 56), 1);
   const xCm = Math.min(
-    Math.max(Number(item.position?.x || 0) / cmToPx, 0),
+    Math.max(getPositionXCm(item, cmToPx), 0),
     roomWidthCm,
   );
   let topCm = Math.min(
-    Math.max(Number(item.position?.y || 0) / cmToPx, 0),
+    Math.max(getPositionTopCm(item, cmToPx), 0),
     roomHeightCm,
   );
   const zCm = Math.min(Math.max(Number(item.position?.z || 0), 0), roomDepthCm);

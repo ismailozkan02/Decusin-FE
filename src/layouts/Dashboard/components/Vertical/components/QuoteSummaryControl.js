@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Box,
+  CircularProgress,
   Dialog,
   DialogContent,
   Stack,
@@ -28,6 +29,9 @@ const QuoteSummaryControl = ({ compact = false }) => {
       return {};
     }
   });
+  const [loading, setLoading] = useState(
+    () => window.localStorage.getItem("decusinQuoteLoading") === "true",
+  );
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState(0);
   const productCount = (quote?.lines || []).reduce(
@@ -42,11 +46,25 @@ const QuoteSummaryControl = ({ compact = false }) => {
     const updateQuoteTotal = (event) => {
       setQuoteTotal(Number(event.detail?.total || 0));
       setQuote(event.detail?.quote || {});
+      setLoading(false);
+      window.localStorage.setItem("decusinQuoteLoading", "false");
+    };
+    const updateQuoteLoading = (event) => {
+      const nextLoading = Boolean(event.detail?.loading);
+      setLoading(nextLoading);
+      window.localStorage.setItem(
+        "decusinQuoteLoading",
+        String(nextLoading),
+      );
+      if (nextLoading) setOpen(false);
     };
 
     window.addEventListener("decusin:quote-total", updateQuoteTotal);
-    return () =>
+    window.addEventListener("decusin:quote-loading", updateQuoteLoading);
+    return () => {
       window.removeEventListener("decusin:quote-total", updateQuoteTotal);
+      window.removeEventListener("decusin:quote-loading", updateQuoteLoading);
+    };
   }, []);
 
   const updateQuoteFee = (field, value) => {
@@ -60,14 +78,16 @@ const QuoteSummaryControl = ({ compact = false }) => {
   return (
     <>
       <Box
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          if (!loading) setOpen(true);
+        }}
         sx={{
           width: compact ? 42 : "100%",
           minHeight: compact ? 42 : 174,
           px: compact ? 0 : 1.45,
           py: compact ? 0 : 1.55,
           borderRadius: 1,
-          cursor: "pointer",
+          cursor: loading ? "wait" : "pointer",
           textAlign: "left",
           display: "flex",
           flexDirection: "column",
@@ -94,7 +114,32 @@ const QuoteSummaryControl = ({ compact = false }) => {
           },
         }}
       >
-        {compact ? (
+        {loading && !compact ? (
+          <Stack alignItems="center" justifyContent="center" spacing={1.1}>
+            <CircularProgress size={28} thickness={4.5} />
+            <Typography
+              sx={{
+                fontSize: 10.5,
+                fontWeight: 950,
+                color: "#2563EB",
+                letterSpacing: 0.8,
+                textTransform: "uppercase",
+              }}
+            >
+              Teklif hazirlaniyor
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 800,
+                color: "#64748B",
+                textAlign: "center",
+              }}
+            >
+              Urunler ve malzemeler yukleniyor
+            </Typography>
+          </Stack>
+        ) : compact ? (
           <Typography sx={{ fontSize: 18, fontWeight: 950, color: "#2563EB" }}>
             ₺
           </Typography>
