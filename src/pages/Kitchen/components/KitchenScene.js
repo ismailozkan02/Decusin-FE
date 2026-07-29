@@ -2417,15 +2417,15 @@ const createRightWallInteriorTopShadowTexture = () => {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
   const topShadow = context.createLinearGradient(0, 0, 0, canvas.height);
-  topShadow.addColorStop(0, "rgba(61,65,61,0.16)");
-  topShadow.addColorStop(0.18, "rgba(61,65,61,0.07)");
+  topShadow.addColorStop(0, "rgba(61,65,61,0.11)");
+  topShadow.addColorStop(0.18, "rgba(61,65,61,0.045)");
   topShadow.addColorStop(0.42, "rgba(61,65,61,0)");
   context.fillStyle = topShadow;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   const innerCorner = context.createRadialGradient(0, 0, 8, 0, 0, 280);
-  innerCorner.addColorStop(0, "rgba(61,65,61,0.1)");
-  innerCorner.addColorStop(0.38, "rgba(61,65,61,0.04)");
+  innerCorner.addColorStop(0, "rgba(61,65,61,0.07)");
+  innerCorner.addColorStop(0.38, "rgba(61,65,61,0.025)");
   innerCorner.addColorStop(1, "rgba(61,65,61,0)");
   context.fillStyle = innerCorner;
   context.fillRect(0, 0, canvas.width, canvas.height);
@@ -2690,6 +2690,10 @@ const RoomShell = ({
   };
   const isNight = surfaces.sceneMode === "night";
   const lightsOn = surfaces.lampVisible === true && surfaces.lightsOn === true;
+  const rightWallColor = new Color(surfaces.sideWall || ikeaWallColor).lerp(
+    new Color("#FFFFFF"),
+    0.18,
+  );
   const surfaceColor = (value, fallback) => {
     const color = new Color(value || fallback);
 
@@ -2810,7 +2814,7 @@ const RoomShell = ({
           >
             <boxGeometry args={[wallThickness, height, depth]} />
             <meshBasicMaterial
-              color={surfaces.sideWall || ikeaWallColor}
+              color={rightWallColor}
               map={rightWallShadowTexture}
             />
           </mesh>
