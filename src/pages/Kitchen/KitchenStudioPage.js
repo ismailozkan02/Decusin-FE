@@ -200,7 +200,7 @@ const getProjectTotal = (project) =>
   Number(project?.quote?.total || project?.total || 0);
 
 const defaultRoomSurfaces = {
-  floor: "#A9A99F",
+  floor: "#AEB1AE",
   floorPattern: "grayAsh",
   backWall: "#D3D4CF",
   sideWall: "#D3D4CF",
@@ -230,14 +230,8 @@ const normalizeRoomSurfaces = (surfaces = {}) => {
 
   return {
     ...nextSurfaces,
-    floor:
-      nextSurfaces.floorPattern === "rusticBrown"
-        ? defaultRoomSurfaces.floor
-        : normalizeColor(nextSurfaces.floor, defaultRoomSurfaces.floor),
-    floorPattern:
-      nextSurfaces.floorPattern === "rusticBrown"
-        ? defaultRoomSurfaces.floorPattern
-        : nextSurfaces.floorPattern,
+    floor: defaultRoomSurfaces.floor,
+    floorPattern: defaultRoomSurfaces.floorPattern,
     backWall: normalizeColor(nextSurfaces.backWall, defaultRoomSurfaces.backWall),
     sideWall: normalizeColor(nextSurfaces.sideWall, defaultRoomSurfaces.sideWall),
     ceiling: normalizeColor(nextSurfaces.ceiling, defaultRoomSurfaces.ceiling),

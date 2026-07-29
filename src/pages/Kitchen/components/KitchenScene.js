@@ -1997,10 +1997,11 @@ const floorPatternPalettes = {
     dark: true,
   },
   grayAsh: {
-    base: "#A9A99F",
-    colors: ["#A9A99F", "#D2D0C5", "#7B7B73", "#BDBBAF", "#96968D"],
+    base: "#AEB1AE",
+    colors: ["#E2E4E1", "#C8CBC8", "#AEB1AE", "#8F9490", "#D4D6D3"],
     mode: "plank",
-    sheen: 0.09,
+    sheen: 0,
+    neutral: true,
   },
   rusticBrown: {
     base: "#70421F",
@@ -2090,12 +2091,15 @@ const drawWoodGrain = (
   height,
   seed = 0,
   dark = false,
+  neutral = false,
 ) => {
   for (let grain = 0; grain < 7; grain += 1) {
     const grainY = y + 10 + grain * (height / 8) + ((seed + grain) % 5);
-    context.strokeStyle = dark
-      ? `rgba(245,222,179,${0.035 + grain * 0.007})`
-      : `rgba(91,58,24,${0.08 + grain * 0.012})`;
+    context.strokeStyle = neutral
+      ? `rgba(88,92,88,${0.045 + grain * 0.007})`
+      : dark
+        ? `rgba(245,222,179,${0.035 + grain * 0.007})`
+        : `rgba(91,58,24,${0.08 + grain * 0.012})`;
     context.lineWidth = 1.1;
     context.beginPath();
     context.moveTo(x + 8, grainY);
@@ -2120,21 +2124,30 @@ const paintWoodTile = (
   color,
   seed = 0,
   dark = false,
+  neutral = false,
 ) => {
   const gradient = context.createLinearGradient(x, y, x + width, y + height);
 
   gradient.addColorStop(0, color);
   gradient.addColorStop(
     0.48,
-    dark ? "rgba(92,64,42,0.92)" : "rgba(255,238,184,0.9)",
+    neutral
+      ? "rgba(188,192,188,0.9)"
+      : dark
+        ? "rgba(92,64,42,0.92)"
+        : "rgba(255,238,184,0.9)",
   );
   gradient.addColorStop(1, color);
   context.fillStyle = gradient;
   context.fillRect(x, y, width, height);
-  context.strokeStyle = dark ? "rgba(0,0,0,0.38)" : "rgba(92,58,24,0.24)";
+  context.strokeStyle = neutral
+    ? "rgba(84,88,84,0.22)"
+    : dark
+      ? "rgba(0,0,0,0.38)"
+      : "rgba(92,58,24,0.24)";
   context.lineWidth = 2;
   context.strokeRect(x + 1, y + 1, width - 2, height - 2);
-  drawWoodGrain(context, x, y, width, height, seed, dark);
+  drawWoodGrain(context, x, y, width, height, seed, dark, neutral);
 };
 
 const createParquetTexture = (pattern = "mosaicOak") => {
@@ -2173,6 +2186,7 @@ const createParquetTexture = (pattern = "mosaicOak") => {
           color,
           seed,
           palette.dark,
+          palette.neutral,
         );
       }
     }
@@ -2195,6 +2209,7 @@ const createParquetTexture = (pattern = "mosaicOak") => {
           color,
           x + y,
           palette.dark,
+          palette.neutral,
         );
         context.restore();
 
@@ -2212,6 +2227,7 @@ const createParquetTexture = (pattern = "mosaicOak") => {
           palette.colors[(x / tile + y / tile + 11) % palette.colors.length],
           x - y,
           palette.dark,
+          palette.neutral,
         );
         context.restore();
       }
@@ -2239,6 +2255,7 @@ const createParquetTexture = (pattern = "mosaicOak") => {
           color,
           row + plankIndex,
           palette.dark,
+          palette.neutral,
         );
         x += plankWidth;
         plankIndex += 1;
@@ -2334,6 +2351,121 @@ const createCeilingShadowTexture = () => {
   edgeShadow.addColorStop(0.82, "rgba(68,72,68,0.05)");
   edgeShadow.addColorStop(1, "rgba(68,72,68,0.16)");
   context.fillStyle = edgeShadow;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const texture = new CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+};
+
+const createRightWallShadowTexture = () => {
+  if (typeof document === "undefined") return null;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const context = canvas.getContext("2d");
+
+  if (!context) return null;
+
+  context.fillStyle = "#FFFFFF";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const topShadow = context.createLinearGradient(0, 0, 0, canvas.height);
+  topShadow.addColorStop(0, "rgba(68,72,68,0.2)");
+  topShadow.addColorStop(0.24, "rgba(68,72,68,0.09)");
+  topShadow.addColorStop(0.62, "rgba(68,72,68,0)");
+  context.fillStyle = topShadow;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const cornerShadow = context.createRadialGradient(
+    canvas.width,
+    0,
+    10,
+    canvas.width,
+    0,
+    360,
+  );
+  cornerShadow.addColorStop(0, "rgba(68,72,68,0.24)");
+  cornerShadow.addColorStop(0.44, "rgba(68,72,68,0.09)");
+  cornerShadow.addColorStop(1, "rgba(68,72,68,0)");
+  context.fillStyle = cornerShadow;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const sideFade = context.createLinearGradient(0, 0, canvas.width, 0);
+  sideFade.addColorStop(0, "rgba(68,72,68,0)");
+  sideFade.addColorStop(0.72, "rgba(68,72,68,0.04)");
+  sideFade.addColorStop(1, "rgba(68,72,68,0.12)");
+  context.fillStyle = sideFade;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const texture = new CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+};
+
+const createRightWallInteriorTopShadowTexture = () => {
+  if (typeof document === "undefined") return null;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const context = canvas.getContext("2d");
+
+  if (!context) return null;
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  const topShadow = context.createLinearGradient(0, 0, 0, canvas.height);
+  topShadow.addColorStop(0, "rgba(61,65,61,0.16)");
+  topShadow.addColorStop(0.18, "rgba(61,65,61,0.07)");
+  topShadow.addColorStop(0.42, "rgba(61,65,61,0)");
+  context.fillStyle = topShadow;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const innerCorner = context.createRadialGradient(0, 0, 8, 0, 0, 280);
+  innerCorner.addColorStop(0, "rgba(61,65,61,0.1)");
+  innerCorner.addColorStop(0.38, "rgba(61,65,61,0.04)");
+  innerCorner.addColorStop(1, "rgba(61,65,61,0)");
+  context.fillStyle = innerCorner;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const texture = new CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+};
+
+const createLeftWallInteriorTopShadowTexture = () => {
+  if (typeof document === "undefined") return null;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const context = canvas.getContext("2d");
+
+  if (!context) return null;
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  const topShadow = context.createLinearGradient(0, 0, 0, canvas.height);
+  topShadow.addColorStop(0, "rgba(61,65,61,0.16)");
+  topShadow.addColorStop(0.18, "rgba(61,65,61,0.07)");
+  topShadow.addColorStop(0.42, "rgba(61,65,61,0)");
+  context.fillStyle = topShadow;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const innerCorner = context.createRadialGradient(
+    canvas.width,
+    0,
+    8,
+    canvas.width,
+    0,
+    280,
+  );
+  innerCorner.addColorStop(0, "rgba(61,65,61,0.1)");
+  innerCorner.addColorStop(0.38, "rgba(61,65,61,0.04)");
+  innerCorner.addColorStop(1, "rgba(61,65,61,0)");
+  context.fillStyle = innerCorner;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   const texture = new CanvasTexture(canvas);
@@ -2544,7 +2676,7 @@ const RoomShell = ({
   const ikeaWallColor = "#D3D4CF";
   const ikeaCeilingColor = "#D3D4CF";
   const surfaces = {
-    floor: "#A9A99F",
+    floor: "#AEB1AE",
     floorPattern: "grayAsh",
     backWall: ikeaWallColor,
     sideWall: ikeaWallColor,
@@ -2568,6 +2700,7 @@ const RoomShell = ({
 
     return color;
   };
+  const floorPaletteKey = floorPatternPalettes[surfaces.floorPattern]?.colors?.join("-");
   const floorTexture = useMemo(() => {
     if (!floorPatternPalettes[surfaces.floorPattern])
       return null;
@@ -2577,9 +2710,18 @@ const RoomShell = ({
       texture.repeat.set(Math.max(width * 0.9, 1), Math.max(depth * 0.9, 1));
     }
     return texture;
-  }, [depth, surfaces.floorPattern, width]);
+  }, [depth, floorPaletteKey, surfaces.floorPattern, width]);
   const wallGradientTexture = useMemo(() => createRoomWallGradientTexture(), []);
   const ceilingShadowTexture = useMemo(() => createCeilingShadowTexture(), []);
+  const leftWallInteriorTopShadowTexture = useMemo(
+    () => createLeftWallInteriorTopShadowTexture(),
+    [],
+  );
+  const rightWallShadowTexture = useMemo(() => createRightWallShadowTexture(), []);
+  const rightWallInteriorTopShadowTexture = useMemo(
+    () => createRightWallInteriorTopShadowTexture(),
+    [],
+  );
   const cameraTourMode = premiumTools?.cameraTour === true;
   const wallsVisible = premiumTools?.walls !== false || cameraTourMode;
   const ceilingVisible =
@@ -2592,8 +2734,18 @@ const RoomShell = ({
       floorTexture?.dispose();
       wallGradientTexture?.dispose();
       ceilingShadowTexture?.dispose();
+      leftWallInteriorTopShadowTexture?.dispose();
+      rightWallShadowTexture?.dispose();
+      rightWallInteriorTopShadowTexture?.dispose();
     },
-    [ceilingShadowTexture, floorTexture, wallGradientTexture],
+    [
+      ceilingShadowTexture,
+      floorTexture,
+      leftWallInteriorTopShadowTexture,
+      rightWallInteriorTopShadowTexture,
+      rightWallShadowTexture,
+      wallGradientTexture,
+    ],
   );
 
   const handleEmptyClick = (event) => {
@@ -2657,11 +2809,22 @@ const RoomShell = ({
             raycast={() => null}
           >
             <boxGeometry args={[wallThickness, height, depth]} />
-            <meshStandardMaterial
-              color={surfaceColor(surfaces.sideWall, ikeaWallColor)}
-              map={wallGradientTexture}
-              roughness={0.94}
-              metalness={0}
+            <meshBasicMaterial
+              color={surfaces.sideWall || ikeaWallColor}
+              map={rightWallShadowTexture}
+            />
+          </mesh>
+          <mesh
+            position={[-width / 2 + 0.002, height / 2, 0]}
+            rotation={[0, Math.PI / 2, 0]}
+            raycast={() => null}
+          >
+            <planeGeometry args={[depth, height]} />
+            <meshBasicMaterial
+              map={leftWallInteriorTopShadowTexture}
+              transparent
+              depthWrite={false}
+              side={DoubleSide}
             />
           </mesh>
         </>
@@ -2677,11 +2840,22 @@ const RoomShell = ({
             raycast={() => null}
           >
             <boxGeometry args={[wallThickness, height, depth]} />
-            <meshStandardMaterial
-              color={surfaceColor(surfaces.sideWall, ikeaWallColor)}
-              map={wallGradientTexture}
-              roughness={0.94}
-              metalness={0}
+            <meshBasicMaterial
+              color={surfaces.sideWall || ikeaWallColor}
+              map={rightWallShadowTexture}
+            />
+          </mesh>
+          <mesh
+            position={[width / 2 - 0.002, height / 2, 0]}
+            rotation={[0, Math.PI / 2, 0]}
+            raycast={() => null}
+          >
+            <planeGeometry args={[depth, height]} />
+            <meshBasicMaterial
+              map={rightWallInteriorTopShadowTexture}
+              transparent
+              depthWrite={false}
+              side={DoubleSide}
             />
           </mesh>
         </>
@@ -2701,7 +2875,7 @@ const RoomShell = ({
             ]}
           />
           <meshBasicMaterial
-            color={ikeaCeilingColor}
+            color={surfaces.ceiling || ikeaCeilingColor}
             map={ceilingShadowTexture}
           />
         </mesh>
