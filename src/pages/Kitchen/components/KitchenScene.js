@@ -2307,6 +2307,40 @@ const createRoomWallGradientTexture = () => {
   return texture;
 };
 
+const createCeilingShadowTexture = () => {
+  if (typeof document === "undefined") return null;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const context = canvas.getContext("2d");
+
+  if (!context) return null;
+
+  context.fillStyle = "#FFFFFF";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const depthShadow = context.createLinearGradient(0, 0, 0, canvas.height);
+  depthShadow.addColorStop(0, "rgba(68,72,68,0.22)");
+  depthShadow.addColorStop(0.22, "rgba(68,72,68,0.1)");
+  depthShadow.addColorStop(0.58, "rgba(68,72,68,0)");
+  context.fillStyle = depthShadow;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const edgeShadow = context.createLinearGradient(0, 0, canvas.width, 0);
+  edgeShadow.addColorStop(0, "rgba(68,72,68,0.16)");
+  edgeShadow.addColorStop(0.18, "rgba(68,72,68,0.05)");
+  edgeShadow.addColorStop(0.5, "rgba(68,72,68,0)");
+  edgeShadow.addColorStop(0.82, "rgba(68,72,68,0.05)");
+  edgeShadow.addColorStop(1, "rgba(68,72,68,0.16)");
+  context.fillStyle = edgeShadow;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const texture = new CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+};
+
 const seededRandom = (seed) => {
   const value = Math.sin(seed * 12.9898) * 43758.5453;
   return value - Math.floor(value);
@@ -2508,7 +2542,7 @@ const RoomShell = ({
   const depth = cmToUnit(roomDimensions?.depth || 240);
   const wallThickness = 0.075;
   const ikeaWallColor = "#D3D4CF";
-  const ikeaCeilingColor = "#B8B9B3";
+  const ikeaCeilingColor = "#D3D4CF";
   const surfaces = {
     floor: "#A9A99F",
     floorPattern: "grayAsh",
@@ -2545,6 +2579,7 @@ const RoomShell = ({
     return texture;
   }, [depth, surfaces.floorPattern, width]);
   const wallGradientTexture = useMemo(() => createRoomWallGradientTexture(), []);
+  const ceilingShadowTexture = useMemo(() => createCeilingShadowTexture(), []);
   const cameraTourMode = premiumTools?.cameraTour === true;
   const wallsVisible = premiumTools?.walls !== false || cameraTourMode;
   const ceilingVisible =
@@ -2556,8 +2591,9 @@ const RoomShell = ({
     () => () => {
       floorTexture?.dispose();
       wallGradientTexture?.dispose();
+      ceilingShadowTexture?.dispose();
     },
-    [floorTexture, wallGradientTexture],
+    [ceilingShadowTexture, floorTexture, wallGradientTexture],
   );
 
   const handleEmptyClick = (event) => {
@@ -2664,10 +2700,9 @@ const RoomShell = ({
               depth + wallThickness,
             ]}
           />
-          <meshStandardMaterial
-            color={surfaceColor(surfaces.ceiling, ikeaCeilingColor)}
-            roughness={0.92}
-            metalness={0}
+          <meshBasicMaterial
+            color={ikeaCeilingColor}
+            map={ceilingShadowTexture}
           />
         </mesh>
       )}

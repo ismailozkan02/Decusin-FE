@@ -204,7 +204,7 @@ const defaultRoomSurfaces = {
   floorPattern: "grayAsh",
   backWall: "#D3D4CF",
   sideWall: "#D3D4CF",
-  ceiling: "#B8B9B3",
+  ceiling: "#D3D4CF",
   trim: "#D1D1CA",
   backWallVisible: true,
   leftWallVisible: true,
