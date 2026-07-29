@@ -97,6 +97,8 @@ const QuoteSummaryControl = ({ compact = false }) => {
         }}
         sx={{
           width: compact ? 42 : "100%",
+          maxWidth: compact ? 42 : 214,
+          mx: compact ? 0 : "auto",
           minHeight: compact ? 42 : 174,
           px: compact ? 0 : 1.35,
           py: compact ? 0 : 1.35,
@@ -111,7 +113,7 @@ const QuoteSummaryControl = ({ compact = false }) => {
           overflow: "hidden",
           border: "1px solid rgba(14,165,233,0.24)",
           background:
-            "linear-gradient(155deg, #061623 0%, #0B2536 52%, #103B49 100%)",
+            "linear-gradient(155deg, #092238 0%, #123D52 52%, #1C5B68 100%)",
           boxShadow:
             "0 18px 38px rgba(2,6,23,0.18), inset 0 1px 0 rgba(255,255,255,0.12)",
           "&::before": {
@@ -253,7 +255,7 @@ const QuoteSummaryControl = ({ compact = false }) => {
             height: { md: 650 },
             maxHeight: "calc(100vh - 36px)",
             borderRadius: 1,
-            overflow: "hidden",
+            overflow: "hidden !important",
             border: "1px solid rgba(191,219,254,0.6)",
             boxShadow:
               "0 38px 110px rgba(2,6,23,0.38), 0 0 0 1px rgba(255,255,255,0.7) inset",
@@ -271,6 +273,8 @@ const QuoteSummaryControl = ({ compact = false }) => {
           sx={{
             p: 0,
             bgcolor: "#F8FAFC",
+            height: "100%",
+            overflow: "hidden",
             "& .MuiOutlinedInput-root": {
               borderRadius: 1,
               bgcolor: "#FFFFFF",
@@ -300,6 +304,7 @@ const QuoteSummaryControl = ({ compact = false }) => {
               gridTemplateColumns: { xs: "1fr", md: "360px 1fr" },
               height: { xs: "auto", md: 650 },
               minHeight: { xs: "auto", md: 650 },
+              overflow: "hidden",
             }}
           >
             <Box
@@ -510,6 +515,7 @@ const QuoteSummaryControl = ({ compact = false }) => {
                 minWidth: 0,
                 display: "flex",
                 flexDirection: "column",
+                overflow: "hidden",
               }}
             >
               <Stack
@@ -598,10 +604,11 @@ const QuoteSummaryControl = ({ compact = false }) => {
               {tab === 0 && (
                 <Box
                   sx={{
-                    height: { md: 526 },
+                    height: { md: 524 },
                     display: "flex",
                     flexDirection: "column",
                     minHeight: 0,
+                    overflow: "hidden",
                   }}
                 >
                   <Stack
@@ -610,8 +617,8 @@ const QuoteSummaryControl = ({ compact = false }) => {
                     justifyContent="space-between"
                     spacing={1.2}
                     sx={{
-                      mb: 1.3,
-                      p: 1.35,
+                      mb: 1,
+                      p: 1.15,
                       borderRadius: 1,
                       bgcolor: "#FFFFFF",
                       border: "1px solid rgba(226,232,240,0.88)",
@@ -800,7 +807,7 @@ const QuoteSummaryControl = ({ compact = false }) => {
               )}
 
               {tab === 1 && (
-                <Stack spacing={1.4} sx={{ height: { md: 526 } }}>
+                <Stack spacing={1.2} sx={{ height: { md: 524 }, overflow: "hidden" }}>
                   <Box
                     sx={{
                       p: 1.45,
@@ -909,7 +916,7 @@ const QuoteSummaryControl = ({ compact = false }) => {
                         fullWidth
                         label="Montaj Notu"
                         multiline
-                        minRows={10}
+                        minRows={12}
                         size="small"
                         placeholder="Olcu, elektrik/su hazirligi, ozel montaj talepleri..."
                         sx={{
@@ -951,7 +958,7 @@ const QuoteSummaryControl = ({ compact = false }) => {
               )}
 
               {tab === 2 && (
-                <Stack spacing={1.4} sx={{ height: { md: 526 } }}>
+                <Stack spacing={1.2} sx={{ height: { md: 524 }, overflow: "hidden" }}>
                   <Box
                     sx={{
                       p: 1.45,
@@ -1060,7 +1067,7 @@ const QuoteSummaryControl = ({ compact = false }) => {
                         fullWidth
                         label="Teslimat Adresi"
                         multiline
-                        minRows={5}
+                        minRows={6}
                         size="small"
                         sx={{
                           gridColumn: "1 / -1",
@@ -1081,7 +1088,7 @@ const QuoteSummaryControl = ({ compact = false }) => {
                         fullWidth
                         label="Nakliye Notu"
                         multiline
-                        minRows={6}
+                        minRows={7}
                         size="small"
                         placeholder="Kat bilgisi, asansor, park durumu, teslimat saati..."
                         sx={{
