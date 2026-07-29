@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Backdrop, Box, Fab } from "@mui/material";
+import { Backdrop, Box, Fab, IconButton } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useLocation } from "react-router-dom";
 import ArrowUp from "mdi-material-ui/ArrowUp";
+import MenuIcon from "mdi-material-ui/Menu";
 import { THEME } from "config";
 import useTheming from "hooks/useTheming";
 import ScrollToTop from "layouts/Dashboard/components/ScrollToTop";
@@ -72,11 +73,35 @@ const Vertical = ({ children, ...rest }) => {
               {...rest}
             />
           )}
+          {isKitchenPage && rest.hidden && (
+            <IconButton
+              color="inherit"
+              aria-label="Menuyu ac"
+              onClick={toggleNavVisibility}
+              sx={{
+                position: "fixed",
+                top: 10,
+                left: 10,
+                zIndex: 20,
+                width: 40,
+                height: 40,
+                borderRadius: 1,
+                color: "#0F172A",
+                bgcolor: "rgba(255,255,255,0.94)",
+                border: "1px solid rgba(203,213,225,0.9)",
+                boxShadow: "0 12px 28px rgba(15,23,42,0.14)",
+                backdropFilter: "blur(8px)",
+                "&:hover": { bgcolor: "#FFFFFF" },
+              }}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
           <ContentWrapper
             className={"layout-page-content"}
             sx={{
               ...(isKitchenPage && {
-                pt: 2.5,
+                pt: { xs: 9, lg: 2.5 },
               }),
               ...(hideFooter && {
                 height: "100vh",

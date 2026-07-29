@@ -230,6 +230,9 @@ const sceneToolPanelSx = {
   bgcolor: "rgba(255,255,255,0.96)",
   border: "1px solid rgba(226,232,240,0.95)",
   boxShadow: "0 6px 14px rgba(15,23,42,0.055)",
+  flexWrap: "wrap",
+  justifyContent: "center",
+  maxWidth: "100%",
 };
 
 const sceneIconButtonSx = (color) => ({
@@ -986,7 +989,7 @@ const KitchenScene = ({
           width: layoutReady ? fittedWidth : "100%",
           height: layoutReady ? fittedHeight : placeholderHeight,
           alignSelf: "center",
-          minWidth: 320,
+          minWidth: { xs: 0, sm: 320 },
           maxWidth: "100%",
           position: "relative",
           background: sceneReady ? "#FFFFFF" : "transparent",

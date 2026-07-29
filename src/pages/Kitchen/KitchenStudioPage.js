@@ -3194,7 +3194,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
         sx={{
           border: "1px solid #E2E8F0",
           borderRadius: 1.5,
-          p: 1,
+          p: { xs: 0.55, sm: 1 },
           mb: 1,
           background: "linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%)",
           boxShadow: "0 8px 22px rgba(15,23,42,0.04)",
@@ -3204,7 +3204,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
           direction={{ xs: "column", lg: "row" }}
           alignItems={{ xs: "stretch", lg: "center" }}
           justifyContent="space-between"
-          spacing={1.5}
+          spacing={{ xs: 0.7, sm: 1.5 }}
         >
           <Stack
             direction="row"
@@ -3241,15 +3241,20 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
             direction={{ xs: "column", xl: "row" }}
             alignItems={{ xs: "stretch", xl: "center" }}
             justifyContent="space-between"
-            spacing={1.2}
+            spacing={{ xs: 0.65, sm: 1.2 }}
             sx={{ width: "100%" }}
           >
             <Stack
               direction="row"
               alignItems="center"
               justifyContent="flex-start"
-              spacing={0.75}
-              sx={{ flexWrap: "wrap", minWidth: 0 }}
+              spacing={{ xs: 0.22, sm: 0.75 }}
+              sx={{
+                flexWrap: "wrap",
+                minWidth: 0,
+                width: { xs: "100%", xl: "auto" },
+                rowGap: { xs: 0.22, sm: 0.75 },
+              }}
             >
               <Button
                 variant="contained"
@@ -3345,16 +3350,17 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
                 direction="row"
                 spacing={0.4}
                 aria-hidden={selectedSceneIndex === null}
-                sx={{
-                  p: 0.35,
-                  borderRadius: 1.25,
+              sx={{
+                p: 0.35,
+                borderRadius: 1.25,
                   bgcolor: "rgba(255,255,255,0.96)",
                   border: "1px solid rgba(37,99,235,0.5)",
-                  boxShadow:
-                    "0 10px 24px rgba(37,99,235,0.16), inset 0 1px 0 rgba(255,255,255,0.86)",
-                  flexShrink: 0,
-                  visibility:
-                    selectedSceneIndex !== null ? "visible" : "hidden",
+                boxShadow:
+                  "0 10px 24px rgba(37,99,235,0.16), inset 0 1px 0 rgba(255,255,255,0.86)",
+                flexShrink: 0,
+                flexWrap: "wrap",
+                visibility:
+                  selectedSceneIndex !== null ? "visible" : "hidden",
                   pointerEvents: selectedSceneIndex !== null ? "auto" : "none",
                 }}
               >
@@ -3603,8 +3609,13 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
               direction="row"
               alignItems="center"
               justifyContent={{ xs: "flex-start", xl: "flex-end" }}
-              spacing={0.55}
-              sx={{ flexWrap: "wrap", minWidth: 0 }}
+              spacing={{ xs: 0.22, sm: 0.55 }}
+              sx={{
+                flexWrap: "wrap",
+                minWidth: 0,
+                width: { xs: "100%", xl: "auto" },
+                rowGap: { xs: 0.22, sm: 0.75 },
+              }}
             >
               <ToolbarNumberControl
                 label="Genislik"
