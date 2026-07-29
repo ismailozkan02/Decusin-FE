@@ -200,11 +200,11 @@ const getProjectTotal = (project) =>
   Number(project?.quote?.total || project?.total || 0);
 
 const defaultRoomSurfaces = {
-  floor: "#DDBF86",
-  floorPattern: "rusticBrown",
-  backWall: "#E8E6DE",
-  sideWall: "#E1DED5",
-  ceiling: "#D4CDC0",
+  floor: "#A9A99F",
+  floorPattern: "grayAsh",
+  backWall: "#D3D4CF",
+  sideWall: "#D3D4CF",
+  ceiling: "#B8B9B3",
   trim: "#D1D1CA",
   backWallVisible: true,
   leftWallVisible: true,
@@ -214,6 +214,34 @@ const defaultRoomSurfaces = {
   lampVisible: false,
   lightsOn: false,
   lampType: "spot",
+};
+
+const normalizeRoomSurfaces = (surfaces = {}) => {
+  const nextSurfaces = {
+    ...defaultRoomSurfaces,
+    ...(surfaces || {}),
+  };
+  const normalizeColor = (value, fallback) => {
+    const legacyColors = ["#E8E6DE", "#E1DED5", "#D4CDC0", "#E3E3DD", "#B2B3AE"];
+    return legacyColors.includes(String(value || "").toUpperCase())
+      ? fallback
+      : value || fallback;
+  };
+
+  return {
+    ...nextSurfaces,
+    floor:
+      nextSurfaces.floorPattern === "rusticBrown"
+        ? defaultRoomSurfaces.floor
+        : normalizeColor(nextSurfaces.floor, defaultRoomSurfaces.floor),
+    floorPattern:
+      nextSurfaces.floorPattern === "rusticBrown"
+        ? defaultRoomSurfaces.floorPattern
+        : nextSurfaces.floorPattern,
+    backWall: normalizeColor(nextSurfaces.backWall, defaultRoomSurfaces.backWall),
+    sideWall: normalizeColor(nextSurfaces.sideWall, defaultRoomSurfaces.sideWall),
+    ceiling: normalizeColor(nextSurfaces.ceiling, defaultRoomSurfaces.ceiling),
+  };
 };
 
 const floorPatternOptions = [
@@ -846,10 +874,7 @@ const normalizeProjectSnapshot = (project) => {
     items: Array.isArray(snapshot.items) ? snapshot.items : [],
     installation_fee: Number(snapshot.installation_fee || 0),
     shipping_fee: Number(snapshot.shipping_fee || 0),
-    room_surfaces: {
-      ...defaultRoomSurfaces,
-      ...(snapshot.room_surfaces || {}),
-    },
+    room_surfaces: normalizeRoomSurfaces(snapshot.room_surfaces),
   };
 };
 
@@ -998,10 +1023,9 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     unit: "cm",
     ...(pendingProject?.room_dimensions || {}),
   });
-  const [roomSurfaces, setRoomSurfaces] = useState({
-    ...defaultRoomSurfaces,
-    ...(pendingProject?.room_surfaces || {}),
-  });
+  const [roomSurfaces, setRoomSurfaces] = useState(() =>
+    normalizeRoomSurfaces(pendingProject?.room_surfaces),
+  );
   const [premiumTools, setPremiumTools] = useState({
     quality: true,
     measurements: true,
@@ -1014,6 +1038,10 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     smartPlacement: true,
   });
   const [cameraPresetSignal, setCameraPresetSignal] = useState(null);
+
+  useEffect(() => {
+    setRoomSurfaces((current) => normalizeRoomSurfaces(current));
+  }, []);
 
   const materialMap = useMemo(
     () => Object.fromEntries(materials.map((item) => [item.id, item])),
@@ -2563,7 +2591,7 @@ const KitchenStudioPage = ({ initialTab = "designer" }) => {
     setDragState(null);
     setResizeState(null);
     setRoomDimensions({ width: 450, height: 250, depth: 240, unit: "cm" });
-    setRoomSurfaces(defaultRoomSurfaces);
+    setRoomSurfaces(normalizeRoomSurfaces());
   }, []);
 
   const clearSceneItems = useCallback(() => {

@@ -138,7 +138,7 @@ const QuoteSummaryControl = ({ compact = false }) => {
               sx={{
                 fontSize: 10.5,
                 fontWeight: 950,
-                color: "#2563EB",
+                color: "#FFFFFF",
                 letterSpacing: 0.8,
                 textTransform: "uppercase",
               }}

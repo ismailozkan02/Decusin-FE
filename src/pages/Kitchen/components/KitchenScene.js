@@ -1230,16 +1230,18 @@ const AutoHideWallsController = ({
 }) => {
   const camera = useThree((state) => state.camera);
   const lastHiddenSurfaceRef = useRef(undefined);
+  const autoHideActive = enabled && !cameraTour;
 
   useEffect(() => {
-    if (enabled && !cameraTour) return;
+    if (autoHideActive) return;
+    if (lastHiddenSurfaceRef.current === undefined) return;
 
     lastHiddenSurfaceRef.current = undefined;
     onAutoHideRoomSurface?.(null);
-  }, [cameraTour, enabled, onAutoHideRoomSurface]);
+  }, [autoHideActive, onAutoHideRoomSurface]);
 
   useFrame(() => {
-    if (!enabled || cameraTour) return;
+    if (!autoHideActive) return;
 
     const roomWidth = cmToUnit(roomDimensions?.width || 450);
     const roomHeight = cmToUnit(roomDimensions?.height || 250);
@@ -2505,11 +2507,11 @@ const RoomShell = ({
   const height = cmToUnit(roomDimensions?.height || 250);
   const depth = cmToUnit(roomDimensions?.depth || 240);
   const wallThickness = 0.075;
-  const ikeaWallColor = "#E3E3DD";
-  const ikeaCeilingColor = "#B2B3AE";
+  const ikeaWallColor = "#D3D4CF";
+  const ikeaCeilingColor = "#B8B9B3";
   const surfaces = {
-    floor: "#DDBF86",
-    floorPattern: "rusticBrown",
+    floor: "#A9A99F",
+    floorPattern: "grayAsh",
     backWall: ikeaWallColor,
     sideWall: ikeaWallColor,
     ceiling: ikeaCeilingColor,
@@ -2600,7 +2602,7 @@ const RoomShell = ({
               args={[width + wallThickness * 2, height, wallThickness]}
             />
             <meshStandardMaterial
-              color={surfaceColor(lightsOn ? "#F4F5F0" : "#E4E5DF", "#E4E5DF")}
+              color={surfaceColor(surfaces.backWall, ikeaWallColor)}
               map={wallGradientTexture}
               roughness={0.94}
               metalness={0}
@@ -2620,7 +2622,7 @@ const RoomShell = ({
           >
             <boxGeometry args={[wallThickness, height, depth]} />
             <meshStandardMaterial
-              color={surfaceColor(lightsOn ? "#F4F5F0" : "#E4E5DF", "#E4E5DF")}
+              color={surfaceColor(surfaces.sideWall, ikeaWallColor)}
               map={wallGradientTexture}
               roughness={0.94}
               metalness={0}
@@ -2640,7 +2642,7 @@ const RoomShell = ({
           >
             <boxGeometry args={[wallThickness, height, depth]} />
             <meshStandardMaterial
-              color={surfaceColor(lightsOn ? "#F4F5F0" : "#E4E5DF", "#E4E5DF")}
+              color={surfaceColor(surfaces.sideWall, ikeaWallColor)}
               map={wallGradientTexture}
               roughness={0.94}
               metalness={0}
@@ -2663,7 +2665,7 @@ const RoomShell = ({
             ]}
           />
           <meshStandardMaterial
-            color={surfaceColor(lightsOn ? "#A7A8A3" : "#9EA09B", ikeaCeilingColor)}
+            color={surfaceColor(surfaces.ceiling, ikeaCeilingColor)}
             roughness={0.92}
             metalness={0}
           />
