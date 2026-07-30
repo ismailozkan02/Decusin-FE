@@ -37,6 +37,7 @@ import {
   Html,
   OrbitControls,
   useGLTF,
+  useProgress,
 } from "@react-three/drei";
 import {
   Box3,
@@ -357,11 +358,14 @@ const KitchenScene = ({
   const controlsRef = useRef(null);
   const autoHiddenSurfaceRef = useRef(null);
   const pendingDragRef = useRef(null);
+  const assetsLoadingRef = useRef(false);
   const [sceneBox, setSceneBox] = useState({ width: 0, top: 0 });
   const [drag3DIndex, setDrag3DIndex] = useState(null);
   const [hover3DIndex, setHover3DIndex] = useState(null);
   const [controlsLocked, setControlsLocked] = useState(false);
   const [sceneReady, setSceneReady] = useState(kitchenSceneHasBooted);
+  const [sceneContentLoading, setSceneContentLoading] = useState(false);
+  const { active: assetsLoading, progress: assetsProgress } = useProgress();
   const scenePremiumTools = premiumTools || {
     quality: true,
     measurements: true,
@@ -384,7 +388,35 @@ const KitchenScene = ({
   const cmToPx = Math.max((fittedWidth / roomWidthCm) * zoom, 0.6);
   const roomDepthCm = Math.max(Number(roomDimensions?.depth || 240), 1);
   const layoutReady = sceneBox.width > 0 && sceneBox.top > 0;
-  const sceneLoading = !sceneReady;
+  const sceneContentSignature = useMemo(
+    () =>
+      sceneItems
+        .map((item, index) => {
+          const product = catalogMap[item.catalog_item_id] || {};
+          return [
+            index,
+            item.catalog_item_id,
+            product.model_url || "fallback",
+            item.options?.door_material_id || "",
+            item.options?.glass_material_id || "",
+            item.options?.countertop_material_id || "",
+          ].join(":");
+        })
+        .join("|"),
+    [catalogMap, sceneItems],
+  );
+  const sceneHasExternalModels = useMemo(
+    () =>
+      sceneItems.some((item) => {
+        const product = catalogMap[item.catalog_item_id] || {};
+        return Boolean(product.model_url);
+      }),
+    [catalogMap, sceneItems],
+  );
+  const sceneLoading =
+    !sceneReady ||
+    sceneContentLoading ||
+    (sceneHasExternalModels && assetsLoading && assetsProgress < 100);
   const placeholderHeight = Math.max(viewportHeight - 190, 420);
   const allRoomSurfacesVisible =
     scenePremiumTools.walls &&
@@ -450,6 +482,41 @@ const KitchenScene = ({
     kitchenSceneHasBooted = true;
     setSceneReady(true);
   }, []);
+
+  useEffect(() => {
+    assetsLoadingRef.current = assetsLoading;
+  }, [assetsLoading]);
+
+  useEffect(() => {
+    if (!layoutReady) return undefined;
+
+    let firstFrameId;
+    let secondFrameId;
+
+    firstFrameId = requestAnimationFrame(() => {
+      setSceneContentLoading(true);
+      secondFrameId = requestAnimationFrame(() => {
+        if (!assetsLoadingRef.current) {
+          setSceneContentLoading(false);
+        }
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(firstFrameId);
+      cancelAnimationFrame(secondFrameId);
+    };
+  }, [layoutReady, sceneContentSignature]);
+
+  useEffect(() => {
+    if (!sceneContentLoading || assetsLoading) return undefined;
+
+    const frameId = requestAnimationFrame(() => {
+      setSceneContentLoading(false);
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [assetsLoading, sceneContentLoading]);
   const applyDefaultCameraView = useCallback(
     (camera, controls) => {
       const target = new Vector3(...defaultCameraView.target);
